@@ -31,3 +31,28 @@
     return stack.length === 0;//如果栈空了会返回true
 };
 //时间复杂度和空间复杂度都是O（n）
+
+/**
+ * @param {string} s
+ * @return {boolean}
+ */
+ var isValid = function(s) {
+    if (s.length % 2 !== 0) return false
+    const map = {
+        '(' : ')',
+        '{' : '}',
+        '[' : ']'
+    };
+    let stack = []
+    for (let char of s) {
+        if (map[char]) {
+            stack.push(map[char])
+        } else {
+            let ret = stack.pop()
+            if (ret !== char) {
+                return false
+            }
+        }
+    }
+    return stack.length === 0
+};
