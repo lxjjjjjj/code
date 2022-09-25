@@ -225,3 +225,9 @@ document.querySelector('button').addEventListener('click', () => {
 ## React 的 Error Boundaries
 
 ## Vue 的 error handler
+
+## 跨域js错误
+
+a. 给script标签添加crossorigin属性，并且设置anonymous为正确的origin域名或者*，如果不是，则不加载js，还有use-credentials属性，需要设置access-control-allow-credentials，返回true，此时access-control-allow-origin：domain必须设置具体的域名，不支持通配符*
+
+b. 通过try catch包裹，手动调用window.onerror方法，把信息包裹出去
