@@ -39,12 +39,6 @@ gitlab-ci配置文档：https://docs.gitlab.com/ee/ci/yaml/#keyword-reference-fo
 
 #### gitlab-runner-mp服务
 
-服务地址：http://eng.xiaojukeji.com/service/group/705/repo/34518/overview
-
-上面提到我们使用 OE 平台来进行 `Runner` 机器的创建工作。**gitlab-runner-mp** 这个服务则是这个工作的一个具体实现。
-
-这里只讲一下整体流程，细节上就不说了。
-
 该服务目前存在**两条流水线**，并且都包含部署流程。流水线的过程分为两步：
 
 1、执行编译构建流程，实际上是执行该服务下的 `build.sh` 文件，该文件会设置好node以及npm环境，并把**镜像文件**当作产出物打包。
@@ -69,16 +63,8 @@ gitlab-ci配置文档：https://docs.gitlab.com/ee/ci/yaml/#keyword-reference-fo
 
 该服务器主要用于我们团队的静态资源存储，其中 `authorize_keys` 记录了我们通用镜像的一些`ssh keys`，方便免密上传文件和执行脚本。
 
-#### @didi/myshell脚本管理工具
 
-该工具主要用于脚本的管理，**统一下载和上传**，避免了一个脚本当作文件四处传播，出问题或是更新通知不及时的问题。
-
-所有能下载的脚本都存放于 [ms-ecology](https://git.xiaojukeji.com/ms-ecology) 仓库，QA侧主要使用的是 [qa-script](https://git.xiaojukeji.com/ms-ecology/qa-script) 脚本，通过 `ms add qa-script` 添加后能获得**拉取117代码**的能力。
-
-QA同学使用 `ms _main` 命令时，实际上是执行了从 [qa-script](https://git.xiaojukeji.com/ms-ecology/qa-script) 下载下来的 `main.sh` 脚本，该脚本的功能即是访问 **117 服务器**，下载对应分支的静态资源。
-
-
-## 新版 OE 构建流程
+## 新版构建流程
 
 ### 背景
 
@@ -98,39 +84,19 @@ QA同学使用 `ms _main` 命令时，实际上是执行了从 [qa-script](https
 
 新版OE构建步骤和 `Gitlab` 大体上是相似的，唯一的区别在于我们将 `Runner` 上运行的流程迁移到了 OE 容器当中。
 
-#### 流水线
-
-新版流程相比于原 `Gitlab CI/CD` 流程来讲，需要手动为分支创建流水线。
-
-创建流水线的链接：http://eng.xiaojukeji.com/group/705/service/25740/pipeline
-
-创建流水线步骤：**新建 -> 选择分支 -> 输入流水线名称（可以自己想）-> 选择模板：分支通用构建模板 -> 下一步 -> 生成流水线**
-
-第一次需要手动触发，后续流水线会监听代码的 `push` 自动执行。
-
 #### build.sh脚本
 
 如果说 `Gitlab CI/CD` 流程中，`gitlab-ci.yml`文件决定了 `Runner` 机器上的执行流程，那么 `build.sh` 则是决定了 OE 中 Docker 镜像的执行流程。
 
 #### Docker镜像
 
-OE 流水线的 **「编译构建」** 流程会默认执行项目根目录下的 `build.sh` 文件，在执行前会初始化镜像环境，我们使用的镜像环境为：`hub.xiaojukeji.com/lihuanyu/fe-oe-runner:v0.7`，该环境集成了node、npm 以及 117 xiaoju 用户的免密登陆配置。
+OE 流水线的 **「编译构建」** 流程会默认执行项目根目录下的 `build.sh` 文件，在执行前会初始化镜像环境，我们使用的镜像环境为：`hub.xiaojukeji.com/lihuanyu/fe-oe-runner:v0.7`，该环境集成了node、npm 以及用户的免密登陆配置。
 
 #### oe-deploy-by-mode.sh脚本
 
-该脚本与 `deploy-by-mode.sh` 脚本功能类似，由于 Gitlab Runner 和 OE Docker 的环境变量会有一些差异，我们无法直接复用 `deploy-by-mode.sh` 脚本，所以我们新增了 `oe-deploy-by-mode.sh` 脚本在 OE Docker 环境中做代码上传。
+该脚本与 `deploy-by-mode.sh` 脚本功能类似，由于 Gitlab Runner 和 OE Docker 的环境变量会有一些差异，我们无法直接复用 `deploy-by-mode.sh` 脚本，所以我们新增了 `oe-deploy-by-mode.sh` 脚本在 OE Docker 环境中做代码上传。该脚本也会将构建产出物上传至 117 服务器
 
-该脚本也会将构建产出物上传至 117 服务器供 QA 进行代码拉取。
-
-## 待跟进内容
-
-1、OE 中接入 CR 流程，彻底脱离 `Gitlab`。
-
-2、OE CR 流程自动化，由于我们每周的时间分支都不相同，如果在 OE 中发起 CR，则须每周手动更新构建模板。后续希望通过 OE 提供 API，或是自己创建自定义应用来进行该步流程的优化。
-
-3、二维码预览应用接入，期望是构建完成之后可以直接触发二维码生成任务来生成预览二维码。
-
-4、`Webhook` 接入，由于 OE 默认的**DC通知**模板信息**十分有限**，希望通过接入 `Webhook` 的形式自定义我们的消息通知。
+`Webhook` 接入，由于 OE 默认的**DC通知**模板信息**十分有限**，希望通过接入 `Webhook` 的形式自定义我们的消息通知。
 
 build.sh
 
@@ -806,11 +772,3 @@ function callback (err, stats) {
 }
 
 ```
-# webpack的provide-plugin插件
-
-```
-https://webpack.js.org/plugins/provide-plugin/
-```
-# webpack流程分析
-
-[webpack流程分析](https://juejin.cn/post/6844903972055023629)
