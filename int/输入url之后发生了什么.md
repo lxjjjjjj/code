@@ -37,11 +37,14 @@ DNS的域名查找
 [总的查找过程](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/30/16ff45e132f02931~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
 在客户端和浏览器，本地DNS之间的查询方式是递归查询；
 
+在客户端和浏览器，本地DNS之间的查询方式是递归查询递归查询：
+
 在客户端输入 URL 后，会有一个递归查找的过程，从浏览器缓存中查找->本地的hosts文件查找->找本地DNS解析器缓存查找->本地DNS服务器查找，这个过程中任何一步找到了都会结束查找流程。
 
 在本地DNS服务器与根域及其子域之间的查询方式是迭代查询；
 
 如果本地DNS服务器无法查询到，则根据本地DNS服务器设置的转发器进行查询。若未用转发模式，则迭代查找过程如下图
+
 [迭代查找过程](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/1/30/16ff48f72977d744~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
 
 ### 查找过程中的优化点
