@@ -353,7 +353,7 @@ Facebook早就知道React这一缺陷，所以历时三年打造了一个不可�
 
 
 # diff算法不同
-
+[diff算法很好的文章](https://juejin.cn/post/6919376064833667080#heading-14)
 ## vue diff
 Vue2 diff算法
 
