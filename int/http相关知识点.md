@@ -136,7 +136,8 @@ Accept Accept-Language Content-Language Content-Type multipart/form-data text/pl
 3.Cache-Control: no-catch 本地，proxy服务器可以缓存 但是使用之前要去服务器验证
 4.Cache-Control: no-store是本地和proxy服务器都不能缓存
 ## 2.到期max-age=<seconds>
-Cache-Control: s-maxage=<seconds>可以代替max-age但是只有在代理服务器才生效
+Cache-Control: max-age=<seconds>可以代替max-age在服务器才生效
+Cache-Control: s-maxage=<seconds>可以代替max-age但是只有在代理服务器才生效，优先级比max-age高
 在代理服务器中s-maxage优先级高于max-age
 Cache-Control: max-stale=<seconds> 在max-age过期之后，发起请求一方主动写有max-stale的话代表即便缓存过期了，只要在max-stale时间内，也可以使用缓存的内容，而不需要去服务器重新请求内容
 ## 3.重新验证
