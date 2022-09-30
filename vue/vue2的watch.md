@@ -1,0 +1,4 @@
+1）遍历watch对象， 给其中每一个watch属性，生成对应的user watcher
+2）调用watcher中的get方法，将Dep.target设置成当前的user watcher，并将user watcher添加到监听data值对应的dep中（依赖收集的过程）
+3）当所监听data中的值发生变化时，会调用set方法触发dep的notify方法，执行watcher中定义的方法
+4）设置成deep：true的情况，递归遍历所监听的对象，将user watcher添加到对象中每一层key值的dep对象中，这样无论当对象的中哪一层发生变化，wacher都能监听到。通过对象的递归遍历，实现了深度监听功能
