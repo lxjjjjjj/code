@@ -1,0 +1,6 @@
+1）vuex中的store本质就是一个没有template模板的隐藏式的vue组件
+2）vuex是利用vue的mixin混入机制，在beforeCreate钩子前混入vuexInit方法
+3）vuexInit方法实现将vuex store注册到当前组件的$store属性上
+4）vuex的state作为一个隐藏的vue组件的data，定义在state上面的变量，相当于这个vue实例的data属性，凡是定义在data上的数据都是响应式的
+5）当页面中使用了vuex state中的数据，就是依赖收集的过程，当vuex中state中的数据发生变化，就通过调用对应属性的dep对象的notify方法，去修改视图变化
+
