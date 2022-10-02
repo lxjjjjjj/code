@@ -112,21 +112,231 @@ https利用TLS/SSL进行对称加密+非对称加密,对称密钥的好处是解
 8.Client再次发起HTTPS的请求，使用对称密钥加密请求的“明文内容B”，然后Server使用对称密钥解密密文，得到“明文内容B”。
 
 
-# 跨域
+# 跨域CORS
+cors是解决跨域问题的常见解决方法，关键是服务器要设置Access-Control-Allow-Origin，控制哪些域名可以共享资源。origin是cors的重要标识，只要是非同源或者POST请求都会带上Origin字段，接口返回后服务器也可以将Access-Control-Allow-Origin设置为请求的Origin，解决cors如何指定多个域名的问题。
 
-GET HEAD POST 方法请求跨域时不需要预请求
+CORS将请求分为**简单请求**和**非简单请求**
 
-* 允许的ContentType 
+* 简单请求
+）只支持HEAD，get、post请求方式；
+2）没有自定义的请求头；
+3）Content-Type：只限于三个值application/x-www-form-urlencoded、multipart/form-data、text/plain
+对于简单请求，浏览器直接发出CORS请求。具体来说，就是在头信息之中，增加一个Origin字段。如果浏览器发现这个接口回应的头信息没有包含Access-Control-Allow-Origin字段的话就会报跨域错误
 
-text/plain
-multipart/form-data
-application/x-www-form-urlencoded
 
-* 允许的请求头
+## 同源策略
+同源 = 协议、域名、端口相同。
+同源政策的目的，是为了保证用户信息的安全，防止恶意的网站窃取数据。设想这样一种情况：A网站是一家银行，用户登录以后，又去浏览其他网站。如果其他网站可以读取A网站的 Cookie，会发生什么？很显然，如果 Cookie 包含隐私（比如存款总额），这些信息就会泄漏。更可怕的是，Cookie 往往用来保存用户的登录状态，如果用户没有退出登录，其他网站就可以冒充用户，为所欲为。因为浏览器同时还规定，提交表单不受同源政策的限制。
 
-Accept Accept-Language Content-Language Content-Type multipart/form-data text/plain
-...
-如果不是以上条件那么会在跨域的时候发送预请求会通过Method=OPTIONS进行预请求 来告诉浏览器 我接下来的请求是被允许的
+
+## cookie
+
+Cookie 主要用于以下三个方面：
+
+会话状态管理（如用户登录状态、购物车、游戏分数或其它需要记录的信息）
+个性化设置（如用户自定义设置、主题等）
+浏览器行为跟踪（如跟踪分析用户行为等）
+
+Cookie 的缺点
+大小有限5M、不安全容易被劫持、增加请求大小等
+
+### Cookies 的属性
+
+#### Name/Value 
+用 JavaScript 操作 Cookie 的时候注意对 Value 进行编码处理。
+
+#### Expires 
+##### Expires有值
+用于设置 Cookie 的过期时间。比如：Set-Cookie: id=a3fWa; Expires=Wed, 21 Oct 2015 07:28:00 GMT;
+
+##### Expires无值----会话cookie
+当 Expires 属性缺省时，表示是会话性 Cookie，像上图 Expires 的值为 Session，表示的就是会话性 Cookie。当为会话性 Cookie 的时候，值保存在客户端内存中，并在用户关闭浏览器时失效。需要注意的是，有些浏览器提供了会话恢复功能，这种情况下即使关闭了浏览器，会话期 Cookie 也会被保留下来，就好像浏览器从来没有关闭一样。
+
+##### 持久化cookie
+与会话性 Cookie 相对的是持久性 Cookie，持久性 Cookies 会保存在用户的硬盘中，直至过期或者清除 Cookie。这里值得注意的是，设定的日期和时间只与客户端相关，而不是服务端。
+
+#### Max-Age 
+
+用于设置在 Cookie 失效之前需要经过的秒数。比如：Set-Cookie: id=a3fWa; Max-Age=604800; Max-Age 可以为正数、负数、甚至是 0。
+
+##### 正值
+
+如果 max-Age 属性为正数时，浏览器会将其持久化，即写到对应的 Cookie 文件中。
+
+##### 负值
+
+当 max-Age 属性为负数，则表示该 Cookie 只是一个会话性 Cookie。
+##### 0
+
+当 max-Age 为 0 时，则会立即删除这个 Cookie。
+
+#### 假如 Expires 和 Max-Age 都存在，Max-Age 优先级更高
+#### Domain
+
+Domain 指定了 Cookie 可以送达的主机名。假如没有指定，那么默认值为当前文档访问地址中的主机部分（但是不包含子域名）。像淘宝首页设置的 Domain 就是 .taobao.com，这样无论是 a.taobao.com 还是 b.taobao.com 都可以使用 Cookie。在这里注意的是，不能跨域设置 Cookie，比如阿里域名下的页面把 Domain 设置成百度是无效的：Set-Cookie: qwerty=219ffwef9w0f; Domain=baidu.com; Path=/; Expires=Wed, 30 Aug 2020 00:00:00 GMT
+
+#### Path
+
+Path 指定了一个 URL 路径，这个路径必须出现在要请求的资源的路径中才可以发送 Cookie 首部。比如设置 Path=/docs，/docs/Web/ 下的资源会带 Cookie 首部，/test 则不会携带 Cookie 首部。Domain 和 Path 标识共同定义了 Cookie 的作用域：即 Cookie 应该发送给哪些 URL。
+
+#### Secure属性
+
+标记为 Secure 的 Cookie 只应通过被HTTPS协议加密过的请求发送给服务端。使用 HTTPS 安全协议，可以保护 Cookie 在浏览器和 Web 服务器间的传输过程中不被窃取和篡改。
+
+#### HTTPOnly
+
+设置 HTTPOnly 属性可以防止客户端脚本通过 document.cookie 等方式访问 Cookie，有助于避免 XSS 攻击。
+
+#### SameSite
+Chrome80 版本中默认屏蔽了第三方的 Cookie，SameSite 属性可以让 Cookie 在跨站请求时不会被发送，从而可以阻止跨站请求伪造攻击（CSRF）。
+
+##### 属性值
+
+SameSite 可以有下面三种值：
+
+Strict 仅允许一方请求携带 Cookie，即浏览器将只发送相同站点请求的 Cookie，即当前网页 URL 与请求目标 URL 完全一致。
+Lax 允许部分第三方请求携带 Cookie
+None 无论是否跨站都会发送 Cookie
+
+之前默认是 None 的，Chrome80 后默认是 Lax。
+
+接下来看下从 None 改成 Lax 到底影响了哪些地方的 Cookies 的发送？直接来一个图表：
+
+[图表图片](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2020/3/18/170eb95c97d98564~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
+
+same-site:lax的具体规则如下：
+
+类型例子                                     是否发送 
+a链接<a href="..."></a>                       发送
+预加载<link rel="prerender" href="..."/>      发送
+GET 表单<form method="GET" action="...">      发送
+POST 表单<form method="POST" action="...">   不发送
+iframe<iframe src="..."></iframe>           不发送
+AJAX axios.post                             不发送
+图片<img src="..."></image>                  不发送
+
+而在这之前是会全部发送的。
+
+从上图可以看出，对大部分 web 应用而言，Post 表单，iframe，AJAX，Image 这四种情况从以前的跨站会发送三方 Cookie，变成了不发送。
+
+* Post表单：应该的，学 CSRF 总会举表单的例子。
+* iframe：iframe 嵌入的 web 应用有很多是跨站的，都会受到影响。
+* AJAX：可能会影响部分前端取值的行为和结果。
+* Image：图片一般放 CDN，大部分情况不需要 Cookie，故影响有限。但如果引用了需要鉴权的图片，可能会受到影响。
+
+除了这些还有 script 的方式，这种方式也不会发送 Cookie，像淘宝的大部分请求都是 jsonp，如果涉及到跨站也有可能会被影响。
+
+##### 如果不修改由None到Lax将引发的问题
+
+```
+1.天猫和飞猪的页面靠请求淘宝域名下的接口获取登录信息，由于 Cookie 丢失，用户无法登录，页面还会误判断成是由于用户开启了浏览器的“禁止第三方 Cookie”功能导致而给与错误的提示
+
+2.淘宝部分页面内嵌支付宝确认付款和确认收货页面、天猫内嵌淘宝的登录页面等，由于 Cookie 失效，付款、登录等操作都会失败
+
+3.阿里妈妈在各大网站比如今日头条，网易，微博等投放的广告，也是用 iframe 嵌入的，没有了 Cookie，就不能准确的进行推荐
+
+4.一些埋点系统会把用户 id 信息埋到 Cookie 中，用于日志上报，这种系统一般走的都是单独的域名，与业务域名分开，所以也会受到影响。
+
+5.一些用于防止恶意请求的系统，对判断为恶意请求的访问会弹出验证码让用户进行安全验证，通过安全验证后会在请求所在域种一个Cookie，请求中带上这个Cookie之后，短时间内不再弹安全验证码。在Chrome80以上如果因为Samesite的原因请求没办法带上这个Cookie，则会出现一直弹出验证码进行安全验证。
+
+6.天猫商家后台请求了跨域的接口，因为没有 Cookie，接口不会返回数据
+
+7.像a链接这种，没有受到影响，依旧会带上三方cookie，这样可以保证从百度搜索中打开淘宝，是有登录状态的。
+```
+##### 设置SameSite=none要注意的问题
+
+1、HTTP 接口不支持 SameSite=none
+如果你想加 SameSite=none 属性，那么该 Cookie 就必须同时加上 Secure 属性，表示只有在 HTTPS 协议下该 Cookie 才会被发送。
+
+2、需要 UA 检测，部分浏览器不能加 SameSite=none
+IOS 12 的 Safari 以及老版本的一些 Chrome 会把 SameSite=none 识别成 SameSite=Strict，所以服务端必须在下发 Set-Cookie 响应头时进行 User-Agent 检测，对这些浏览器不下发 SameSite=none 属性
+
+##### same-party
+[原文链接](https://juejin.cn/post/7087206796351242248)
+将same-site:Lax改成same-site:None 这不是长久之策，一来，浏览器把same-site的默认值从从none调整到lax可以避免CSRF攻击，保障安全，可我们为了业务正常运行，却又走了回头路；二来，chrome承诺2022年，也就是今年，会全面禁用三方cookie，届时和在safari一样，我们没法再用这种方法去hack。
+如果我们不想使用same-site:none，或者说，未来用不了这种方式了，same-party将是我们的唯一选择。
+
+继续沿用阿里系的例子，same-party可以把.taobao.com、.tmall.com和.alimama.com三个站合起来，它们设置的cookie在这个集合内部不会被当作第三方cookie对待。
+首先需要定义First-Party集合：在.taobao.com、.tmall.com和.alimama.com三个站的服务器下都加一个配置文件，放在/.well-know/目录下，命名为first-party-set。其中一个是“组长”，暂定为.taobao.com，在它的的服务器下写入
+```
+// /.well-know/first-party-set
+{
+  "owner": ".taobao.com",
+  "members": [".tmall.com", ".alimama.com"]
+}
+```
+另外两个是组员：
+```
+// /.well-know/first-party-set
+{
+  "owner": ".taobao.com",
+}
+```
+
+并且，在下发cookie时，需要注明same-party属性：
+```
+Set-Cookie: id=nian; SameParty; Secure; SameSite=Lax; domain=.taobao.com
+```
+这样，我们打开.tmall.com的网站，向.taobao.com发起AJAX请求，都会带上这个cookie，即使当前的same-site属性是lax，因为这集合中的三个域名都会被当作一个站对待，也就是说，在浏览器眼中，这个cookie现在就是第一方cookie。而不在集合中的baidu.com发起的AJAX请求则不会带上。需要注意的是，使用same-party属性时，必须要同时使用https(secure属性)，并且same-site不能是strict。
+
+##### 第三方cookie，
+现在有三个请求：
+
+网页www.a.com/index.html的前端页面，去请求接口www.b.com/api
+网页www.b.com/index.html的前端页面，去请求接口www.a.com/api
+网页www.a.com/index.html的前端页面，去请求接口www.a.com/api
+
+哪个请求会带上之前设置的cookie呢？答案是2、3都会带上cookie，因为cookie的取用规则是去看请求的目的地，2、3请求的都是www.a.com/api命中domain=.a.com规则。
+这就是「不认来源，只看目的」的意思，不管请求来源是哪里，只要请求的目的是a站，cookie都会携带上。通过这个案例也可以再回顾一下：3的这种情况的叫第一方cookie，2的这种情况叫第三方cookie。
+
+###### 限制三方cookie的携带
+
+「不认来源，只看目的」规矩在2020年开始被打破，这种变化体现在浏览器将same-site:lax设置为默认属性。chrome操作比较平缓，目前可以手动设置same-site:none恢复之前规则。但在safari中如果这样设置，会被当作same-site:strict。可以看到，在safari中使用的全是第一方cookie，直观的体验就是在天猫登录完，打开淘宝，还需要再登录一次。也就是说（strict模式）现在cookie的取用是「既看来源，又看目的」了。none代表完全不做限制，即之前「不认来源，只看目的」的cookie取用原则。
+
+### 判断两个域名属于SameSite
+[原文链接](https://juejin.cn/post/6844904095711494151)
+
+站（Site）= eTLD(有效顶级域名) + 1
+
+比如 https://www.example.com:443  .com是eTLD  example.com是eTLD+1
+
+TLD 表示顶级域名，例如 .com、.org、.cn 等等，不过顶级域名并不是一成不变的，会随着时间推移增加，例如前段时间就增加了 .gay 顶级域名。
+
+www.a.taobao.com 和 www.b.taobao.com 是同站，a.github.io 和 b.github.io 是跨站(注意是跨站)。
+
+TLD+1 表示顶级域名和它前面二级域名的组合，例如
+
+* https://www.example.com:443/foo TLD 是 .com TLD+1 是 example.com 
+
+* https://www.example.com.cn TLD+1 就是 com.cn，并不能表示这个站点，真正能表示这个站点的应该是 example.com.cn 才对，所以衍生出 eTLD 的概念，eTLD：com.cn，eTLD+1：example.com.cn。eTLD是有效顶级域名，而「站」的定义就是 eTLD+1。
+
+以 https://www.example.com:443 为例，下面给出了一系列的网址是否与其同源或同站的解释
+对比网址                         是否同源                  是否同站 
+https://www.other.com:443       否，因为 hostname 不同    否，因为 eTLD+1 不同
+https://example.com:443         否，因为 hostname 不同    是，子域名不影响 
+https://login.example.com:443   否，因为 hostname 不同    是，子域名不影响
+http://www.example.com:443      否，因为 scheme 不同      是，协议不影响 
+www.example.com:80              否，因为 port 不同        是，端口号不影响 
+www.example.com:443             是，完全匹配              是，完全匹配
+www.example.com                 是，隐式完全匹配 (https端口号是443)是，端口号不影响
+
+### same-site如何防止csrf攻击
+1、用户 A 在网站 a.com 登录后，浏览器存储 a.com 的 cookie
+2、用户 A 在网站 a.com 进行交易操作，携带 cookie 调用接口 a.com/api/transfer
+3、用户 A 同时打开了 b.com，一个欺诈网站
+4、b.com 引导用户 A 点击按钮，携带了 a.com 的 cookie 调用 a.com/api/transfer
+5、用户在 b.com 触发了 a.com 上的交易操作，用户却完全不知情。
+
+same-site 的默认值是 lax，这种情况下，不属于 same site 的请求，就不会携带 cookie。
+
+### SameSite=None时不声明Secure导致set-cookie失败
+SameSite=None，则必须声明Secure，并且是https安全协议，否则无法写入cookie。
+
+### chrome运行本地项目无法携带跨域cookie问题解决方案-SameSite=None无法设置问题
+
+chrome 80版本后浏览器默认的SameSite策略为Lax，该策略中对于当前域名向第三方域名中发送跨域请求时无法携带cookie，因此本地管理台项目的请求发出去时都没有携带cookie，导致后端接口检测不到该请求携带的用户信息。
+[解决方案](https://juejin.cn/post/6974593447395065886)
+
 
 # Cache-Control请求头
 
