@@ -123,13 +123,38 @@ CORS将请求分为**简单请求**和**非简单请求**
 
 * 简单请求
 ）只支持HEAD，get、post请求方式；
-2）没有自定义的请求头；
+2）没有自定义的请求头；Accept  Accept-Language Content-Language Last-Event-ID Content-Type
 3）Content-Type：只限于三个值application/x-www-form-urlencoded、multipart/form-data、text/plain
 对于简单请求，浏览器直接发出CORS请求。具体来说，就是在头信息之中，增加一个Origin字段。如果浏览器发现这个接口回应的头信息没有包含Access-Control-Allow-Origin字段的话就会报跨域错误。
 
 * 非简单请求的跨域处理
 
 非简单请求，会在正式通信之前，增加一次HTTP查询请求，称为"预检"请求（options）,用来判断当前网页所在的域名是否在服务器的许可名单之中。如果在许可名单中，就会发正式请求；如果不在，就会报跨越错误。
+
+（1）Access-Control-Allow-Origin
+
+该字段是必须的。它的值要么是请求时Origin字段的值，要么是一个*，表示接受任意域名的请求。
+
+（2）Access-Control-Allow-Credentials
+
+该字段可选。它的值是一个布尔值，表示是否允许发送Cookie。默认情况下，Cookie不包括在CORS请求之中。设为true，即表示服务器明确许可，Cookie可以包含在请求中，一起发给服务器。这个值也只能设为true，如果服务器不要浏览器发送Cookie，删除该字段即可。
+
+（3）Access-Control-Expose-Headers
+
+该字段可选。CORS请求时，XMLHttpRequest对象的getResponseHeader()方法只能拿到6个基本字段：Cache-Control、Content-Language、Content-Type、Expires、Last-Modified、Pragma。如果想拿到其他字段，就必须在Access-Control-Expose-Headers里面指定。上面的例子指定，getResponseHeader('FooBar')可以返回FooBar字段的值。
+
+
+"预检"请求用的请求方法是OPTIONS，表示这个请求是用来询问的。头信息里面，关键字段是Origin，表示请求来自哪个源。除了Origin字段，"预检"请求的头信息包括两个特殊字段。
+
+（1）Access-Control-Request-Method
+
+该字段是必须的，用来列出浏览器的CORS请求会用到哪些HTTP方法，上例是PUT。
+
+（2）Access-Control-Request-Headers
+
+该字段是一个逗号分隔的字符串，指定浏览器CORS请求会额外发送的头信息字段，上例是X-Custom-Header。
+
+
 ## 同源策略
 同源 = 协议、域名、端口相同。
 同源政策的目的，是为了保证用户信息的安全，防止恶意的网站窃取数据。设想这样一种情况：A网站是一家银行，用户登录以后，又去浏览其他网站。如果其他网站可以读取A网站的 Cookie，会发生什么？很显然，如果 Cookie 包含隐私（比如存款总额），这些信息就会泄漏。更可怕的是，Cookie 往往用来保存用户的登录状态，如果用户没有退出登录，其他网站就可以冒充用户，为所欲为。因为浏览器同时还规定，提交表单不受同源政策的限制。
