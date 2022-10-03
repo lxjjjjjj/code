@@ -416,12 +416,10 @@ babel-preset-react这个预设起到的就是将jsx进行转译的作用。
 
 ```
 
-## 使用polyfill的总结
+# 使用polyfill的总结
 
 ```
-我们可以看到针对polyfill其实我耗费了不少去将它们之间的区别和联系，让我们来稍微总结一下吧。
 在babel中实现polyfill主要有两种方式：
-
 
 一种是通过@babel/polyfill配合preset-env去使用，这种方式可能会存在污染全局作用域。
 
@@ -538,9 +536,7 @@ export default {
 [原文链接](https://juejin.cn/post/7051355444341637128)
 
 我们通过一系列插件在打包过程中通过 Babel 将我们高版本 ECMAScrpit 转换成为兼容性更加良好的低版本语法，从而提供给生产环境使用
-```
 
-```
 ## 基于babel实现tree-shaking
 js代码的执行过程，需要经历以下三个步骤:
 
