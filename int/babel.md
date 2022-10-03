@@ -511,7 +511,7 @@ export default {
 而对于一些 ES API 和对应的内置模板，使用 @babel/plugin-transform-runtime 配合 @babel/runtime 来提供 polyfill 
 ```
 
-## 开发babel插件用到的内容
+# 开发babel插件用到的内容
 
 ```
 @babel/core:上边我们说过babel/core是babel的核心库，核心的api都在这里。比如上边我们讲到的transform，parse方法。
@@ -531,13 +531,13 @@ export default {
 ```
 [一张图声明babel编译流程](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/787ab733a63c4314b6ce01b3812ba04f~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.image?)
 
-## 业务babel的最佳实践
+# 业务babel的最佳实践
 
 [原文链接](https://juejin.cn/post/7051355444341637128)
 
 我们通过一系列插件在打包过程中通过 Babel 将我们高版本 ECMAScrpit 转换成为兼容性更加良好的低版本语法，从而提供给生产环境使用
 
-## 基于babel实现tree-shaking
+# 基于babel实现tree-shaking
 js代码的执行过程，需要经历以下三个步骤:
 
 - V8通过源码进行词法分析，语法分析生成AST和执行上下文。
