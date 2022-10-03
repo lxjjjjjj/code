@@ -1,11 +1,79 @@
+[原文链接](https://juejin.cn/post/7025237833543581732)
+[babel7](https://juejin.cn/post/6844904008679686152#heading-5)
+
+# babel是什么
+Babel 是一个 JS 编译器，Babel 是一个工具链，主要用于将 ECMAScript 2015+ 版本的代码转换为向后兼容的 JavaScript 语法，以便能够运行在当前和旧版本的浏览器或其他环境中。
+
+# babel能做什么
+1、语法转换 解析语法然后编译成向后兼容的语法
+2、通过 Polyfill 方式在目标环境中添加缺失的特性(@babel/polyfill模块) polyfill会启动某些语法解析
+3、源码转换(codemods)
+
+# polyfill
+
+最新ES Api，比如Promise、最新ES实例/静态方法，比如String.prototype.include、语法层面的转化preset-env完全可以胜任。但是一些内置方法模块，仅仅通过preset-env的语法转化是无法进行识别转化的
+
+babel内置的polyfill包
+
+```
+@babel/polyfill
+
+@babel/runtime
+
+@babel/plugin-transform-runtime
+```
+# babel-core
+
+```
+babel在编译代码过程中核心的库就是@babel/core。babel-core其实相当于@babel/parse和@babel/generator这两个包的合体
+```
+大概做的事情
+```
+const core = require('@babel/core');
+
+/**
+ *
+ * @param sourceCode 源代码内容
+ * @param options babel-loader相关参数
+ * @returns 处理后的代码
+ */
+function babelLoader(sourceCode, options) {
+  // 通过transform方法编译传入的源代码
+  core.transform(sourceCode, {
+    presets: ['babel-preset-env'],
+    plugins: [...]
+  });
+  return targetCode;
+}
+```
+
 # 常见plugin和Preset
 所谓Preset就是一些Plugin组成的合集,你可以将Preset理解称为就是一些的Plugin整合称为的一个包。
 
-[原文链接](https://juejin.cn/post/7025237833543581732)
 ### @babel/preset-env
-```
-preset-env内部集成了绝大多数plugin（State > 3）的转译插件，它会根据对应的参数进行代码转译。不会包含任何低于 Stage 3 的 JavaScript 语法提案。如果需要兼容低于Stage 3阶段的语法则需要额外引入对应的Plugin进行兼容。babel-preset-env仅仅针对语法阶段的转译，比如转译箭头函数，const/let语法。针对一些Api或者Es 6内置模块的polyfill，preset-env是无法进行转译的。
 
+preset-env内部集成了绝大多数plugin（State > 3）的转译插件，它会根据对应的参数进行代码转译。不会包含任何低于 Stage 3 的 JavaScript 语法提案。如果需要兼容低于Stage 3阶段的语法则需要额外引入对应的Plugin进行兼容。babel-preset-env仅仅针对语法阶段的转译，比如转译箭头函数，const/let语法。@babel/preset-env 主要作用是对我们所使用的并且目标浏览器中缺失的功能进行代码转换和加载 polyfill，在不进行任何配置的情况下，@babel/preset-env 所包含的插件将支持所有最新的JS特性(ES2015,ES2016等，不包含 stage 阶段)，将其转换成ES5代码。例如，如果你的代码中使用了可选链(目前，仍在 stage 阶段)，那么只配置 @babel/preset-env，转换时会抛出错误，需要另外安装相应的插件。针对一些Api或者Es 6内置模块的polyfill，preset-env是无法进行转译的。
+
+需要说明的是，@babel/preset-env 会根据你配置的目标环境，生成插件列表来编译。对于基于浏览器或 Electron 的项目，官方推荐使用 .browserslistrc 文件来指定目标环境。默认情况下，如果你没有在 Babel 配置文件中(如 .babelrc)设置 targets 或 ignoreBrowserslistConfig，@babel/preset-env 会使用 browserslist 配置源。
+如果你不是要兼容所有的浏览器和环境，推荐你指定目标环境，这样你的编译代码能够保持最小。
+例如，仅包括浏览器市场份额超过0.25％的用户所需的 polyfill 和代码转换（忽略没有安全更新的浏览器，如 IE10 和 BlackBerry）:
+```
+//.browserslistrc
+> 0.25%
+not dead
+```
+
+例如，你将 .browserslistrc 的内容配置为: 
+```
+last 2 Chrome versions
+```
+
+然后再执行 npm run compiler，你会发现箭头函数不会被编译成ES5，因为 chrome 的最新2个版本都能够支持箭头函数。现在，我们将 .browserslistrc 仍然换成之前的配置。
+
+
+[更多browserlist的判断](https://github.com/browserslist/browserslist)
+
+```
 "presets": [
     [
       "@babel/env",
@@ -33,88 +101,37 @@ preset-env内部集成了绝大多数plugin（State > 3）的转译插件，它�
 
 @babel/preset-env里会加上@babel/plugin-transform-arrow-functions、 @babel/plugin-transform-block-scoping
 ```
-### babel-preset-react
 
-```
-babel-preset-react这个预设起到的就是将jsx进行转译的作用。
-```
-### babel-preset-typescript
 
-```
-对于TypeScript代码，我们有两种方式去编译TypeScript代码成为JavaScript代码。
-使用tsc命令，结合cli命令行参数方式或者tsconfig配置文件进行编译ts代码。
-使用babel，通过babel-preset-typescript代码进行编译ts代码。
-
-```
-### @babel/plugin-transform-runtime
-
-```
-polyfill
-```
-### @babel/register
-
-```
-它会改写require命令，为它加上一个钩子。此后，每当使用require加载.js、.jsx、.es和.es6后缀名的文件，就会先用Babel进行转码。
-```
-### babel-loader
-
-```
-babel-loader的本质就是一个函数，我们匹配到对应的jsx?/tsx?的文件交给babel-loader处理。babel-loader仅仅是识别匹配文件和接受对应参数的函数。
-```
-### babel-core
-
-```
-babel在编译代码过程中核心的库就是@babel/core。babel-core其实相当于@babel/parse和@babel/generator这两个包的合体
-```
-大概做的事情
-```
-const core = require('@babel/core');
-
-/**
- *
- * @param sourceCode 源代码内容
- * @param options babel-loader相关参数
- * @returns 处理后的代码
- */
-function babelLoader(sourceCode, options) {
-  // 通过transform方法编译传入的源代码
-  core.transform(sourceCode, {
-    presets: ['babel-preset-env'],
-    plugins: [...]
-  });
-  return targetCode;
-}
-```
-### polyfill
-
-```
-最新ES语法，比如：箭头函数，let/const。
-最新ES Api，比如Promise
-最新ES实例/静态方法，比如String.prototype.include
-
-babel-prest-env仅仅只会转化最新的es语法，并不会转化对应的Api和实例方法,比如说ES 6中的Array.from静态方法。babel是不会转译这个方法的，如果想在低版本浏览器中识别并且运行Array.from方法达到我们的预期就需要额外引入polyfill进行在Array上添加实现这个方法。
-```
-
-```
-语法层面的转化preset-env完全可以胜任。但是一些内置方法模块，仅仅通过preset-env的语法转化是无法进行识别转化的
-```
-
-babel内置的polyfill包
-
-```
-@babel/polyfill
-
-@babel/runtime
-
-@babel/plugin-transform-runtime
-```
 ### @babel/polyfill
 
+通过babelPolyfill通过往全局对象上添加属性以及直接修改内置对象的Prototype上添加方法实现polyfill。比如说我们需要支持String.prototype.include，在引入babelPolyfill这个包之后，它会在全局String的原型对象上添加include方法从而支持我们的Js Api。我们说到这种方式本质上是往全局对象/内置对象上挂载属性，所以这种方式难免会造成全局污染。从 Babel 7.4.0 开始，这个包已经被弃用，单独安装 core-js 和 regenerator-runtime 模块。（以填充 ECMAScript 特性）
+
+我们需要将完整的 polyfill 在代码之前加载，修改我们的 src/index.js:
 ```
-通过babelPolyfill通过往全局对象上添加属性以及直接修改内置对象的Prototype上添加方法实现polyfill。比如说我们需要支持String.prototype.include，在引入babelPolyfill这个包之后，它会在全局String的原型对象上添加include方法从而支持我们的Js Api。我们说到这种方式本质上是往全局对象/内置对象上挂载属性，所以这种方式难免会造成全局污染。从 Babel 7.4.0 开始，这个包已经被弃用，取而代之的是直接包含core-js/stable（以填充 ECMAScript 特性）
+import '@babel/polyfill';
+
+const isHas = [1,2,3].includes(2);
+
+const p = new Promise((resolve, reject) => {
+    resolve(100);
+});
 ```
+@babel/polyfill 需要在其它代码之前引入，我们也可以在 webpack 中进行配置。例如:
+```
+entry: [
+    require.resolve('./polyfills'),
+    path.resolve('./index')
+]
+```
+不过，很多时候，我们未必需要完整的 @babel/polyfill，这会导致我们最终构建出的包的体积增大，@babel/polyfill的包大小为89K (当前 @babel/polyfill 版本为 7.7.0)。
+我们更期望的是，如果我使用了某个新特性，再引入对应的 polyfill，避免引入无用的代码。
+
 应用@babel/polyfill
 
+有一点需要注意：配置此参数的值为 usage ，必须要同时设置 corejs (如果不设置，会给出警告，默认使用的是"corejs": 2) 首先说一下使用 core-js@3 的原因，core-js@2 分支中已经不会再添加新特性，新特性都会添加到 core-js@3。例如你使用了 Array.prototype.flat()，如果你使用的是 core-js@2，那么其不包含此新特性。为了可以使用更多的新特性，建议大家使用 core-js@3。
+
+#### useBuiltIns的值为false
 ```
 {
     "presets": [
@@ -127,24 +144,25 @@ babel内置的polyfill包
 false  它表示仅仅会转化最新的ES语法，并不会转化任何Api和方法。
 
 ```
-
+#### useBuiltIns的值为entry
 ```
 // 项目入口文件中需要额外引入polyfill
-// core-js 2.0中是使用"@babel/polyfill" core-js3.0版本中变化成为了上边两个包
+
 import "@babel/polyfill"
 
 // babel
 {
     "presets": [
         ["@babel/preset-env", {
-            "useBuiltIns": "entry"
+            "useBuiltIns": "entry",
+            "corejs": 3
         }]
     ]
 }
 
 当传入entry时，需要我们在项目入口文件中手动引入一次core-js，它会根据我们配置的浏览器兼容性列表(browserList)然后全量引入不兼容的polyfill
 ```
-
+#### useBuiltIns的值为usage
 ```
 {
     "presets": [
@@ -155,10 +173,12 @@ import "@babel/polyfill"
     ]
 }
 
+```
 当我们配置useBuintIns:usage时，会根据配置的浏览器兼容，以及代码中 使用到的Api 进行引入polyfill按需添加。
 
 它仅仅会为我们引入目标浏览器中不支持并且我们在代码中使用到的内容，会剔除没有使用到的 polyfill 内容
-```
+在 useBuiltIns 参数值为 usage 时，仍然需要安装 @babel/polyfill，虽然我们上面的代码转换中看起来并没有使用到，但是，如果我们源码中使用到了 async/await，那么编译出来的代码需要 require("regenerator-runtime/runtime")，在 @babel/polyfill 的依赖中，当然啦，你也可以只安装 regenerator-runtime/runtime 取代安装 @babel/polyfill。
+
 #### 带有browserList的配置
 ```
 // https://babeljs.io/docs/en/configuration
@@ -226,6 +246,62 @@ import "core-js/modules/es.promise";
 在usage情况下，如果我们存在很多个模块，那么无疑会多出很多冗余代码(import语法)。
 
 同样在使用usage时因为是模块内部局部引入polyfill所以按需在模块内进行引入，而entry则会在代码入口中一次性引入。
+### @babel/plugin-transform-runtime
+Babel 会使用很小的辅助函数来实现类似 _createClass 等公共方法。默认情况下，它将被添加(inject)到需要它的每个文件中。
+```
+class Point {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+    };
+    getX() {
+        return this.x;
+    }
+}
+
+let cp = new ColorPoint(25, 8);
+```
+编译后的文件
+```
+"use strict";
+
+require("core-js/modules/es.object.define-property");
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Point =
+    /*#__PURE__*/
+    function () {
+        function Point(x, y) {
+            _classCallCheck(this, Point);
+
+            this.x = x;
+            this.y = y;
+        }
+
+        _createClass(Point, [{
+            key: "getX",
+            value: function getX() {
+                return this.x;
+            }
+        }]);
+
+        return Point;
+    }();
+
+var cp = new ColorPoint(25, 8);
+```
+看起来，似乎并没有什么问题，但是你想一下，如果你有10个文件中都使用了这个 class，是不是意味着 _classCallCheck、_defineProperties、_createClass 这些方法被 inject 了10次。这显然会导致包体积增大，最关键的是，我们并不需要它 inject 多次。
+这个时候，就是 @babel/plugin-transform-runtime 插件大显身手的时候了，使用 @babel/plugin-transform-runtime 插件，所有帮助程序都将引用模块 @babel/runtime，这样就可以避免编译后的代码中出现重复的帮助程序，有效减少包体积。@babel/plugin-transform-runtime 是一个可以重复使用 Babel 注入的帮助程序，以节省代码大小的插件。
+
+注意：诸如 Array.prototype.flat() 等实例方法将不起作用，因为这需要修改现有的内置函数(可以使用 @babel/polyfill 来解决这个问题) ——> 对此需要说明的是如果你配置的是corejs3， core-js@3 现在已经支持原型方法，同时不污染原型。
+
+@babel/plugin-transform-runtime 通常仅在开发时使用，但是运行时最终代码需要依赖 @babel/runtime，所以 @babel/runtime 必须要作为生产依赖被安装
+
 
 ### @babel/runtime
 
@@ -294,6 +370,31 @@ var Circle = function Circle() { _classCallCheck(this, Circle); };
   ]
 }
 ```
+
+### @babel/register
+
+```
+它会改写require命令，为它加上一个钩子。此后，每当使用require加载.js、.jsx、.es和.es6后缀名的文件，就会先用Babel进行转码。
+```
+### babel-loader
+
+```
+babel-loader的本质就是一个函数，我们匹配到对应的jsx?/tsx?的文件交给babel-loader处理。babel-loader仅仅是识别匹配文件和接受对应参数的函数。
+```
+### babel-preset-react
+
+```
+babel-preset-react这个预设起到的就是将jsx进行转译的作用。
+```
+### babel-preset-typescript
+
+```
+对于TypeScript代码，我们有两种方式去编译TypeScript代码成为JavaScript代码。
+使用tsc命令，结合cli命令行参数方式或者tsconfig配置文件进行编译ts代码。
+使用babel，通过babel-preset-typescript代码进行编译ts代码。
+
+```
+
 ## 使用polyfill的总结
 
 ```
