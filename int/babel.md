@@ -50,6 +50,26 @@ function babelLoader(sourceCode, options) {
 # 常见plugin和Preset
 所谓Preset就是一些Plugin组成的合集,你可以将Preset理解称为就是一些的Plugin整合称为的一个包。
 
+## 插件顺序
+如果两个转换插件都将处理“程序（Program）”的某个代码片段，则将根据转换插件或 preset 的排列顺序依次执行。
+* 插件在 Presets 前运行。
+* 插件顺序从前往后排列。
+* Preset 顺序是颠倒的（从后往前）。
+  
+```
+例如:
+{
+    "plugins": ["@babel/plugin-proposal-class-properties", "@babel/plugin-syntax-dynamic-import"]
+}
+
+先执行 @babel/plugin-proposal-class-properties，后执行 @babel/plugin-syntax-dynamic-import
+{
+  "presets": ["@babel/preset-env", "@babel/preset-react"]
+}
+
+preset 的执行顺序是颠倒的，先执行 @babel/preset-react， 后执行 @babel/preset-env。
+
+```
 ### @babel/preset-env
 
 preset-env内部集成了绝大多数plugin（State > 3）的转译插件，它会根据对应的参数进行代码转译。不会包含任何低于 Stage 3 的 JavaScript 语法提案。如果需要兼容低于Stage 3阶段的语法则需要额外引入对应的Plugin进行兼容。babel-preset-env仅仅针对语法阶段的转译，比如转译箭头函数，const/let语法。@babel/preset-env 主要作用是对我们所使用的并且目标浏览器中缺失的功能进行代码转换和加载 polyfill，在不进行任何配置的情况下，@babel/preset-env 所包含的插件将支持所有最新的JS特性(ES2015,ES2016等，不包含 stage 阶段)，将其转换成ES5代码。例如，如果你的代码中使用了可选链(目前，仍在 stage 阶段)，那么只配置 @babel/preset-env，转换时会抛出错误，需要另外安装相应的插件。针对一些Api或者Es 6内置模块的polyfill，preset-env是无法进行转译的。
@@ -302,6 +322,7 @@ var cp = new ColorPoint(25, 8);
 
 @babel/plugin-transform-runtime 通常仅在开发时使用，但是运行时最终代码需要依赖 @babel/runtime，所以 @babel/runtime 必须要作为生产依赖被安装
 
+**使用@babel/plugin-transform-runtime不是直接将函数 inject 到代码中，而是从 @babel/runtime 中引入。前文说了使用 @babel/plugin-transform-runtime 可以避免全局污染，我们来看看是如何避免污染的。引入@babel/runtime-corejs3包会发现@babel/plugin-transform-runtime会从@babel/runtime-corejs3中引入方法，而不是直接修改全局方法**
 
 ### @babel/runtime
 
