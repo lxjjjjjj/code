@@ -1,13 +1,31 @@
+[原文链接](https://juejin.im/post/5df36ffd518825124d6c1765#heading-58)
+
+[流程图更清晰](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/13/16eff1c393a42bd0~tplv-t2oaga2asx-image.image)
+# HotModuleReplacementPlugin
+
+## 1、注入运行时代码
+hotCreateRequire方法在代码中注入客户端和本地server的socket通信代码
+
+编译生成的chunk文件多一个hot属性，给打包编译生成的文件添加hot属性，hot是否有值支持热更新，hot对象包含accept函数和check函数，accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。check函数负责拉取manifest文件。（对应客户端的2）。accept就是往hot._acceptedDependencies对象存入局部更新回调函数，当模块文件改变的时候，我们会调用acceptedDependencies搜集的回调，没错，他就是将模块改变时，要做的事进行了搜集，搜集到_acceptedDependencies中，以便当content.js模块改变时，他的父模块index.js通过_acceptedDependencies知道要干什么。
+## 2、生成两个补丁文件
 HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，包含本次编译和上次编译更改的chunk名和更改的chunk文件的hash值的内容。还有updated chunk (JavaScript)命名为chunk名字.本次编译生成的hash.hot-update.js。
-给打包编译生成的文件添加hot属性，hot对象包含accept函数和check函数，accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。check函数负责拉取manifest文件。（对应客户端的2）
 
-webpack-dev-server负责更改entry、监听webpack done事件发送hash和ok事件）、创建webserver服务器和websocket服务器让浏览器和服务端建立通信（对应服务端的1.3.4和客户端的1）
 
-webpack-dev-middleware负责本地文件的监听、启动webpack编译和设置文件系统为内存文件系统3.实现了一个express中间件，将编译的文件返回（对应服务端的2）
+
+# webpack-dev-server
+
+1、负责更改entry、监听webpack done事件发送hash和ok事件）
+2、创建webserver服务器和websocket服务器让浏览器和服务端建立通信（对应服务端的1.3.4和客户端的1）
+
+# webpack-dev-middleware
+1、负责本地文件的监听、启动webpack编译
+2、设置文件系统为内存文件系统
+3、实现了一个express中间件，将编译的文件返回（对应服务端的2）
+
 
 整个流程分为服务端和客户端两部分
 
-服务端主要四个重要点
+# 服务端主要四个重要点
 
 1.通过webpack创建compiler实例，webpack在watch模式下编译compiler实例：监听本地文件的变化、文件改变自动编译、编译输出。更改config中的entry属性：将lib/client/index.js、lib/client/hot/dev-server.js注入到打包输出的chunk文件中。往compiler.hooks.done钩子（webpack编译完成后触发）注册事件：里面会向客户端发射hash和ok事件
 
@@ -18,8 +36,12 @@ webpack-dev-middleware负责本地文件的监听、启动webpack编译和设置
 4.创建websocket服务：建立本地服务和浏览器的双向通信；每当有新的编译，立马告知浏览器执行热更新逻辑
 
 
-客户端主要分为两个关键点
+# 客户端主要分为两个关键点
 
 1.创建一个 websocket客户端 连接 websocket服务端，websocket客户端监听 hash 和 ok 事件。
 
 2.主要的热更新客户端实现逻辑，浏览器会接收服务器端推送的消息，如果需要热更新，浏览器发起http请求去服务器端获取新的模块资源解析并局部刷新页面，这本是HotModuleReplacementPlugin帮我们做了，他将HMR 运行时代码注入到chunk中
+
+# 总结
+
+引入HotModuleReplacementPlugin生成manifest.json和js文件，其中manifest.json文件存放的是更改的文件的hash值，以便于客户端拉取新的文件。js文件就是更改的新文件。同时HotModuleReplacementPlugin也会生成在客户端运行可以接收服务端socket消息通信的代码。webpack-dev-server负责将通信代码在webpack编译流程中通过更改entry达到将文件打包到客户端文件中让客户端执行。同时它也会创建本地server服务用来给客户端发送消息，webpack-dev-middleware负责监听webpack编译获取文件系统的变化并且将文件发送给客户端。HotModuleReplacementPlugin在webpack编译的每个module中都加入hot属性，hot对象包含accept函数和check函数，check函数负责拉取manifest文件。accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。

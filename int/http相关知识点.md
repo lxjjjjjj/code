@@ -117,6 +117,7 @@ https利用TLS/SSL进行对称加密+非对称加密,对称密钥的好处是解
 
 
 # 跨域CORS
+[跨域解决方案](https://juejin.cn/post/7017614708832206878#heading-5)
 cors是解决跨域问题的常见解决方法，关键是服务器要设置Access-Control-Allow-Origin，控制哪些域名可以共享资源。origin是cors的重要标识，只要是非同源或者POST请求都会带上Origin字段，接口返回后服务器也可以将Access-Control-Allow-Origin设置为请求的Origin，解决cors如何指定多个域名的问题。
 
 CORS将请求分为**简单请求**和**非简单请求**
