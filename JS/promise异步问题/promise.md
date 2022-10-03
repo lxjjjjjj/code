@@ -24,5 +24,11 @@ Promise有这些特征：
 ## 解决捕获错误能力
 
 ```
-
+p.then(res => {
+    console.log('这是resovle的回调.then方法', res);
+    console.log(undefinedData) //未定义的变量
+})
+.catch(reason => {
+    console.log('这是reject的回调.catch方法', reason);
+})
 ```
