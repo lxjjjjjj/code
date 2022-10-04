@@ -15,7 +15,11 @@ null	全为0
 
 在判断数据类型时，是根据机器码低位标识来判断的，而null的机器码标识为全0，而对象的机器码低位标识为000。所以typeof null的结果被误判为Object
 ```
-
+如何判断一个对象是Promise对象
+```
+let a = new Promise((resolve,reject)=>{resolve()});
+console.log(a instanceof Promise);// true
+```
 ?. 中文名为可选链 和 ?? 中文名为空位合并运算符
 
 ```
