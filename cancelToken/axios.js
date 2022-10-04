@@ -7,7 +7,7 @@
 
 // 导入 axios
 import qs from 'qs';
-import { CacheUtils } from './cacheUtils.js';
+import { CacheUtils } from './cacheUtils.js.js';
 import axios from 'axios';
 // 创建 axios 实例
 const instance = axios.create({
