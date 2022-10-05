@@ -37,6 +37,8 @@ module.exports = DonePlugin;
 # 插件的构建对象
 
 ## compiler 对象
+compiler 在 Webpack 启动打包时创建，保存着本次打包的所有初始化配置信息。在每一次进行打包过程中它会创建 compilation 对象进行模块打包。关于如何理解每一次比方说我们在 watch (devServer) 模式中，每当文件内容发生变化时都会产生一个 compilation 对象进行打包，而 compiler 对象永远只有一个，除非你终止打包命令重新调用 webpack 。
+
 在 compiler 对象中保存着完整的 Webpack 环境配置，它通过 CLI 或 者 Node API传递的所有选项创建出一个 compilation 实例。这个对象会在首次启动 Webpack 时创建，我们可以通过 compiler 对象上访问到 Webapck 的主环境配置，比如 loader 、 plugin 等等配置信息。compiler 你可以认为它是一个单例，每次启动 webpack 构建时它都是一个独一无二，仅仅会创建一次的对象。
 
 ### 关于 compiler 对象存在以下几个主要属性：
@@ -168,3 +170,272 @@ module.exports = DonePlugin;
 webpack使用 Parser 对每个模块进行解析，我们可以在 Plugin 中注册 JavascriptParser Hook 在 Webpack 对于模块解析生成 AST 节点时添加额外的逻辑。
 上述的 DonePlugin 会将模块中所有的 statementIf 节点的判断表达式修改称为 false 。
 
+## NormalModuleFactory 与 JavaScriptParser
+```
+// index.js 入口文件
+import module1 from './module1'
+import module2 from './module2'
+```
+首先 webpack 会进入入口文件，在此时首先会涉及到 NormalModuleFactory hook 上注册的相关 hook ，它是针对于模块资源请求的处理 hook 。
+只有在进入入口文件后，通过 NormalModuleFactory hook 该依赖文件需要进行编译时，才会进入 JavascriptParser Hooks 通过 AST 来分析模块内容。
+如果在 NormalModuleFactory hook 开头判断该模块不需要编译那么自然也不会进入依赖模块的 parser 阶段。
+以上方的为例：
+在运行编译命令时首先分析入口文件 index.js 模块请求，调用 NormalModuleFactory Hook 部分钩子。
+之后会编译 index.js 文件（它也是一个 module ），会进行 AST 分析此时就是 Parser 实例对象的作用，接下来分析该模块（index.js）时会触发一系列 JavascriptParser Hooks 。
+# 开发自己的插件
+
+## CompressAssetsPlugin
+
+需求: 众所周知在使用 Webpack 打包项目时，通常我们会将所有资源打包在 dist 文件目录内，分别存放对应的 html、css 以及 js 文件。此时，假使我需要在每次打包结束后将本次打包生成出的所有资源打包成为一个 zip 包。
+```
+const path = require('path');
+const CompressAssetsPlugin = require('./plugins/CompressAssetsPlugin');
+
+module.exports = {
+  mode: 'development',
+  entry: {
+    main: path.resolve(__dirname, './src/entry1.js'),
+  },
+  devtool: false,
+  output: {
+    path: path.resolve(__dirname, './build'),
+    filename: '[name].js',
+  },
+  plugins: [
+    new CompressAssetsPlugin({
+      output: 'result.zip',
+    }),
+  ],
+};
+```
+CompressAssetsPlugin
+```
+const JSZip = require('jszip');
+const { RawSource } = require('webpack-sources');
+/* 
+  将本次打包的资源都打包成为一个压缩包
+  需求:获取所有打包后的资源
+*/
+ 
+const pluginName = 'CompressAssetsPlugin';
+
+class CompressAssetsPlugin {
+  constructor({ output }) {
+    this.output = output;
+  }
+
+  apply(compiler) {
+    // AsyncSeriesHook 将 assets 输出到 output 目录之前调用该钩子
+    compiler.hooks.emit.tapAsync(pluginName, (compilation, callback) => {
+      // 创建zip对象
+      const zip = new JSZip();
+      // 获取本次打包生成所有的assets资源
+      const assets = compilation.getAssets();
+      // 循环每一个资源
+      assets.forEach(({ name, source }) => {
+        // 调用source()方法获得对应的源代码 这是一个源代码的字符串
+        const sourceCode = source.source(); // 的到string/buffer
+        // 往 zip 对象中添加资源名称和源代码内容
+        zip.file(name, sourceCode);
+      });
+      // 调用 zip.generateAsync 生成 zip 压缩包
+      zip.generateAsync({ type: 'nodebuffer' }).then((result) => {
+        // 通过 new RawSource 创建压缩包 这个库是一个 webpack 内置库，它的内部包含了 Source 等一系列基于 Source 的子类对象。
+        // 并且同时通过 compilation.emitAsset 方法将生成的 Zip 压缩包输出到 this.output
+        compilation.emitAsset(this.output, new RawSource(result));
+        // 调用 callback 表示本次事件函数结束
+        callback();
+      });
+    });
+  }
+}
+
+module.exports = CompressAssetsPlugin;
+```
+
+## ExternalWebpackPlugin
+
+### 存在的问题
+Webpack 中存在一个 externals 的配置选项，所谓 externals 即是说「从输出的 bundle 中排除依赖」。比如使用上方的配置 Webpack 在进行模块编译时如果发现依赖模块 jqery 时，此时并不会将 jquery 打包进入模块依赖中，而是当作外部模块依赖使用全局对象上的 jQuery 赋值给 jquery 模块。
+```
+比如使用上方配置文件，代码中存在这样的模块依赖：
+import $ from 'jquery'
+
+当 Webpack 碰到 jquery 的模块引入时，并不会将 jquery 这个模块依赖代码打包进入业务代码，而是会根据 externals 配置将 jquery 作为外部模块去名为 jQuery 的变量上去寻找。
+
+针对于 jquery 模块 Webpack 将它处理成为了 module.exports = jQuery。
+```
+源生 externals 配置方式
+通常如果在业务代码中，如果我们需要将某些内部依赖模块不进行打包而是使用 externals 形式作为 CDN 进行引入，我们需要经历一下二个步骤：1、webpack 配置中进行 externals 配置。比如我们代码中如果使用到了 Vue 和 lodash 这两个库，此时我们并不想在业务代码中打包这两个库而是希望通过 CDN 的形式在生成的 html 文件中引入，2、生成的 html 文件中注入 externals 中的 CDN 配置外部链接。需要这样做:
+```
+// webpack.config.js
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+module.exports = {
+  mode: 'development',
+  entry: {
+    main: path.resolve(__dirname, './src/entry1.js'),
+  },
+  devtool: false,
+  output: {
+    path: path.resolve(__dirname, './build'),
+    filename: '[name].js',
+  },
+  externals: {
+    vue: 'Vue',
+    lodash: '_',
+  },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: '../public/index.html',
+    }),
+  ],
+}
+我们在 webpack.config.js 中配置了 externals 选项告诉 webpack 在打包时如果遇到引入 vue 或者 lodash 模块时不需要将这两个模块的内容打包到最终输出的代码中。
+而在在将全局环境下的 Vue 变量赋值给 vue 模块，将 _ 赋值给 lodash 模块。
+
+```
+此时我们已经完成了 externals 的配置，但这还远远不够。因为此时我们打包编译后的代码中并不存在 Vue 和 _ 这两个全局变量，我们需要在最终生成的 html 文件中添加这两个模块对应的 CDN 链接。上边的配置中我们使用了 HtmlWebpackPlugin 指定了生成的 html 文件的模板，接下来让我们来看看这个 html 文件 public/index.html：
+
+```
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Webpack App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- 手动引入对应的模块CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+</head>
+
+<body>
+</body>
+
+</html>
+```
+上述步骤存在的问题：
+```
+1.首先，配置步骤在我看来应该尽量的简单化。我们使用需要将依赖模块转变为 CDN 形式的话每次都要在 externals 和生成的 html 文件中进行同步修改，这无疑增加了步骤的繁琐。
+2.可能会存在 CDN 冗余加载的问题。可能我并没有使用 lodash 但是并没法保证该项目内其他开发者有没有使用 lodash，但是我们在 html 中仍然冗余的引入了它的 CDN 
+```
+### 配置文件的书写格式
+```
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const ExternalsWebpackPlugin = require('./plugins/externals-webpack-plugin');
+
+module.exports = {
+  mode: 'development',
+  entry: {
+    main: path.resolve(__dirname, './src/entry1.js'),
+  },
+  devtool: false,
+  output: {
+    path: path.resolve(__dirname, './build'),
+    filename: '[name].js',
+  },
+  externals: {
+    vue: 'Vue',
+    lodash: '_',
+  },
+  plugins: [
+    new HtmlWebpackPlugin(),
+    new ExternalsWebpackPlugin({
+      lodash: {
+        // cdn链接
+        src: 'https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js',
+        // 替代模块变量名
+        variableName: '_',
+      },
+      vue: {
+        src: 'https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js',
+        variableName: 'vue',
+      },
+    }),
+  ],
+};
+```
+### 原理梳理
+1、我们需要通过 NormalModuleFactory Hook 注册事件函数，当 webpack 处理模块内部的依赖模块引入时会触发对应的 hook 从而判断：如果即将引入的模块匹配插件传入需要作为外部依赖模块的话，那么此时就不行编译直接当作外部模块处理。
+2、这里插件内部会使用 JavaScriptParser Hook 分析引入模块的依赖模块引入语句，在生成 AST 时进行判断，保存使用到的外部依赖模块。
+3、HtmlWebpackPlugin 通过 HtmlWebpackPlugin.getHooks(compilation) 方法拓展了一些列 hook 方便别的插件开发者在生成 html 文件中注入逻辑
+### 代码
+```
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const pluginName = 'ExternalsWebpackPlugin'
+
+class ExternalsWebpackPlugin {
+  constructor(options) {
+    // 保存参数
+    this.options = options
+    // 保存参数传入的所有需要转化CDN外部externals的库名称
+    this.transformLibrary = Object.keys(options)
+    // 分析依赖引入 保存代码中使用到需要转化为外部CDN的库
+    this.usedLibrary = new Set()
+    
+  }
+
+  apply() {
+    // normalModuleFactory 创建后会触发该事件监听函数
+    compiler.hooks.normalModuleFactory.tap(
+      pluginName,
+      (normalModuleFactory) => {
+        // 在初始化解析模块之前调用
+        normalModuleFactory.hooks.factorize.tapAsync(
+          pluginName,
+          (resolveData, callback) => {
+            // 获取引入的模块名称
+            const requireModuleName = resolveData.request;
+            if (this.transformLibrary.includes(requireModuleName)) {
+              // 如果当前模块需要被处理为外部依赖
+              // 首先获得当前模块需要转位成为的变量名
+              const externalModuleName =
+                this.options[requireModuleName].variableName;
+              callback(
+                null,
+                new ExternalModule(
+                  externalModuleName,
+                  'window',
+                  externalModuleName
+                )
+              );
+            } else {
+              // 正常编译 不需要处理为外部依赖 什么都不做
+              callback();
+            }
+          }
+        );
+      }
+    );
+    compiler.hooks.compilation.tap(pluginName, (compilation) => {
+      // 获取HTMLWebpackPlugin拓展的compilation Hooks
+      HtmlWebpackPlugin.getHooks(compilation).alterAssetTags.tap(
+        pluginName,
+        (data) => {
+          // 额外添加scripts
+          const scriptTag = data.assetTags.scripts
+          this.usedLibrary.forEach((library) => {
+            scriptTag.unshift({
+              tagName: 'script',
+              voidTag: false,
+              meta: { plugin: pluginName },
+              attributes: {
+                defer: true,
+                type: undefined,
+                src: this.options[library].src,
+              },
+            });
+          });
+        }
+      );
+    });
+    // ...
+  }
+}
+
+module.exports = ExternalsWebpackPlugin;
+
+```
