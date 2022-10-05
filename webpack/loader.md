@@ -1,6 +1,5 @@
-[loader1](https://juejin.cn/post/6844903780769595405)
-[loader2](https://juejin.cn/post/6844903780777984008)
-[loader3](https://juejin.cn/post/6844903780778000398)
+[vue-loader1](https://juejin.cn/post/6844903780778000398)
+[vue-loader2](https://juejin.cn/post/6994468137584295973)
 [loader-api](https://v4.webpack.docschina.org/api/loaders)
 [style-loader的实现](https://juejin.cn/post/7037696103973650463)
 [babel-loader和loader-runner的实现更好的理解loader](https://juejin.cn/post/7036379350710616078)
@@ -278,7 +277,21 @@ module.exports = loader2
 ```
 # loader-runner(webpack中集中处理loader执行的机制)
 
-**webpack中通过compilation对象进行模块编译时，会首先进行匹配loader处理文件得到结果,之后才会输出给webpack进行编译。简单来说就是在每一个模块module通过webpack编译前都会首先根据对应文件后缀寻找匹配到对应的loader，先调用loader处理资源文件从而将处理后的结果交给webpack进行编译。webpack在进行模块编译时会调用_doBuild，在doBuild方法内部通过调用runLoaders方法调用loader处理模块。**
+**在一个 module 构建过程中，首先根据 module 的依赖类型(例如 NormalModuleFactory)调用对应的构造函数来创建对应的模块。在创建模块的过程中(new NormalModuleFactory())，会根据开发者的 webpack.config 当中的 rules 以及 webpack 内置的 rules 规则实例化 RuleSet 匹配实例，简单来说就是在每一个模块module通过webpack编译前都会首先根据对应文件后缀寻找匹配到对应的loader，先调用loader处理资源文件从而将处理后的结果交给webpack进行编译。webpack在进行模块编译时会调用_doBuild，在doBuild方法内部通过调用runLoaders方法调用loader处理模块。**
+
+```
+实例化 RuleSet 后，还会注册2个钩子函数:当 NormalModuleFactory 实例化完成后，并在 compilation 内部调用这个实例的 create 方法开始真实开始创建这个 normalModule。首先调用hooks.factory获取对应的钩子函数，接下来就调用 resolver 钩子(hooks.resolver)进入到了 resolve 的阶段，在真正开始 resolve loader 之前，首先就是需要匹配过滤找到构建这个 module 所需要使用的所有的 loaders。首先进行的是对于 inline loaders 的处理：
+
+class NormalModuleFactory {
+  ...
+  // 内部嵌套 resolver 的钩子，完成相关的解析后，创建这个 normalModule
+  this.hooks.factory.tap('NormalModuleFactory', () => (result, callback) => { ... })
+
+  // 在 hooks.factory 的钩子内部进行调用，实际的作用为解析构建一共 module 所需要的 loaders 及这个 module 的相关构建信息(例如获取 module 的 packge.json等)
+  this.hooks.resolver.tap('NormalModuleFactory', () => (result, callback) => { ... })
+  ...
+}
+```
 
 ## runLoader参数
 ### 第一个参数对象
@@ -949,6 +962,133 @@ webpack递归编译style-loader返回脚本中的import语句时，我们在编�
 # vue-loader
 
 vue-loader要配合vueloaderPlugin一起使用
+
+## 第一阶段
+
+```
+module.exports = function (source) {
+  // source 就是读取到的 test.vue 的源文件
+  const loaderContext = this
+  // 通过 @vue/component-compiler-utils 的 parse 解析器，将 test.vue 文件转换为文件描述符
+  // compiler 参数就是 vue-template-compiler 模板解析器
+  const descriptor = parse({
+    source,
+    compiler: options.compiler || loadTemplateCompiler(loaderContext),
+    filename,
+    sourceRoot,
+    needMap: sourceMap
+  })
+  // template
+  let templateRequest
+  if (descriptor.template) {
+    templateImport = `import { render, staticRenderFns } from ${request}`
+    // 'import { render, staticRenderFns } from "./test.vue?vue&type=template&id=13429420&scoped=true&"'
+  }
+  let scriptImport = `var script = {}`
+  if (descriptor.script) {
+    scriptImport = // ...
+  }
+  let stylesCode = ``
+  if (descriptor.styles.length) {
+    stylesCode = //...
+  }
+  let code = `
+${templateImport}
+${scriptImport}
+${stylesCode}
+/* normalize component */
+import normalizer from ${stringifyRequest(`!${componentNormalizerPath}`)}
+var component = normalizer(
+  script,
+  render,
+  staticRenderFns,
+)`.trim() + `\n`
+  code += `\nexport default component.exports`
+  return code
+}
+```
+通过以上代码将vue文件分成各个block的请求，分成
+```
+./source.vue?vue&type=template&id=27e4e96e&scoped=true&lang=pug&',
+'./source.vue?vue&type=script&lang=js&',
+'./source.vue?vue&type=style&index=0&id=27e4e96e&scoped=true&lang=css&',
+'./source.vue?vue&type=custom&index=0&blockType=foo'
+```
+然后交给webpack处理request
+## 第二阶段
+交给webpack之后进入vueLoaderPlugin阶段,什么时候注入的pitchloader呢？在 webpack生成compiler之后，注入 pitcher-loader，我们主要这个loader的命中规则 resourceQuery。我们常用的是使用方式 test: /\.vue$/，在 webpack 内部会被 RuleSet 这个类标准化。所以上述 request 会先经由 pitcher-loader中的 pitch函数处理。
+```
+class VueLoaderPlugin {
+  apply (compiler) {
+    // ...
+    // global pitcher (responsible for injecting template compiler loader & CSS post loader)
+    const pitcher = {
+      loader: require.resolve('./loaders/pitcher'),
+      resourceQuery: query => {
+        const parsed = qs.parse(query.slice(1))
+        return parsed.vue != null
+      },
+      options: {
+        cacheDirectory: vueLoaderUse.options.cacheDirectory,
+        cacheIdentifier: vueLoaderUse.options.cacheIdentifier
+      }
+    }
+    compiler.options.module.rules = [
+      pitcher,
+      // other rules ....     
+    ]
+  }
+}
+```
+
+
+通过vueloaderplugin注入pitchLoader，对第一次vue-loader的resource进行处理之后处理成下面这样,
+```
+-!.template-loader!vue-loader!./test.vue?vue&type=template&id=13429420&coped=true
+```
+
+给各种block添加vue-loader和模块(template,style,js,custom)loader处理,为什么不直接在vueloader中处理的原因
+是因为如果直接将js代码交给webpack运行得到结果会比较方便
+
+## 第三阶段
+
+将第二阶段得到的request交给vue-loader处理得到template中内容，通过loaderContext.callback传给templateLoader，最后生成webpack识别的js module
+```
+module.exports = function (source) {
+  // source 就是读取到的 test.vue 的源文件
+  const loaderContext = this
+  const { resourceQuery = '' } = loaderContext
+  const rawQuery = resourceQuery.slice(1)
+  const inheritQuery = `&${rawQuery}`
+  const incomingQuery = qs.parse(rawQuery)
+  // 通过 @vue/component-compiler-utils 的 parse 解析器，将 test.vue 文件转换为文件描述符
+  // compiler 参数就是 vue-template-compiler 模板解析器
+  const descriptor = parse({
+    source,
+    compiler: options.compiler || loadTemplateCompiler(loaderContext),
+    filename,
+    sourceRoot,
+    needMap: sourceMap
+  })
+  // if the query has a type field, this is a language block request
+  // e.g. foo.vue?type=template&id=xxxxx
+  // and we will return early
+  // 如果查询有一个类型字段，这是一个块请求
+  // 例如foo.vue?type=template&id=xxxxx 尽早return
+  // 我们需要注意 loader 中的return语句，因为多个loader是链式作用的，这个出口的逻辑在第三阶段会有使用，在第一阶段我们暂不讨论
+  if (incomingQuery.type) {
+    return selectBlock(
+      descriptor,
+      loaderContext,
+      incomingQuery,
+      !!options.appendExtension
+    )
+  }
+  // ...
+}
+```
+这里是 vue-loader的第二个出口，通过代码的注释我们知道，当 vue-loader在处理 .vue 文件中的一个 block 请求时，通过 qs.parse 序列化快请求参数 ?vue&type=template&id=13429420&scoped=true&，如果有 type 则返回 selectBlock 函数的执行结果。我们再来看看 selectBlock 干了哪些事情。
+
 
 # file-loader
 
