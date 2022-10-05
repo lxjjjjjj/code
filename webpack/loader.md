@@ -962,7 +962,8 @@ webpack递归编译style-loader返回脚本中的import语句时，我们在编�
 # vue-loader
 
 vue-loader要配合vueloaderPlugin一起使用
-
+[style代码的三个阶段](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/2/21/1690f6d4e5b01478~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
+[template代码的三个阶段](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/2/21/1690f6d95599feef~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
 ## 第一阶段
 
 ```
@@ -1049,7 +1050,7 @@ class VueLoaderPlugin {
 -!.template-loader!vue-loader!./test.vue?vue&type=template&id=13429420&coped=true
 ```
 
-给各种block添加vue-loader和模块(template,style,js,custom)loader处理,为什么不直接在vueloader中处理的原因
+给各种block添加vue-loader和模块(template,style,js,custom)loader处理,为什么不直接在vueloader中处理的原因生成一个新的request交给webpack处理可以重新匹配到各种代码处理的loader，比如有的人js用了ts模式需要ts-loader有的人style用了scss模式需要scss-loader
 
 ## 第三阶段
 
@@ -1090,6 +1091,29 @@ module.exports = function (source) {
 ```
 这里是 vue-loader的第二个出口，通过代码的注释我们知道，当 vue-loader在处理 .vue 文件中的一个 block 请求时，通过 qs.parse 序列化快请求参数 ?vue&type=template&id=13429420&scoped=true&，如果有 type 则返回 selectBlock 函数的执行结果。我们再来看看 selectBlock 干了哪些事情。
 
+```
+module.exports = function selectBlock (
+  descriptor,
+  loaderContext,
+  query,
+  appendExtension
+) {
+  // template
+  if (query.type === `template`) {
+    if (appendExtension) {
+      loaderContext.resourcePath += '.' + (descriptor.template.lang || 'html')
+    }
+    // Tip: 传递给下一个loader
+    loaderContext.callback(
+      null,
+      descriptor.template.content,
+      descriptor.template.map
+    )
+    return
+  }
+}
+```
+selectBlock 依据传入的 query.type，将 descriptor 中对应的部分通过 loaderContext.callback 传递给下一个loader(这里是template-loader) 处理。
 
 # file-loader
 
