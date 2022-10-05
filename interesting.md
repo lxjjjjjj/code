@@ -3,3 +3,4 @@
 [我打破了 React Hook 必须按顺序、不能在条件语句中调用的枷锁](https://juejin.cn/post/6939766434159394830)
 [webapck的sourceMap配置原理]（https://mp.weixin.qq.com/s/0Sq9Z0i9Q3N0likFlZB0rQ）
 [scroll你玩明白了吗]（https://mp.weixin.qq.com/s/Lgq72E2p5jAIXg1GdttBOg）
+[从vue源代码中了解Symbol.isPrimitive](https://juejin.cn/post/6994298142631919629)
