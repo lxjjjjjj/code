@@ -1015,6 +1015,8 @@ var component = normalizer(
 './source.vue?vue&type=custom&index=0&blockType=foo'
 ```
 然后交给webpack处理request
+
+我们看到通过 vue-loader 处理到得到的 module path 上的 query 参数都带有 vue 字段。这里便涉及到了我们在文章开篇提到的 VueLoaderPlugin 加入的 pitcher loader。如果遇到了 query 参数上带有 vue 字段的 module path，那么就会把 pitcher loader 加入到处理这个 module 的 loaders 数组当中。因此这个 module 最终也会经过 pitcher loader 的处理。此外在 loader 的配置顺序上，pitcher loader 为第一个，因此在处理 Vue SFC 模块的时候，最先也是交由 pitcher loader 来处理。
 ## 第二阶段
 交给webpack之后进入vueLoaderPlugin阶段,什么时候注入的pitchloader呢？在 webpack生成compiler之后，注入 pitcher-loader，我们主要这个loader的命中规则 resourceQuery。我们常用的是使用方式 test: /\.vue$/，在 webpack 内部会被 RuleSet 这个类标准化。所以上述 request 会先经由 pitcher-loader中的 pitch函数处理。
 ```
@@ -1048,7 +1050,6 @@ class VueLoaderPlugin {
 ```
 
 给各种block添加vue-loader和模块(template,style,js,custom)loader处理,为什么不直接在vueloader中处理的原因
-是因为如果直接将js代码交给webpack运行得到结果会比较方便
 
 ## 第三阶段
 
