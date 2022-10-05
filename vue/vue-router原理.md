@@ -154,8 +154,15 @@ elem.dispatchEvent(event);
 1、hash 模式中的 # 也称作锚点，这里的的 # 和 css 中的 # 是一个意思，所以在 hash 模式内，页面定位会失效。
 2、hash 不利于 SEO（搜索引擎优化）。
 3、白屏时间问题。浏览器需要等待 JavaScript 文件加载完成之后渲染 HTML 文档内容，用户等待时间稍长。
+4、hash 的传参是基于 url 的，如果要传递复杂的数据，会有体积的限制
 
-
+## history
+### 优点
+history 模式不仅可以在url里放参数，还可以将数据存放在一个特定的对象中。
+如果不想要很丑的 hash，我们可以用路由的 history 模式 —— 引用自 vueRouter文档
+### 缺点
+1、需要服务端知道路由
+2、实现路由监听麻烦
 # vue-router的实现
 [原文链接](https://juejin.cn/post/6844903946343940104#heading-8)
 ## Vue项目中是怎么引入VueRouter
