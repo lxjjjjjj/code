@@ -1,3 +1,12 @@
+# 本地运行TS
+可以不起本地服务就能玩ts的地方
+https://www.typescriptlang.org/zh/play
+```
+安装node.js环境
+全局安装typescript npm i -g typescript
+创建一个ts文件
+使用tsc对ts文件编译 (进入ts文件目录 执行tsc 文件名.ts)
+```
 # tsconfig.json
 tsconfig.json 是 TypeScript 项目的配置文件。如果一个目录下存在一个 tsconfig.json 文件，那么往往意味着这个目录就是 TypeScript 项目的根目录。
 tsconfig.json 包含 TypeScript 编译的相关配置，通过更改编译配置项，我们可以让 TypeScript 编译出 ES6、ES5、node 的代码。
