@@ -59,6 +59,25 @@ type DeepRequired<T> = {
 };
 
 ```
+## Readonly
+Readonly<T> 的作用是将某个类型所有属性变为只读属性，也就意味着这些属性不能被重新赋值。
+```
+type Readonly<T> = {
+ readonly [P in keyof T]: T[P];
+};
+
+interface Todo {
+ title: string;
+}
+
+const todo: Readonly<Todo> = {
+ title: "Delete inactive users"
+};
+
+todo.title = "Hello"; // Error: cannot reassign a readonly property
+
+```
+
 # Exclude<T,U>
 Exclude是进行排除 T 类型中满足 U 的类型从而返回新的类型,Exclude是针对于联合类型来操作的
 ```
@@ -157,7 +176,7 @@ type T1 = ReturnType<(s: string) => void>; // type T1 = void
 ```
 type ReturnType<T extends (...args: any) => any> = T extends (...args: any) => infer R ? R : any;
 ```
-# Record<Keys,Type>
+# Record<K extends keyof any, T>
 构造一个新的对象类型，其属性键为Keys，属性值为Type。此实用程序可用于将一种类型的属性映射到另一种类型。
 
 ```
@@ -209,4 +228,35 @@ mapping({ name: '19Qingfeng', company: 'Tencent' }, (key, value) => {
 type Record<K extends keyof any, T> = {
     [P in K]: T;
 };
+```
+# NonNullable
+NonNullable<T> 的作用是用来过滤类型中的 null 及 undefined 类型。
+
+```
+type T0 = NonNullable<string | number | undefined>; // string | number
+type T1 = NonNullable<string[] | null | undefined>; // string[]
+
+```
+## 原理实现
+```
+type NonNullable<T> = T extends null | undefined ? never : T;
+```
+
+# Parameters
+Parameters<T> 的作用是用于获得函数的参数类型组成的元组类型。
+
+```
+type A = Parameters<() =>void>; // []
+type B = Parameters<typeof Array.isArray>; // [any]
+type C = Parameters<typeof parseInt>; // [string, (number | undefined)?]
+type D = Parameters<typeof Math.max>; // number[]
+
+const fn = (a:string, b: number, ...c: number[]) => { };
+type c = Parameters<typeof fn>;
+// type c = [a:number, b: number, ...c:number[]]
+```
+## 源码实现：
+```
+type Parameters<T extends (...args: any) => any> = T extends (...args: infer P) => any
+? P : never;
 ```
