@@ -5,3 +5,4 @@
 [scroll你玩明白了吗]（https://mp.weixin.qq.com/s/Lgq72E2p5jAIXg1GdttBOg）
 [从vue源代码中了解Symbol.isPrimitive](https://juejin.cn/post/6994298142631919629)
 [Web 现代应用程序架构下的性能优化，渐进式的极致艺术。](https://juejin.cn/post/6898224585993519111)
+[webpack的asyncQueue](https://juejin.cn/post/7052609791641780260)

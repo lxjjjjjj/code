@@ -2,6 +2,7 @@
 为了协调事件，用户交互，脚本，渲染，网络任务等，浏览器必须使用事件循环
 # Node的事件循环
 [原文链接](https://zhuanlan.zhihu.com/p/54882306)
+[原文链接](https://juejin.cn/post/7077122129107353636)
 [chrome浏览器V8的优化 & node11前后变化]
 NodeJS的执行机制
 
@@ -10,8 +11,7 @@ NodeJS的执行机制
 * libuv 库负责 Node API 的执行。它将不同的任务分配给不同的线程，形成一个 Event Loop（事件循环），以异步的方式将任务的执行结果返回给 V8 引擎。
 * V8 引擎再将结果返回给用户。
 
-
-nodejs中的微任务是在不同阶段之间执行的。node事件循环机制分为6个阶段，它们会按照顺序反复运行。每当进入某一个阶段的时候，都会从对应的回调队列中取出函数去执行。当队列为空或者执行的回调函数数量到达系统设定的阈值，就会进入下一阶段。
+nodejs中的微任务是在不同阶段之间执行的。node事件循环机制分为6个阶段(当然他们都是EventLoop中的宏任务执行顺序)，它们会按照顺序反复运行。每当进入某一个阶段的时候，都会从对应的回调队列中取出函数去执行。当队列为空或者执行的回调函数数量到达系统设定的阈值，就会进入下一阶段。
 
 ## Node事件循环的阶段
 无论是我们对文件的IO操作、数据库操作，都会有对应的结果和回调函数放到事件循环队列中，事件循环会不断从任务队列中取出对应的回调函数然后进行执行。一次完整的事件循环可以称之为一次Tick分为多个阶段: 在每一次事件循环的tick中，会按照如下顺序来执行代码
@@ -19,7 +19,7 @@ nodejs中的微任务是在不同阶段之间执行的。node事件循环机制�
 [不同阶段图片](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3293e898bd56417c94a69b80f77cf4d6~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
 
 - 定时器(Timers): timers 阶段会执行 setTimeout 和 setInterval 回调，并且是由 poll 阶段控制的
-- 待定回调(pending callback): 处理一些上一轮循环中的少数未执行的 I/O 回调
+- 待定回调(pending callback): 上一次循环队列中，还未执行完毕的会在这个阶段进行执行。比如延迟到下一个 Loop 之中的 I/O 操作。
 - idle，prepare: 仅 node 内部使用
 - 轮询(Poll): poll 是一个至关重要的阶段，这一阶段中，系统会做两件事情：回到 timer 阶段执行回调：执行 I/O 回调，获取新的 I/O 事件, 适当的条件下 node 将阻塞在这里
 - check: setImmediate()的回调会被加入 check 队列中，从 event loop 的阶段图可以知道，check 阶段的执行顺序在 poll 阶段之后
@@ -100,6 +100,10 @@ setImmediate(function immediate () {
 ```
 对于以上代码来说，setTimeout 可能执行在前，也可能执行在后。首先 setTimeout(fn, 0) === setTimeout(fn, 1)，这是由源码决定的。进入事件循环也是需要成本的，如果在准备时候花费了大于 1ms 的时间，那么在 timer 阶段就会直接执行 setTimeout 回调。如果准备时间花费小于 1ms，那么就是 setImmediate 回调先执行了。
 
+在上述的同步代码执行完毕，以及进入 EventLoop 中这一切发生在 1ms 之内，显然 timers 阶段由于代码中的 setTimeout 并没有达到对应的时间，换句话说它所对应的 callback 并没有被推入当前 timer 中。
+自然，名为 timer 的函数也并不会被执行。会依次进入接下里的阶段。Loop 会依次向下进行检查。
+当执行到 poll 阶段时，即使定时器对应的 timer 函数已经被推入 timers 中了。由于 poll 阶段检查到存在 setImmediate 所以会继续进入 check 阶段并不会掉头重新进入 timers 中。
+
 但当二者在异步 i/o callback 内部调用时，总是先执行 setImmediate，再执行 setTimeout
 
 ```
@@ -119,7 +123,7 @@ fs.readFile(__filename, () => {
 在上述代码中，setImmediate 永远先执行。因为两个代码写在 IO 回调中，IO 回调是在 poll 阶段执行，当回调执行完毕后队列为空，发现存在 setImmediate 回调，所以就直接跳转到 check 阶段去执行回调了。
 
 ## process.nextTick
-这个函数其实是独立于 Event Loop 之外的，它有一个自己的队列，当每个阶段完成后，如果存在 nextTick 队列，就会清空队列中的所有回调函数，并且优先于其他 microtask 执行。
+这个函数其实是独立于 Event Loop 之外的，它有一个自己的队列，当每个阶段完成后，如果存在 nextTick 队列，就会清空队列中的所有回调函数，并且优先于其他 microtask 执行。所谓 Process.nextTick 的执行时机即是在同步任务执行完毕后，即将将 micro-task 推入栈中时优先会将 Process.nextTick 推入栈中进行执行。
 ```
 setTimeout(() => {
  console.log('timer1')
@@ -160,8 +164,27 @@ setImmediate(() => console.log('timeout4'));
 在 node11 之后，process.nextTick 是微任务的一种,因此上述代码是先进入 check 阶段，执行一个 setImmediate 宏任务，然后执行其微任务队列，再执行下一个宏任务及其微任务,因此输出为timeout1=>next tick1=>promise resolve=>timeout2=>next tick2=>timeout3=>timeout4
 
 ## node 版本差异说明
-ode11 之后一些特性已经向浏览器看齐了，总的变化一句话来说就是，如果是 node11 版本一旦执行一个阶段里的一个宏任务(setTimeout,setInterval和setImmediate)就立刻执行对应的微任务队列。
+node11 之后一些特性已经向浏览器看齐了，总的变化一句话来说就是，如果是 node11 版本一旦执行一个阶段里的一个宏任务(setTimeout,setInterval和setImmediate)就立刻执行对应的微任务队列。
 
+一个简单的例子
+```
+function tick() {
+  console.log('tick');
+}
+
+function timer() {
+  console.log('timer');
+}
+
+setTimeout(() => {
+  timer();
+}, 0);
+
+process.nextTick(() => {
+  tick();
+});
+// log: tick timer
+```
 ### timers 阶段的执行时机变化
 ```
 setTimeout(()=>{
@@ -328,9 +351,11 @@ Node结果：
 // setImmediate
 // setTimeout2
 ```
+
 # 浏览器的事件循环
 
 浏览器执行微任务，当某个宏任务执行完后,会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务，执行宏任务的过程中，遇到微任务，依次加入微任务队列。栈空后，再次读取微任务队列里的任务，依次类推。
+浏览器中的时间环中 EventLoop 会清空当前 macro 下产生的所有 micaro 的 callback 。
 
 
 [原文链接](https://juejin.cn/post/7079092748929728548)
