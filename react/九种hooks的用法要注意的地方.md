@@ -159,12 +159,14 @@ export default function ParentThree (){
 }
 ```
 ## 关于性能优化
+[原文链接](https://juejin.cn/post/6847902217261809671#heading-3)
 关于 useCallback 以及 useMemo 这两个 Hook 都是 React 提供给开发者作为性能优化手段的方法。
-但是大多数时候，你不需要考虑去优化不必要的重新渲染。 React 是非常快的，我能想到你可以利用时间去做很多事情，比起做这些类似的优化要好得多。
-对于 useCallback 和 useMemo 来说，我个人认为不合理的利用这两个 Hook 不仅仅会使代码更加复杂，同时有可能会通过调用内置的 Hook 防止依赖项和 memoized 的值被垃圾回收从而导致性能变差。
+useCallback的设计初衷并非解决组件内部函数多次创建的问题，而是减少子组件的不必要重复渲染。useCallback用的越多，负重越多。站在 javascript 的角度，当组件刷新时，未被useCallback包裹的方法将被垃圾回收并重新定义，但被useCallback所制造的闭包将保持对回调函数和依赖项的引用。
 如果说，有些情况下比如交互特别复杂的图表、动画之类，使用这两个 Hook 可以使你获得了必要的性能收益，那么这些成本都是值得承担的，但最好使用之前先测量一下。
 
-官方文档指出，[无需担心创建函数会导致性能问题](https://reactjs.org/docs/hooks-faq.html#are-hooks-slow-because-of-creating-functions-in-render)。我们上述提供的例子仅仅是为了向大家展示它们的用法，实际场景下非常不建议这样使用。
+官方文档指出，[无需担心创建函数会导致性能问题](https://reactjs.org/docs/hooks-faq.html#are-hooks-slow-because-of-creating-functions-in-render)。
+
+useMemo只有当创建行为本身会产生高昂的开销（比如计算上千次才会生成变量值），才有必要使用useMemo
 
 
 # useContext
@@ -252,10 +254,7 @@ const ChildComponent = ({ callback }) => {
 export default ChildComponent;
 ```
 # useRef
-useRef 会在所有的 render 中保持对返回值的唯一引用。因为所有对ref的赋值和取值拿到的都是最终的状态，并不会因为不同的 render 中存在不同的隔离。
-```
-
-```
+useRef 会在所有的 render 中保持对返回值的唯一引用。因为所有对ref的赋值和取值拿到的都是最终的状态，并不会因为不同的 render 中存在不同的隔离。useRef的值改变并不会造成页面重新渲染。
 # useImperativeHandle
 useImperativeHandle 这个 Hook 很多同学日常可能用的不是很多，但是在某些情况下它会帮助我们实现一些意向不到的效果。
 ```
