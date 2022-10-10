@@ -12,14 +12,14 @@ class MyPromise {
     status = PENDING
     value = null
     reason = null
-    onfulfilledCallbacks = []
+    onFulfilledCallbacks = []
     onRejectedCallbacks = []
     resolve = (value) => {
         if (this.status === PENDING) {
             this.status === FULFILLED
             this.value = value
-            while (this.onfulfilledCallbacks.length) {
-              this.onfulfilledCallbacks.shift()(value)
+            while (this.onFulfilledCallbacks.length) {
+              this.onFulfilledCallbacks.shift()(value)
             }
         }
     }
@@ -36,33 +36,33 @@ class MyPromise {
         const realOnFulfilled = typeof onfulfilled === 'function' ? onfulfilled : value => value
         const realOnRejected = typeof onRejected === 'function' ? onRejected : (reason) => { throw reason }
         const promise2 = new MyPromise((resolve, reject) => {
-            const fulfilledMicroTask = () => {
+            const fulfilledMicrotask = () => {
                 queueMicrotask(()=> {
                     try{
                         const x = realOnFulfilled(this.value)
-                        resolvedPromise(promise2, x, resolve, reject)
+                        resolvePromise(promise2, x, resolve, reject)
                     } catch (e) {
                         reject(e)
                     }
                 })
             }
-            const rejectedMicroTask = () => { 
+            const rejectedMicrotask = () => { 
                 queueMicrotask(()=> {
                     try{
                         const x = realOnRejected(this.reason)
-                        resolvedPromise(promise2, x, resolve, reject)
+                        resolvePromise(promise2, x, resolve, reject)
                     } catch (e) {
                         reject(e)
                     }
                 })
             }
             if (this.status === FULFILLED) {
-                fulfilledMicroTask()
+                fulfilledMicrotask()
             } else if(this.status === REJECTED) {
-                rejectedMicroTask()
+                rejectedMicrotask()
             } else {
-                this.onfulfilledCallbacks.push(fulfilledMicroTask)
-                this.onRejectedCallbacks.push(rejectedMicroTask)
+                this.onFulfilledCallbacks.push(fulfilledMicrotask)
+                this.onRejectedCallbacks.push(rejectedMicrotask)
             }
         })
         return promise2
