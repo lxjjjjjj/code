@@ -48,7 +48,7 @@ console.log(obj.value)
 
 **get 陷阱中的 receiver 存在的意义就是为了正确的在陷阱中传递上下文。**
 
-** Proxy 中 get 陷阱的 receiver 不仅仅代表的是 Proxy 代理对象本身，同时也许他会代表继承 Proxy 的那个对象。**
+**Proxy 中 get 陷阱的 receiver 不仅仅代表的是 Proxy 代理对象本身，同时也许他会代表继承 Proxy 的那个对象。**
 
 **第三个参数 receiver 代表的是代理对象本身或者继承与代理对象的对象，它表示触发陷阱时正确的上下文。**
 
