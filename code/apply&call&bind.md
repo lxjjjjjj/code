@@ -48,7 +48,7 @@ function bind(context, ...outerArgs) {
         if(self instanceof F) {
             return new self(...outerArgs, ...innerArgs)
         }
-        let symbolfn =symbol()
+        let symbolfn = Symbol()
         context[symbolfn] = self
         let res = context[symbolfn](...outerArgs, ...innerArgs)
         delete context[symbolfn]

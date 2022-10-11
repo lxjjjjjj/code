@@ -128,3 +128,45 @@
 // const obj2 = myNew(obj1)
 // console.log(obj2)
 
+// function throttle(func, wait = 50){
+//   let last = new Date()
+//   return function() {
+//     const now = new Date()
+//     if(now - last > wait){
+//       last = now
+//       func.call(this,...Array.from(arguments))
+//     }
+//   }
+// }
+// const aa = throttle(() => {
+//   console.log('zhixingle')
+// }, 5000)
+// setInterval(() => {
+//   aa()
+// }, 1000);
+
+// function debounce (func, wait = 50) {
+//   let timer = 0
+//    return function (...args) {
+//        if(timer) clearTimeout(timer)
+//        timer = setTimeout(()=>{
+//           func.apply(this, args)
+//           clearTimeout(timer)
+//        }, wait)
+//    }
+// }
+// const aa = debounce(() => {
+//   console.log('debounce')
+// },1000)
+// setInterval(()=> {
+//   aa()
+// },2000)
+
+function myCall(context, ...args) {
+  context = context || window
+  const symbolFn = new Symbol()
+  context[symbolFn] = this
+  const fn = context[symbolFn](...args)
+  delete context[symbolFn]
+  return fn
+}

@@ -4,6 +4,7 @@ function debounce (func, wait = 50) {
      return function (...args) {
          if(timer) clearTimeout(timer)
          timer = setTimeout(()=>{
+            clearTimeout(timer)
             func.apply(this, args)
          }, wait)
      }
