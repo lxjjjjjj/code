@@ -162,11 +162,108 @@
 //   aa()
 // },2000)
 
-function myCall(context, ...args) {
-  context = context || window
-  const symbolFn = new Symbol()
-  context[symbolFn] = this
-  const fn = context[symbolFn](...args)
-  delete context[symbolFn]
-  return fn
+// function myCall(context,...args) {
+//   context = context || window
+//   const symbolFn = Symbol()
+//   context[symbolFn] = this
+//   const res = context[symbolFn](...args)
+//   delete context[symbolFn]
+//   return res
+// }
+// function myApply(context,args) {
+//   context = context || window
+//   const symbolFn = Symbol()
+//   context[symbolFn] = this
+//   const res = context[symbolFn](...args)
+//   delete context[symbolFn]
+//   return res
+// }
+// function myBind(context,...outerArgs) {
+//   context = context || window
+//   const self = this
+//   return function F(...innerArgs){
+//     if(self instanceof F){
+//       return new self(...outerArgs,...innerArgs)
+//     }
+//     let symbolFn = Symbol()
+//     context[symbolFn] = self
+//     let result = context[symbolfn](...outerArgs, ...innerArgs)
+//         delete context[symbolfn]
+//         return result
+//   }
+// }
+// const getData = () =>
+//   new Promise(resolve => setTimeout(() => resolve("data"), 1000))
+
+
+// // async函数会被编译成generator函数 (babel会编译成更本质的形态，这里我们直接用generator)
+// function* testG() {
+//   // await被编译成了yield
+//   const data = yield getData()
+//   console.log('data: ', data);
+//   const data2 = yield getData()
+//   console.log('data2: ', data2);
+//   return data + '123'
+// }
+// function asyncGen(genfunc){
+//   return function() {
+//     const gen = genfunc.apply(this, arguments)
+//     return new Promise((resolve,reject) => {
+//       function step(key, arg) {
+//         let result
+//         try{
+//           result = gen[key](arg)
+//         }catch(e){
+//           reject(e)
+//         }
+//         const { done, value } = result
+//         if(done){
+//           resolve(value)
+//         }else {
+//           return Promise.resolve(value).then((value) => { step('next',value) },(reason) => { step('throw', reason)})
+//         }
+//       }
+//       step('next')
+//     })
+//   }
+// }
+// const testGAsync = asyncGen(testG)
+// testGAsync().then(result => {
+//   console.log(result)
+// })
+
+// const a = async () => {
+//   await new Promise((resolve)=>{
+//     setTimeout(()=> {
+//       console.log('async 1')
+//       resolve()
+//     })
+//   })
+    
+//   console.log('~~~1')
+// }
+// const b = async () => {
+//   await a()
+//   console.log('~~~2')
+// }
+// b()
+// function compose(funs) {
+//   var combin = null;
+//   for (var i = 0; i < funs.length; i++) {
+//     combin = (function(i, combin) {
+//       return combin
+//         ? function(args) {
+//             return combin(funs[i](args));
+//           }
+//         : function(args) {
+//             return funs[i](args);
+//           };
+//     })(i, combin);
+//   }
+//   return combin;
+// }
+class EventBus {
+  constructor(){
+    
+  }
 }

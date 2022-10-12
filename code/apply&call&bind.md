@@ -50,7 +50,7 @@ function bind(context, ...outerArgs) {
         }
         let symbolfn = Symbol()
         context[symbolfn] = self
-        let res = context[symbolfn](...outerArgs, ...innerArgs)
+        let result = context[symbolfn](...outerArgs, ...innerArgs)
         delete context[symbolfn]
         return result
     }
