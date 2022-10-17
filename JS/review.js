@@ -79,6 +79,8 @@
 //   }
 // }
 
+const { resolve, reject } = require("../code/promise");
+
 // const promise = new MyPromise((resolve) => {
 //   setTimeout(() => {
 //     resolve(1)
@@ -301,97 +303,89 @@
 //   }
 // }
 
-const PENDING = 'pending'
-const FULFILLED = 'fulfilled'
-const REJECTED = 'rejected'
-class MyPromise {
-    constructor(exector){
-        try {
-            exector(this.resolve, this.reject)
-        } catch(err) {
-            this.reject(err)
+function all(args) {
+    return Promise((resolve, reject) => {
+        let interatorIndex = 0;
+        let fullCount = 0;
+        let result = []
+        for(let item of args) {
+            let resultIndex = interatorIndex
+            interatorIndex++
+            Promise.resolve(item).then(value => {
+                fullCount++
+                result[resultIndex] = value
+                if(interatorIndex === fullCount){
+                    resolve(result)
+                }
+            }).catch(err => {
+                reject(err)
+            })
         }
-    }
-    result = null
-    reason = null
-    status = PENDING
-    onFulFilledCallbacks = []
-    onRejectedCallbacks = []
-    resolve = (value) => {
-        if(this.status === PENDING) {
-            this.status = FULFILLED
-            this.result = value
-            while (this.onFulFilledCallbacks.length) {
-                this.onFulFilledCallbacks.shift()(value)
-            }
+        if(interatorIndex === 0){
+            resolve(result)
         }
-    }
-    reject = (reason) => {
-        if(this.status === PENDING) {
-            this.status = REJECTED
-            this.reason = reason
-            while (this.onRejectedCallbacks.length) {
-                this.onRejectedCallbacks.shift()(reason)
-            }
-        }
-    }
-    then(fulfilled, rejected){
-        const realOnFulfilled = typeof fulfilled === 'function' ? fulfilled : value => value
-        const realRejected = typeof rejected === 'function' ? rejected : reason => { throw reason }
-        const promise2 = new MyPromise((resolve, reject) => {
-            const fulfilledMicrotask = () => {
-                queueMicrotask(() => {
-                    try{
-                        const x = realOnFulfilled(this.value)
-                        resolvePromise(promise2, x, resolve, reject)
-                    }catch(err){
-                        reject(err)
-                    }
-                })
-            }
-            const rejectedMicrotask = () => {
-                queueMicrotask(() => {
-                    try{
-                        const x = realRejected(this.reason)
-                        resolvePromise(promise2, x, resolve, reject)
-                    }catch(err){
-                        reject(err)
-                    }
-                })
-            }
-            if(this.status === FULFILLED) {
-                fulfilledMicrotask()
-            } else if(this.status === REJECTED) {
-                rejectedMicrotask()
-            } else {
-                this.onFulFilledCallbacks.push(fulfilledMicrotask)
-                this.onRejectedCallbacks.push(rejectedMicrotask)
-            }
-        })
-        return promise2
-    }
-}
-function resolvePromise(promise2,x, resolve, reject) {
-    if(x === promise2){
-        return reject(new TypeError("xxxxxx"))
-    }
-    if(x instanceof MyPromise){
-        x.then(resolve,reject)
-    } else {
-        resolve(x)
-    }
+    })
 }
 
-const promise = new MyPromise((resolve) => {
-  setTimeout(() => {
-    resolve(1)
-  }, 2000)
-})
-promise.then((value)=> {
-  console.log('then1', value)
-  return new MyPromise((resolve) => {
-    resolve(2)
-  })
-}).then((value) => {
-  console.log('then2', value)
-})
+function allsettled(args) {
+    return new Promise((resolve, reject) => {
+        let fullCount = 0;
+        let interatorIndex = 0;
+        let result = []
+        for(let item of args) {
+            let resultIndex = interatorIndex
+            interatorIndex++
+            Promise.resolve(item).then((value)=> {
+                result[resultIndex] = value
+                if(fullCount === interatorIndex) {
+                    resolve(result)
+                }
+            }).catch(err=> {
+                const res = {
+                    value: item,
+                    status: 'reject'
+                }
+                result[resultIndex] = res
+                fullCount += 1
+                if(fullCount === interatorIndex) {
+                    resolve(result)
+                }
+            })
+        }
+        if(iteratorIndex === fullCount){
+            resovle(results)
+        }
+    })
+}
+
+function race(args){
+    return new Promise((resolve, reject) => {
+        for(let item of args) {
+            Promise.resolve(item).then(value => {
+                resolve(value)
+            }).catch(err => {
+                reject(err)
+            })
+        }
+    })
+}
+
+function any(promises) {
+    return new Promise((resolve, reject) => {
+        promises = Array.isArray(promises) ? promises : [promises]
+        let len = promises.length
+        let errs = []
+        if(len === 0) return reject(new AggregateError('All promises were rejected'))
+        promises.forEach(promise => {
+            promise.then(value => {
+                resolve(value)
+            },err => {
+                len--
+                errs.push(err)
+                if(len === 0){
+                    reject(new AggregateError(errs))
+                }
+            })
+        })
+    })
+}

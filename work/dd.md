@@ -216,8 +216,140 @@ oe平台构建完代码之后触发webhook请求上线平台接口 -> oeNotice�
 * 点击主卡 也会跳转到相关活动页面，展示更多此活动的券数据。
 
 ## 分包异步化改造
+独立分包是小程序中一种特殊类型的分包，可以独立于主包和其他分包运行。**从独立分包中页面进入小程序时，不需要下载主包**。**当用户进入普通分包或主包内页面时，主包才会被下载**。开发者可以按需将某些具有一定功能独立性的页面配置到独立分包中。当小程序从普通的分包页面启动时，需要首先下载主包；而独立分包不依赖主包即可运行，可以很大程度上提升分包页面的启动速度。一个小程序中可以有多个独立分包。独立分包属于分包的一种。普通分包的所有限制都对独立分包有效。独立分包中插件、自定义组件的处理方式同普通分包。**独立分包中不能依赖主包和其他分包中的内容**。在小程序中，不同的分包对应不同的下载单元；因此，除了非独立分包可以依赖主包外，分包之间不能互相使用自定义组件或进行 require。
 
+## 图片加载失败重新加载组件
+```
+<template>
+  <image
+    wx:if="{{src}}"
+    src="{{url || src}}"
+    mode="{{mode}}"
+    webp="{{webp}}"
+    lazy-load="{{lazyLoad}}"
+    show-menu-by-longpress = "{{showMenuByLongPress}}"
+    binderror="errHandler"
+    bindload="loadHander"
+    class="img-preload-wrap"
+  />
+</template>
 
+<script>
+  import { createComponent } from '@mpxjs/core'
+  const Omega = getApp().Omega
+
+  createComponent({
+    data: {
+      url: '',
+      requestCount: 0,
+      isTry: 0 // 0 不重新请求  1 重新请求
+    },
+    properties: {
+      src: {
+        type: String,
+        value: ''
+      },
+      mode: {
+        type: String,
+        value: 'scaleToFill'
+      },
+      webp: {
+        type: Boolean,
+        value: false
+      },
+      lazyLoad: {
+        type: Boolean,
+        value: false
+      },
+      showMenuByLongPress: {
+        type: Boolean,
+        value: false
+      },
+      // 以下额外添加的一些功能
+      // 是否开启图片加载率分析上报
+      imageAnalysis: {
+        type: Object,
+        value: {
+          open: false, // 是否开启图片分析，每次分析都会上报一套omega埋点，请勿批量添加
+          tag: '' // 类型标识，会用于分析image的时候
+        }
+      },
+      // 开启在图片加载失败的时候进行一次自动重试操作
+      openImageRetry: {
+        type: Boolean,
+        value: false
+      }
+    },
+    watch: {
+      src: {
+        handler(val, oldval) {
+          if (val && this.imageAnalysis?.open) {
+            // 图片链接请求更改，重置状态
+            if (oldval) {
+              this.url = ''
+              this.isTry = 0
+              this.requestCount = 0
+            }
+            this.sendOmegaLog('get')
+          }
+        },
+        immediate: true
+      }
+    },
+    detached() {
+      (!this.requestCount && this.src) && this.sendOmegaLog('unload')
+    },
+    methods: {
+      sendOmegaLog(type, e = {}) {
+        if (this.imageAnalysis?.open) {
+          const maps = {
+            get: 'tech_mini_image_data_sw', // 拉取数据
+            err: 'tech_mini_image_error_sw', // 图片加载失败
+            load: 'tech_mini_image_load_sw', // 加载图片成功
+            unload: 'tech_mini_image_unload_sw' // 未执行err和load事件时，触发
+          }
+          Omega.trackEvent(maps[type], {
+            image_src: this.url || this.src,
+            tag: this.imageAnalysis?.tag,
+            err_msg: e?.detail?.errMsg,
+            is_try: this.isTry
+          })
+        }
+      },
+      errHandler(e) {
+        this.requestCount++
+        this.sendOmegaLog('err', e)
+        const triggerName = this.isTry ? 'retryError' : 'error'
+        this.triggerEvent(triggerName, {
+          err: e,
+          is_try: this.isTry
+        })
+
+        // 请求重试
+        if (this.openImageRetry) {
+          this.isTry = 1
+          this.openImageRetry = false
+          this.url = this.src + '?timestamp=' + Date.now()
+          this.sendOmegaLog('get')
+        }
+      },
+      loadHander(event) {
+        this.requestCount++
+        this.triggerEvent('load', event)
+        this.sendOmegaLog('load')
+      }
+    }
+
+  })
+</script>
+
+<style lang="stylus" scoped>
+  .img-preload-wrap
+    height 100%
+    width 100%
+</style>
+
+```
 # mpx转快手
 ## 背景
 Mpx作为一个跨平台编译的工具，支持输出快手小程序为以后业务接入打下基础。

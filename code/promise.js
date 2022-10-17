@@ -254,9 +254,9 @@ function myPromiseAll(args) {
                 if(iteratorIndex === fullCount){
                     resolve(results)
                 }
-            }).catch(err){
+            }).catch(err => {
                 reject(err)
-            }
+            })
         }
         if(iteratorIndex === 0){
             resovle(results)
@@ -281,7 +281,7 @@ function myPromiseAllsettled(args) {
                 if(iteratorIndex === fullCount){
                     resolve(results)
                 }
-            }).catch(err){
+            }).catch(err => {
                 const result = {
                     status: 'reject',
                     value: item
@@ -291,7 +291,7 @@ function myPromiseAllsettled(args) {
                 if(iteratorIndex === fullCount){
                     resolve(results)
                 }
-            }
+            })
         }
         if(iteratorIndex === fullCount){
             resovle(results)
@@ -302,14 +302,14 @@ function myPromiseAllsettled(args) {
 // # promise.race
 
 
-function myPromiseAll(args) {
+function myPromiseRace(args) {
     return new Promise((resolve, reject) => {
         for(const item of args){
             Promise.resolve(item).then((res) => {
                 resolve(res)
-            }).catch(err){
+            }).catch(err =>{
                 reject(err)
-            }
+            })
         }
     })
 }
