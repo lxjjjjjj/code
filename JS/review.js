@@ -300,3 +300,98 @@
 //     }
 //   }
 // }
+
+const PENDING = 'pending'
+const FULFILLED = 'fulfilled'
+const REJECTED = 'rejected'
+class MyPromise {
+    constructor(exector){
+        try {
+            exector(this.resolve, this.reject)
+        } catch(err) {
+            this.reject(err)
+        }
+    }
+    result = null
+    reason = null
+    status = PENDING
+    onFulFilledCallbacks = []
+    onRejectedCallbacks = []
+    resolve = (value) => {
+        if(this.status === PENDING) {
+            this.status = FULFILLED
+            this.result = value
+            while (this.onFulFilledCallbacks.length) {
+                this.onFulFilledCallbacks.shift()(value)
+            }
+        }
+    }
+    reject = (reason) => {
+        if(this.status === PENDING) {
+            this.status = REJECTED
+            this.reason = reason
+            while (this.onRejectedCallbacks.length) {
+                this.onRejectedCallbacks.shift()(reason)
+            }
+        }
+    }
+    then(fulfilled, rejected){
+        const realOnFulfilled = typeof fulfilled === 'function' ? fulfilled : value => value
+        const realRejected = typeof rejected === 'function' ? rejected : reason => { throw reason }
+        const promise2 = new MyPromise((resolve, reject) => {
+            const fulfilledMicrotask = () => {
+                queueMicrotask(() => {
+                    try{
+                        const x = realOnFulfilled(this.value)
+                        resolvePromise(promise2, x, resolve, reject)
+                    }catch(err){
+                        reject(err)
+                    }
+                })
+            }
+            const rejectedMicrotask = () => {
+                queueMicrotask(() => {
+                    try{
+                        const x = realRejected(this.reason)
+                        resolvePromise(promise2, x, resolve, reject)
+                    }catch(err){
+                        reject(err)
+                    }
+                })
+            }
+            if(this.status === FULFILLED) {
+                fulfilledMicrotask()
+            } else if(this.status === REJECTED) {
+                rejectedMicrotask()
+            } else {
+                this.onFulFilledCallbacks.push(fulfilledMicrotask)
+                this.onRejectedCallbacks.push(rejectedMicrotask)
+            }
+        })
+        return promise2
+    }
+}
+function resolvePromise(promise2,x, resolve, reject) {
+    if(x === promise2){
+        return reject(new TypeError("xxxxxx"))
+    }
+    if(x instanceof MyPromise){
+        x.then(resolve,reject)
+    } else {
+        resolve(x)
+    }
+}
+
+const promise = new MyPromise((resolve) => {
+  setTimeout(() => {
+    resolve(1)
+  }, 2000)
+})
+promise.then((value)=> {
+  console.log('then1', value)
+  return new MyPromise((resolve) => {
+    resolve(2)
+  })
+}).then((value) => {
+  console.log('then2', value)
+})
