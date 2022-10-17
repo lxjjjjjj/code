@@ -48,14 +48,14 @@ class EventBus {
       }
     }
     // 订阅事件，只会执行一次，为了方便，id上直接加上一个标识d
-    $once(name, callbcak){
+    $once(name, callback){
       // 判断是否存储过
       if (!this.eventObj[name]) {
         this.eventObj[name] = {};
       }
       // 定义当前回调函数id,添加D则代表只执行一次
       const id = "D" + this.callbcakId++;
-      this.eventObj[name][id] = callbcak; // 以键值对的形式存储回调函数
+      this.eventObj[name][id] = callback; // 以键值对的形式存储回调函数
       return id; // 将id返回出去，可以利用该id取消订阅
     }
   }

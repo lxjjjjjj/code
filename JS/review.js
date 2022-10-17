@@ -262,8 +262,41 @@
 //   }
 //   return combin;
 // }
-class EventBus {
-  constructor(){
-    
-  }
-}
+
+// class EventBus {
+//   constructor(){
+//     this.eventMap = {}
+//     this.callbackID = 0
+//   }
+//   $on(name, callback) {
+//     if(!this.eventMap[name]){
+//       this.eventMap[name] = {}
+//     }
+//     const id = this.callbackID++
+//     this.eventMap[name][id] = callback
+//     return id
+//   }
+//   $emit(name, ...args){
+//     const eventList = this.eventMap[name]
+//     for(const id in eventList){
+//       eventList[id](...args)
+//       if(id.indexOf('D') !== -1) {
+//         delete eventList[id]
+//       }
+//     }
+//   }
+//   $once(name, callback){
+//     if(!this.eventMap[name]){
+//       this.eventMap[name] = {}
+//     }
+//     const id = 'D' + this.callbackID++
+//     this.eventMap[name][id] = callback
+//     return id
+//   }
+//   $off(name, id){
+//     delete this.eventObj[name][id];
+//     if(!Object.keys(this.eventObj[name]).length){
+//       delete this.eventMap[name]
+//     }
+//   }
+// }
