@@ -4,17 +4,47 @@
 # HotModuleReplacementPlugin
 
 ## 1、注入运行时代码
-hotCreateRequire方法在代码中注入客户端和本地server的socket通信代码
+hotCreateRequire方法在代码中注入客户端和本地server的socket通信代码监听来自服务端的webpackHotUpdate事件
+然后调用编译生成的chunk文件多一个hot属性，给打包编译生成的文件添加hot属性，hot是否有值支持热更新，hot对象包含accept函数和check函数，accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。check函数负责拉取manifest文件。（对应客户端的2）。accept就是往hot._acceptedDependencies对象存入局部更新回调函数，当模块文件改变的时候，我们会调用acceptedDependencies搜集的回调，没错，他就是将模块改变时，要做的事进行了搜集，搜集到_acceptedDependencies中，以便当content.js模块改变时，他的父模块index.js通过_acceptedDependencies知道要干什么。
 
-编译生成的chunk文件多一个hot属性，给打包编译生成的文件添加hot属性，hot是否有值支持热更新，hot对象包含accept函数和check函数，accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。check函数负责拉取manifest文件。（对应客户端的2）。accept就是往hot._acceptedDependencies对象存入局部更新回调函数，当模块文件改变的时候，我们会调用acceptedDependencies搜集的回调，没错，他就是将模块改变时，要做的事进行了搜集，搜集到_acceptedDependencies中，以便当content.js模块改变时，他的父模块index.js通过_acceptedDependencies知道要干什么。
+socket通信代码监听来自服务端的webpackHotUpdate事件window.webpackHotUpdate方法里拉取mainfest.json代码获取到moduleid找到旧的module的代码替换代码，并且根据旧的module的parent，利用父module的parentModule.hot._acceptedDependencies里的依赖收集的accept函数，然后执行在父组件dependences里每个module中存储的callback更新函数
+### accept使用
+```
+if (module.hot) {
+    module.hot.accept(["./content.js"], render);
+}
+```
+function hotCreateModule() {
+    var hot = {
+        accept: function (dep, callback) {
+            for (var i = 0; i < dep.length; i++)
+                hot._acceptedDependencies[dep[i]] = callback;
+        },
+    };
+    return hot;
+} 
+var module = installedModules[moduleId] = {
+    // ...
+    hot: hotCreateModule(moduleId),
+};
+accept就是往hot._acceptedDependencies对象存入 局部更新回调函数，_acceptedDependencies什么时候会用到呢？（当模块文件改变的时候，我们会调用acceptedDependencies搜集的回调）
+
+```
+if (module.hot) {
+    module.hot.accept(["./content.js"], render);
+    // 等价于module.hot._acceptedDependencies["./content.js"] = render
+    // 没错，他就是将模块改变时，要做的事进行了搜集，搜集到_acceptedDependencies中
+    // 以便当content.js模块改变时，他的父模块index.js通过_acceptedDependencies知道要干什么
+}
+```
 ## 2、生成两个补丁文件
 HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，包含本次编译和上次编译更改的chunk名和更改的chunk文件的hash值的内容。还有updated chunk (JavaScript)命名为chunk名字.本次编译生成的hash.hot-update.js。
 
 
 
 # webpack-dev-server
+1、创建webpack实例，更改entry、向客户端打包的代码中添加HotModuleReplacementPlugin生成的监听webpack done事件发送hash和ok事件的代码
 
-1、负责更改entry、监听webpack done事件发送hash和ok事件）
 2、创建webserver服务器和websocket服务器让浏览器和服务端建立通信（对应服务端的1.3.4和客户端的1）
 
 # webpack-dev-middleware
@@ -45,3 +75,4 @@ HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，
 # 总结
 
 引入HotModuleReplacementPlugin生成manifest.json和js文件，其中manifest.json文件存放的是更改的文件的hash值，以便于客户端拉取新的文件。js文件就是更改的新文件。同时HotModuleReplacementPlugin也会生成在客户端运行可以接收服务端socket消息通信的代码。webpack-dev-server负责将通信代码在webpack编译流程中通过更改entry达到将文件打包到客户端文件中让客户端执行。同时它也会创建本地server服务用来给客户端发送消息，webpack-dev-middleware负责监听webpack编译获取文件系统的变化并且将文件发送给客户端。HotModuleReplacementPlugin在webpack编译的每个module中都加入hot属性，hot对象包含accept函数和check函数，check函数负责拉取manifest文件。accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。
+
