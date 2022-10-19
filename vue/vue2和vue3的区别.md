@@ -4,9 +4,12 @@ vue2使用Object.defineProperty()实现响应式原理，而vue3使用Proxy()实
 
 ## 虽然vue2，vue3面对对象嵌套，都需要递归，但vue2是对对象的所有属性进行递归，vue3是按需递归，如果没有使用到内部对象的属性，就不需要递归，性能更好。
 
-虽然vue2中对于收集依赖也有限制，就是Dep.target。但是每个组件中的data对象的不同对象都有一个dep对象，所有收集的effect是收集到这个dep对象下的。
+虽然vue2中对于收集依赖也有限制，就是Dep.target。当new watcher的时候Dep.target是这个watcher，只要调用对象的get方法，watcher就会被收集到这个data对象的唯一一个dep下。
+```
+嵌套对象 添加依赖childOb.dep.depend()
+```
 
-但是vue3建立了一个depsMap对象，然后effect是收集在data每个对象的属性key下的。所以可以做到收集依赖的时候做到按需递归，没有更改的属性key就不递归，性能更好。
+但是vue3建立了一个depsMap对象，然后effect是收集在data每个对象的属性key下的deps。所以可以做到收集依赖的时候做到按需递归，没有更改的属性key就不递归，性能更好。
 
 vue2
 ```
