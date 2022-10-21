@@ -1,0 +1,19 @@
+# 对副作用的理解不同了
+
+hooks是函数式编程理念的诠释，将之前一个class组件维护的多个状态拆分，可以将一个相同的state改变产生的副作用放到相同的hooks中，这样可以集中更新。不仅可以使代码更好维护，更可以在react做diff算法过程中优化性能。
+
+# 使用起来要注意的事情
+class组件中由于this这个引用对象的存在可以使react在异步中也能正确拿到新的状态值
+
+但是hooks是每次渲染都会重新创建新的函数。所以导致hooks在异步中如果不通过ref或者函数调用的方式是拿不到最新状态的，只能拿到属于那一次渲染的状态。同时使用useReducer也可以拿到新的状态，因为useReducer的状态是脱离每次函数的渲染的。reducer在每次渲染执行时只是记住那一次渲染的操作。state是独立于渲染之外的对象。
+
+# react是自顶向下更新的，对于hooks和class组件的更新渲染有不同的优化方案
+
+useCallback & useMemo React.memo（传回调更新）
+
+pureComponent & shouldComponentUpdate
+
+对于useCallback的使用其实对于渲染开销不大的组件。如果滥用useCallback可能对于浏览器来说创建闭包销毁闭包的性能开销更大
+
+# 一些api的不同
+context啊 useReducer啊
