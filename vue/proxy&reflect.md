@@ -41,7 +41,7 @@ const obj = {
 // 设置obj继承与parent的代理对象proxy
 Object.setPrototypeOf(obj, proxy);
 
-// log: false
+// log: 19Qingfeng
 console.log(obj.value)
 ```
 此时 receiver指的是真正的调用者，而不是实现Proxy的原对象

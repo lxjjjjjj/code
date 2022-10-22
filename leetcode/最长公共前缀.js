@@ -10,14 +10,14 @@
  * @return {string}
  */
  var longestCommonPrefix = function(strs) {
-    let re = strs[0] || ''
-    if (strs.length === 1) return strs[0]
-
-    for (let i = 1; i < strs.length; i++) {
-        while (strs[i].slice(0, re.length) !== re) {
-            re = re.slice(0, re.length - 1)
-        }
+    if(!strs.length) return ''
+    let index = 0
+    first = strs.pop()
+    let res = first[index]
+    while(strs.every(item => !item.indexOf(res))){
+        res = res + first[++index]
     }
-
-    return re
+    return res.slice(0, res.length - 1)
 };
+// console.log(longestCommonPrefix(["flower","flow","flight"]))
+console.log(longestCommonPrefix(["dog","racecar","car"]))
