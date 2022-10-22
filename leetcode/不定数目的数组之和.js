@@ -1,4 +1,5 @@
-// [2,2,3,7] target 7
+// [2,3,6,7] target 7 [[2,2,3],[7]] 
+// [2,4,7] target 8
 function sum (arr, target) {
     
     let res = []
@@ -9,9 +10,10 @@ function sum (arr, target) {
             res.push(c)
             return
         }
-        
+        // 不用自己
         dfs(target, c, idx + 1)
         
+        // 用自己 每次都是重复去看
         if (target - arr[idx] >= 0) {
             dfs(target - arr[idx], [arr[idx], ...c], idx)
         }
@@ -21,4 +23,5 @@ function sum (arr, target) {
     
     return res
 }
-console.log(sum([2,2,3,7], 7))
+// console.log(sum([2,2,3,7], 7))
+console.log(sum([2,4,7], 8))
