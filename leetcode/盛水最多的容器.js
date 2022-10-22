@@ -6,10 +6,10 @@
     let [l, r, ans] = [0, height.length - 1, 0]
 
     while (l < r) {
-        let [lh, lr] = [height[l], height[r]]
-        ans = Math.max(ans, Math.min(lh, lr) * (r - l))
+        let [lh, rh] = [height[l], height[r]]
+        ans = Math.max(ans, Math.min(lh, rh) * (r - l))
 
-        lh < lr ? l++ : r--
+        lh < rh ? l++ : r--
     }
 
     return ans
