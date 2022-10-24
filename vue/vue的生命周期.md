@@ -1,3 +1,4 @@
+[原文链接](https://juejin.cn/post/6874855535234170887)
 # beforeCreate
 是new Vue()之后触发的第一个钩子，此时 data、methods、computed以及watch上的数据和方法还未初始化，都不能被访问。在实例初始化之后，数据观测 (data observer) 和 event/watcher 事件配置之前被调用。
 
