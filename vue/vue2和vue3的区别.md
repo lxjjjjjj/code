@@ -2,7 +2,12 @@
 # 响应式更新的原理
 vue2使用Object.defineProperty()实现响应式原理，而vue3使用Proxy()实现。
 
-## 虽然vue2，vue3面对对象嵌套，都需要递归，但vue2是对对象的所有属性进行递归，vue3是按需递归，如果没有使用到内部对象的属性，就不需要递归，性能更好。
+## 虽然vue2，vue3面对对象嵌套，都需要递归，但vue2是对对象的所有属性进行递归，vue3是按需递归，如果没有使用到内部对象的属性，就不需要递归，性能更好。因为它们的代理粒度不同
+
+defineProperty 只能代理属性，Proxy 代理的是对象。
+也就是说，如果想代理对象的所有属性，defineProperty 需要遍历属性一个个加 setter 和 getter。
+而 Proxy 只需要配置一个可以获取属性名参数的函数即可。
+当然，如果出现嵌套的对象，Proxy 也是要递归进行代理的，但可以做惰性代理，即用到嵌套对象时再创建对应的 Proxy。
 
 虽然vue2中对于收集依赖也有限制，就是Dep.target。当new watcher的时候Dep.target是这个watcher，只要调用对象的get方法，watcher就会被收集到这个data对象的唯一一个dep下。
 ```
