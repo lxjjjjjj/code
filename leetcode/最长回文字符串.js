@@ -20,6 +20,7 @@
  * @param {string} s
  * @return {string}
  */
+ // 奇数回文 aba 偶数回文abba
  var longestPalindrome = function(s) {
     let max = ''
 
