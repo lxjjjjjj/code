@@ -1,0 +1,51 @@
+<!-- 现有8个图片资源的url，已经存储在数组urls中，且已有一个函数function loading，
+输入一个url链接，返回一个Promise，该Promise在图片下载完成的时候resolve，下载失败则reject。
+要求：任何时刻同时下载的链接数量不可以超过3个。
+请写一段代码实现这个需求，要求尽可能快速地将所有图片下载完成。 -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+    <div id="root">
+        <div id="div">div标签
+            <!-- <a href="" id="a">a标签</a> -->
+            <div id="a">a标签</div>
+        </div>
+    </div>
+  <script>
+    var outerElement = document.getElementById('root');
+    var middleElement = document.getElementById('div');
+    var innerElement = document.getElementById('a');
+
+    outerElement.addEventListener('click', function (event) {
+        console.log('trigger outermost div');
+    });
+    middleElement.addEventListener('click', function () {
+        console.log('trigger middle div');
+    });
+    innerElement.addEventListener('click', function (event) {
+        event.preventDefault(); // 如果没有这个的话 会触发a标签的默认行为就是刷新链接
+        // event.stopPropagation(); // 这个是阻止向上冒泡
+        console.log('trigger innermost button');
+    });
+
+  </script>
+  <style>
+      #root {
+          height: 200px;
+          width: 200px;
+          border: 1px solid #f00
+      }
+      #div {
+          height: 100px;
+          width: 100px;
+          border: 1px solid #f00
+      }
+  </style>
+</body>
+</html>
