@@ -140,3 +140,20 @@ Object.setPrototypeOf(obj, proxy);
 console.log(obj.value);
 ```
 
+# Proxy可以拦截的操作和其对应的名称
+
+内部方法Handler  方法何时触发 
+[[Get]]get读取属性
+[[Set]]set写入属性
+[[HasProperty]]hasin 操作符
+[[Delete]]deletePropertydelete 操作符
+[[Call]]apply函数调用
+[[Construct]]constructnew 操作符
+[[GetPrototypeOf]]getPrototypeOf Object.getPrototypeOf
+[[SetPrototypeOf]]setPrototypeOf Object.setPrototypeOf
+[[IsExtensible]]isExtensibleObject.isExtensible
+[[PreventExtensions]]preventExtensions Object.preventExtensions
+[[DefineOwnProperty]]definePropertyObject.defineProperty, Object.defineProperties
+[[GetOwnProperty]]getOwnPropertyDescriptorObject.getOwnPropertyDescriptor, for..in, Object.keys/values/entries
+[[OwnPropertyKeys]]ownKeysObject.getOwnPropertyNames, Object.getOwnPropertySymbols, for..in, Object.keys/values/entries
+
