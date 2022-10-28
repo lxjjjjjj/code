@@ -22,3 +22,4 @@ var descriptor = Object.getOwnPropertyDescriptor(obj, "a");
 console.log(descriptor.enumerable); // true
 console.log(descriptor);
 // { value: 1, writable: true, enumerable: true, configurable: true }
+
