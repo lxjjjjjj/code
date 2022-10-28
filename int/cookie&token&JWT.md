@@ -1,4 +1,5 @@
 [原文链接](https://juejin.cn/post/6844904034181070861)
+[csrf攻击](https://tech.meituan.com/2018/10/11/fe-security-csrf.html)
 # Cookie认证机制
 
 ```
@@ -163,7 +164,7 @@ JWT 的这些特性使得我们可以完全依赖其无状态的特性提供数�
 Token：服务端验证客户端发送过来的 Token 时，还需要查询数据库获取用户信息，然后验证 Token 是否有效。
 JWT： 将 Token 和 Payload 加密后存储于客户端，服务端只需要使用密钥解密进行校验（校验也是 JWT 自己实现的）即可，不需要查询或者减少查询数据库，因为 JWT 自包含了用户信息和加密的数据。
 
-### node中使用jwt实现token认证
+## node中使用jwt实现token认证
 
 在项目中安装jsonwebtoken依赖
 ```
