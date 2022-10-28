@@ -3,7 +3,7 @@
 [loader-api](https://v4.webpack.docschina.org/api/loaders)
 [style-loader的实现](https://juejin.cn/post/7037696103973650463)
 [babel-loader和loader-runner的实现更好的理解loader](https://juejin.cn/post/7036379350710616078)
-
+[字节的loader介绍](https://juejin.cn/post/6950092728919130126)
 # loader 是什么的理解
 
 总结一下：
