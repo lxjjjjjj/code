@@ -4,21 +4,22 @@
 - 减少在合并 feature 时出现的意外次数。
 - 解决“在我的机子上没问题”的问题
 - 将测试周期切片到每个 feature 逐渐合并到主线中的阶段（而不是一次性的）
-# 主小程序CI整体流程以及原理
 
 # 什么是CD持续交付
 软件测试完很长时间不部署，只等到最后一次交付软件才部署，因为生产环境和测试环境的不同，所以会导致某些bug的出现，所以要持续交付。
 ### 优点
 - 可以减少不同环境造成的bug
 
+# CI/CD 可以做的事情
 
-## 旧版 Gitlab CI
+我们可以在每次代码提交后执行预置的任务，比如代码风格及质量检查，安全检查，构建产物检测，部署到集成环境，对部署后的环境跑各种测试（兼容性测试，真机测试，性能测试等），产出各种检测报告；我们也可以在几分钟内快速完成版本的上线，回滚，切换等操作。
+
+前端服务跟后端服务有着本质区别。大部分前端项目（暂不考虑 BFF）都是静态资源的托管，不涉及到其他昂贵的计算资源，一个最简单的解决办法只需要一个 Nginx 就足够。前端托管显然不是提供 HTTP 服务就足够的。后来我们考虑到需要实现比较复杂的路由匹配、小流量等逻辑，也需要兼顾可维护性，我们选择了基于 golang 实现这个服务。这个服务可以作为公共服务直接使用，考虑到某些业务的高访问量，也能够单独部署以免影响到其他业务的稳定性。
+
+
+# Gitlab CI
 
 gitlab-ci配置文档：https://docs.gitlab.com/ee/ci/yaml/#keyword-reference-for-the-gitlab-ciyml-file
-
-### 流程概览
-
-![](https://dpubstatic.udache.com/static/dpubimg/13b5d31c-2d46-44a4-b75a-00ade7f299c8.png)
 
 ### 关键步骤解释
 
@@ -38,15 +39,7 @@ gitlab-ci配置文档：https://docs.gitlab.com/ee/ci/yaml/#keyword-reference-fo
 
 结合以上两个问题，结论是我们必须维护若干台具有同样初始环境的 `Runner` 机器，才能保证 Gitlab `CI/CD` 流程的顺利运行。
 
-刚好 OE 平台能很好的对这些问题提供解决方案，所以我们使用 OE 平台来做 `Runner` 机器的创建工作。
-
-#### gitlab-runner-mp服务
-
-服务地址：http://eng.xiaojukeji.com/service/group/705/repo/34518/overview
-
-上面提到我们使用 OE 平台来进行 `Runner` 机器的创建工作。**gitlab-runner-mp** 这个服务则是这个工作的一个具体实现。
-
-这里只讲一下整体流程，细节上就不说了。
+#### 团队小程序上线服务
 
 该服务目前存在**两条流水线**，并且都包含部署流程。流水线的过程分为两步：
 
@@ -799,11 +792,5 @@ function callback (err, stats) {
 }
 
 ```
-# webpack的provide-plugin插件
 
-```
-https://webpack.js.org/plugins/provide-plugin/
-```
-# webpack流程分析
 
-[webpack流程分析](https://juejin.cn/post/6844903972055023629)
