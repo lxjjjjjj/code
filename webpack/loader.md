@@ -19,14 +19,12 @@ webpack中loader的本质就是一个函数，接受我们的源代码作为入�
 
 
 # 四种loader 
-后置post
+前置pre
 普通normal
 行内inline
-前置pre
+后置post
 
-## post、pre、normal loader
-
-### post、pre、normal 的 enforce 属性
+## post、pre、normal 的 enforce 属性
 匹配loader的执行顺序 如果use为一个数组时表示有多个loader依次处理匹配的资源，按照 从右往左(从下往上) 的顺序去处理。但是如果我们希望loader的执行顺序不是按照书写顺序执行，就会用到enforce属性值。
 
 对于post，normal，pre，主要取决于在配置里Rule.enforce的取值：pre || post，若无设置，则为normal。
@@ -37,7 +35,7 @@ webpack中loader的本质就是一个函数，接受我们的源代码作为入�
 行内 loader 比较特殊，是在import / require的时候，将 loader 写入代码中。而对于inline而言，有三种前缀语法：
 
 !：忽略normal loader
--!：忽略preloader 和normal loader
+-!：忽略pre loader 和normal loader
 !!：忽略所有 loader（pre / noraml / post ）
 
 行内 loader 通过!将资源中的 loader 进行分割，同时支持在 loader 后面，通过?传递参数，参数信息参考 loader.options 内容。
