@@ -9,6 +9,7 @@
 提供 optimization.minimizer 数组
 
 ```
+[webpack官网介绍](https://webpack.js.org/guides/tree-shaking/)
 # 理论基础
 
 在 CommonJs、AMD、CMD 等旧版本的 JavaScript 模块化方案中，导入导出行为是高度动态，难以预测的，例如：
