@@ -1,3 +1,4 @@
+[原文链接](https://juejin.cn/post/6967272970196615199)
 # flex布局
 
 ```
@@ -7,6 +8,12 @@
 flex container里面的直接子元素叫做flex items（也就是开启了flex布局的盒子包裹的第一层子元素）
 设置display的属性为flex或者inline-flex可以开启flex布局即成为flex container
 ```
+## flex:1 代表 flex: 1 1 0
+数值 1 设置的是 flex-grow，flex-shrink没设置的时候默认值是1，和初始值一样的；
+flex-grow: 1, flex-shrink: 1, flex-basis: 0
+特殊在于flex-basis，初始值为 auto 那常规思路没设置就采用默认值则：flex:1 === flex:1 1 auto;
+但MDN给了定义一个值的时候的解释，如果flex只定义了一个数字值，则 flex-basis 的值为 0；所以：flex:1 为：flex: 1 1 0;
+
 ### 属性值设置为flex和inline-flex的区别
 
 ```
@@ -19,7 +26,7 @@ flex container里面的直接子元素叫做flex items（也就是开启了flex�
 ##### flex-flow
 
 ```
-flex-flow是flex-direction || flex-wrap的缩写，这个属性很灵活，你可以只写一个属性，也可以两个都写，甚至交换前后顺序都是可以的
+flex-flow是 flex-direction || flex-wrap的缩写，这个属性很灵活，你可以只写一个属性，也可以两个都写，甚至交换前后顺序都是可以的
 flex-flow：column wrap === flex-direction：column；flex-wrap：wrap
 
 如果只写了一个属性值的话，那么另一个属性就直接取默认值；flex-flow：row-reverse === flex-direction：row-reverse；flex-wrap：nowrap；
@@ -79,10 +86,9 @@ justify-content决定了flex items在主轴上的对齐方式，总共有6个属
 flex-start（默认值）：在主轴方向上与main start对齐
 flex-end：在主轴方向上与main end对齐
 center：在主轴方向上居中对齐
-space-between 与main start、main end两端对齐,flex items之间的距离相等
+space-between 与main start、main end两端对齐,flex items之间的距离相等(元素和容器两端紧贴着)
 space-evenly flex items之间的距离相等.flex items与main start、main end之间的距离等于flex items的距离
-space-around flex items之间的距离相等
-flex items与main start、main end之间的距离等于flex items的距离的一半
+space-around flex items之间的距离相等 flex items与main start、main end之间的距离等于flex items的距离的一半
 ```
 ##### align-items
 
@@ -127,19 +133,16 @@ auto：1 1 auto（放大且缩小）
 ```
 ##### flex-grow
 
+flex-grow决定了flex-items如何扩展，可以设置任何非负数字（正整数、正小数、0），默认值为0。
 
-```
-flex-grow决定了flex-items如何扩展
-可以设置任何非负数字（正整数、正小数、0），默认值为0
+只有当flex container在主轴上有剩余的size时，该属性才会生效。如果所有的flex items的flex-grow属性值总和sum超过1，每个flex item扩展的size就为flex container剩余size * flex-grow / sum
 
-只有当flex container在主轴上有剩余的size时，该属性才会生效
-如果所有的flex items的flex-grow属性值总和sum超过1，每个flex item扩展的size就为flex container剩余size * flex-grow / sum
 利用上一条计算公式，我们可以得出：当flex items的flex-grow属性值总和sum不超过1时，扩展的总长度为剩余 size * sum，但是sum又小于1，所以最终flex items不可能完全填充felx container
 
 如果所有的flex items的flex-grow属性值总和sum不超过1，每个flex item扩展的size就为flex container剩余size * flex-grow
 
 flex items扩展后的最终size不能超过max-width/max-height
-```
+
 ##### flex-basis
 
 ```
@@ -185,3 +188,65 @@ flex items可以通过align-self覆盖flex container设置的align-items
 stretch、flex-start、flex-end、center、baseline，效果跟align-items一致，简单来说，就是align-items有什么属性，align-self就有哪些属性，当然auto除外
 
 ```
+## flex的详细值
+[原文链接](https://juejin.cn/post/6967272970196615199)
+/* 关键字值 */
+flex: auto;
+flex: initial;
+flex: none;
+
+/* 一个值, 无单位数字: flex-grow */
+flex: 2;
+
+/* 一个值, width/height: flex-basis */
+flex: 10em;
+flex: 30px;
+flex: min-content;
+
+/* 两个值: flex-grow | flex-basis */
+flex: 1 30px;
+
+/* 两个值: flex-grow | flex-shrink */
+flex: 2 2;
+
+/* 三个值: flex-grow | flex-shrink | flex-basis */
+flex: 2 2 10%;
+
+/*全局属性值 */
+flex: inherit;
+flex: initial;
+flex: unset;
+
+单值语法:
+值必须为以下其中之一:
+
+一个无单位数(<number>): 它会被当作flex:<number> 1 0; <flex-shrink>的值被假定为1，然后<flex-basis> 的值被假定为0。
+一个有效的宽度(width)值: 它会被当作 的值。
+关键字none，auto或initial.
+
+双值语法:
+第一个值必须为一个无单位数，并且它会被当作 <flex-grow> 的值。第二个值必须为以下之一：
+
+一个无单位数：它会被当作  的值。
+一个有效的宽度值: 它会被当作  的值。
+
+三值语法:
+
+第一个值必须为一个无单位数，并且它会被当作  的值。
+第二个值必须为一个无单位数，并且它会被当作   的值。
+第三个值必须为一个有效的宽度值， 并且它会被当作  的值。
+
+取值
+initial
+元素会根据自身宽高设置尺寸。它会缩短自身以适应 flex 容器，但不会伸长并吸收 flex 容器中的额外自由空间来适应 flex 容器 。相当于将属性设置为"flex: 0 1 auto"。
+auto
+元素会根据自身的宽度与高度来确定尺寸，但是会伸长并吸收 flex 容器中额外的自由空间，也会缩短自身来适应 flex 容器。这相当于将属性设置为 "flex: 1 1 auto".
+none
+元素会根据自身宽高来设置尺寸。它是完全非弹性的：既不会缩短，也不会伸长来适应 flex 容器。相当于将属性设置为"flex: 0 0 auto"。
+<'flex-grow'>
+定义 flex 项目的 flex-grow 。负值无效。省略时默认值为 1。 (初始值为 0)
+<'flex-shrink'>
+定义 flex 元素的 flex-shrink 。负值无效。省略时默认值为1。 (初始值为 1)
+<'flex-basis'>
+定义 flex 元素的 flex-basis 属性。若值为0，则必须加上单位，以免被视作伸缩性。省略时默认值为 0。(初始值为 auto)
+
