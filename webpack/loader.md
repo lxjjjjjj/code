@@ -19,14 +19,12 @@ webpack中loader的本质就是一个函数，接受我们的源代码作为入�
 
 
 # 四种loader 
-后置post
+前置pre
 普通normal
 行内inline
-前置pre
+后置post
 
-## post、pre、normal loader
-
-### post、pre、normal 的 enforce 属性
+## post、pre、normal 的 enforce 属性
 匹配loader的执行顺序 如果use为一个数组时表示有多个loader依次处理匹配的资源，按照 从右往左(从下往上) 的顺序去处理。但是如果我们希望loader的执行顺序不是按照书写顺序执行，就会用到enforce属性值。
 
 对于post，normal，pre，主要取决于在配置里Rule.enforce的取值：pre || post，若无设置，则为normal。
@@ -37,7 +35,7 @@ webpack中loader的本质就是一个函数，接受我们的源代码作为入�
 行内 loader 比较特殊，是在import / require的时候，将 loader 写入代码中。而对于inline而言，有三种前缀语法：
 
 !：忽略normal loader
--!：忽略preloader 和normal loader
+-!：忽略pre loader 和normal loader
 !!：忽略所有 loader（pre / noraml / post ）
 
 行内 loader 通过!将资源中的 loader 进行分割，同时支持在 loader 后面，通过?传递参数，参数信息参考 loader.options 内容。
@@ -959,161 +957,6 @@ webpack递归编译style-loader返回脚本中的import语句时，我们在编�
 需要额外注意的是需要额外将 remainingRequest 绝对路径处理成为相对 process.cwd(loaderContext.context) 的路径，这是因为 webpack 中的模块生成机制生成的模块ID(路径)都是相对于process.cwd生成的。所以需要保证 require(import) 到对应的模块 ID 所以需要处理为相对路径。
 
 
-# vue-loader
-
-vue-loader要配合vueloaderPlugin一起使用
-[style代码的三个阶段](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/2/21/1690f6d4e5b01478~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
-[template代码的三个阶段](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/2/21/1690f6d95599feef~tplv-t2oaga2asx-zoom-in-crop-mark:3024:0:0:0.awebp)
-## 第一阶段
-
-```
-module.exports = function (source) {
-  // source 就是读取到的 test.vue 的源文件
-  const loaderContext = this
-  // 通过 @vue/component-compiler-utils 的 parse 解析器，将 test.vue 文件转换为文件描述符
-  // compiler 参数就是 vue-template-compiler 模板解析器
-  const descriptor = parse({
-    source,
-    compiler: options.compiler || loadTemplateCompiler(loaderContext),
-    filename,
-    sourceRoot,
-    needMap: sourceMap
-  })
-  // template
-  let templateRequest
-  if (descriptor.template) {
-    templateImport = `import { render, staticRenderFns } from ${request}`
-    // 'import { render, staticRenderFns } from "./test.vue?vue&type=template&id=13429420&scoped=true&"'
-  }
-  let scriptImport = `var script = {}`
-  if (descriptor.script) {
-    scriptImport = // ...
-  }
-  let stylesCode = ``
-  if (descriptor.styles.length) {
-    stylesCode = //...
-  }
-  let code = `
-${templateImport}
-${scriptImport}
-${stylesCode}
-/* normalize component */
-import normalizer from ${stringifyRequest(`!${componentNormalizerPath}`)}
-var component = normalizer(
-  script,
-  render,
-  staticRenderFns,
-)`.trim() + `\n`
-  code += `\nexport default component.exports`
-  return code
-}
-```
-通过以上代码将vue文件分成各个block的请求，分成
-```
-./source.vue?vue&type=template&id=27e4e96e&scoped=true&lang=pug&',
-'./source.vue?vue&type=script&lang=js&',
-'./source.vue?vue&type=style&index=0&id=27e4e96e&scoped=true&lang=css&',
-'./source.vue?vue&type=custom&index=0&blockType=foo'
-```
-然后交给webpack处理request
-
-我们看到通过 vue-loader 处理到得到的 module path 上的 query 参数都带有 vue 字段。这里便涉及到了我们在文章开篇提到的 VueLoaderPlugin 加入的 pitcher loader。如果遇到了 query 参数上带有 vue 字段的 module path，那么就会把 pitcher loader 加入到处理这个 module 的 loaders 数组当中。因此这个 module 最终也会经过 pitcher loader 的处理。此外在 loader 的配置顺序上，pitcher loader 为第一个，因此在处理 Vue SFC 模块的时候，最先也是交由 pitcher loader 来处理。
-## 第二阶段
-交给webpack之后进入vueLoaderPlugin阶段,什么时候注入的pitchloader呢？在 webpack生成compiler之后，注入 pitcher-loader，我们主要这个loader的命中规则 resourceQuery。我们常用的是使用方式 test: /\.vue$/，在 webpack 内部会被 RuleSet 这个类标准化。所以上述 request 会先经由 pitcher-loader中的 pitch函数处理。
-```
-class VueLoaderPlugin {
-  apply (compiler) {
-    // ...
-    // global pitcher (responsible for injecting template compiler loader & CSS post loader)
-    const pitcher = {
-      loader: require.resolve('./loaders/pitcher'),
-      resourceQuery: query => {
-        const parsed = qs.parse(query.slice(1))
-        return parsed.vue != null
-      },
-      options: {
-        cacheDirectory: vueLoaderUse.options.cacheDirectory,
-        cacheIdentifier: vueLoaderUse.options.cacheIdentifier
-      }
-    }
-    compiler.options.module.rules = [
-      pitcher,
-      // other rules ....     
-    ]
-  }
-}
-```
-
-
-通过vueloaderplugin注入pitchLoader，对第一次vue-loader的resource进行处理之后处理成下面这样,
-```
--!.template-loader!vue-loader!./test.vue?vue&type=template&id=13429420&coped=true
-```
-
-给各种block添加vue-loader和模块(template,style,js,custom)loader处理,为什么不直接在vueloader中处理的原因生成一个新的request交给webpack处理可以重新匹配到各种代码处理的loader，比如有的人js用了ts模式需要ts-loader有的人style用了scss模式需要scss-loader
-
-## 第三阶段
-
-将第二阶段得到的request交给vue-loader处理得到template中内容，通过loaderContext.callback传给templateLoader，最后生成webpack识别的js module
-```
-module.exports = function (source) {
-  // source 就是读取到的 test.vue 的源文件
-  const loaderContext = this
-  const { resourceQuery = '' } = loaderContext
-  const rawQuery = resourceQuery.slice(1)
-  const inheritQuery = `&${rawQuery}`
-  const incomingQuery = qs.parse(rawQuery)
-  // 通过 @vue/component-compiler-utils 的 parse 解析器，将 test.vue 文件转换为文件描述符
-  // compiler 参数就是 vue-template-compiler 模板解析器
-  const descriptor = parse({
-    source,
-    compiler: options.compiler || loadTemplateCompiler(loaderContext),
-    filename,
-    sourceRoot,
-    needMap: sourceMap
-  })
-  // if the query has a type field, this is a language block request
-  // e.g. foo.vue?type=template&id=xxxxx
-  // and we will return early
-  // 如果查询有一个类型字段，这是一个块请求
-  // 例如foo.vue?type=template&id=xxxxx 尽早return
-  // 我们需要注意 loader 中的return语句，因为多个loader是链式作用的，这个出口的逻辑在第三阶段会有使用，在第一阶段我们暂不讨论
-  if (incomingQuery.type) {
-    return selectBlock(
-      descriptor,
-      loaderContext,
-      incomingQuery,
-      !!options.appendExtension
-    )
-  }
-  // ...
-}
-```
-这里是 vue-loader的第二个出口，通过代码的注释我们知道，当 vue-loader在处理 .vue 文件中的一个 block 请求时，通过 qs.parse 序列化快请求参数 ?vue&type=template&id=13429420&scoped=true&，如果有 type 则返回 selectBlock 函数的执行结果。我们再来看看 selectBlock 干了哪些事情。
-
-```
-module.exports = function selectBlock (
-  descriptor,
-  loaderContext,
-  query,
-  appendExtension
-) {
-  // template
-  if (query.type === `template`) {
-    if (appendExtension) {
-      loaderContext.resourcePath += '.' + (descriptor.template.lang || 'html')
-    }
-    // Tip: 传递给下一个loader
-    loaderContext.callback(
-      null,
-      descriptor.template.content,
-      descriptor.template.map
-    )
-    return
-  }
-}
-```
-selectBlock 依据传入的 query.type，将 descriptor 中对应的部分通过 loaderContext.callback 传递给下一个loader(这里是template-loader) 处理。
 
 # file-loader
 

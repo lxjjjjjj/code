@@ -78,6 +78,7 @@ http2_server_push_url /simple_push.js
 
 [preload和push的区别](https://zhuanlan.zhihu.com/p/48521680)
 ### http3.0
+[原文链接](https://www.smashingmagazine.com/2021/08/http3-core-concepts-part1/)
 基于tcp下就难免存在阻塞问题，如果发生丢包就需要等待上一个包。在http3彻底解决了tcp的队头阻塞问题，它是基于udp协议并且在上层增加了一层QUIC协议。
 
 http3.0 新特性

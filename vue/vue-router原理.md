@@ -86,9 +86,7 @@ history 提供类似 hashchange 事件的 popstate 事件，但 popstate 事件�
 </script>
 </html>
 ```
-## hash路由和history路由的优缺点
-```
-```
+
 ## 拦截pushState和replaceState事件
 
 ```
@@ -129,6 +127,7 @@ elem.addEventListener('build', function (e) { ... }, false);
 elem.dispatchEvent(event);
 ```
 # 选择hash还是history
+
 ## hash
 * 有 # 号
 * 能够兼容到IE8
@@ -163,6 +162,25 @@ history 模式不仅可以在url里放参数，还可以将数据存放在一个
 ### 缺点
 1、需要服务端知道路由
 2、实现路由监听麻烦
+
+
+hash模式是不需要后端服务配合的。但是history模式下，如果你再跳转路由后再次刷新会得到404的错误，这个错误说白了就是浏览器会把整个地址当成一个可访问的静态资源路径进行访问，然后服务端并没有这个文件～看下面例子更好理解
+没刷新时，只是通过pushState改变URL，不刷新页面
+http://192.168.30.161:5500/ === http://192.168.30.161:5500/index.html // 默认访问路径下的index.html文件，没毛病
+http://192.168.30.161:5500/home === http://192.168.30.161:5500/index.html // 仍然访问路径下的index.html文件，没毛病
+...
+http://192.168.30.161:5500/mine === http://192.168.30.161:5500/index.html // 所有的路由都是访问路径下的index.html，没毛病
+复制代码
+一旦在某个路由下刷新页面的时候，想当于去该路径下寻找可访问的静态资源index.html，无果，报错
+http://192.168.30.161:5500/mine === http://192.168.30.161:5500/mine/index.html文件，出问题了，服务器上并没有这个资源，404😭
+复制代码
+所以一般情况下，我们都需要配置下nginx，告诉服务器，当我们访问的路径资源不存在的时候，默认指向静态资源index.html
+```
+location / {
+  try_files $uri $uri/ /index.html;
+}
+```
+
 # vue-router的实现
 [原文链接](https://juejin.cn/post/6844903946343940104#heading-8)
 ## Vue项目中是怎么引入VueRouter

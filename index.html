@@ -1,0 +1,82 @@
+<html>
+    <head>
+        <style>
+            .width{
+                height: 300px;
+                width: 300px;
+            }
+            img {
+                height:100%;
+                width:100%;
+            }
+            .screen {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- <div class="screen" id="screen">
+
+        </div> -->
+        <div class="width">
+            <img id="img1" src=""/>
+        </div>
+        <div class="width">
+            <img id="img2" src=""/>
+        </div>
+        <div class="width">
+            <img id="img3" src=""/>
+        </div>
+        <div class="width">
+            <img id="img4" src=""/>
+        </div>
+        <div class="width">
+            <img id="img5" src=""/>
+        </div>
+        <div class="width">
+            <img id="img6" src=""/>
+        </div>
+        <script>
+            let count = 0
+            const arr = [
+                'https://img1.baidu.com/it/u=2994957850,1031393616&fm=253&fmt=auto&app=120&f=JPEG?w=1280&h=800',
+                'https://img1.baidu.com/it/u=71885453,474453660&fm=253&fmt=auto&app=120&f=JPEG?w=1422&h=800',
+                'https://img0.baidu.com/it/u=4114954710,4054661963&fm=253&fmt=auto&app=120&f=JPEG?w=1280&h=800',
+                'https://img0.baidu.com/it/u=3876987987,3445517006&fm=253&fmt=auto&app=120&f=JPEG?w=1422&h=800',
+                'https://img0.baidu.com/it/u=1845539242,4291551966&fm=253&fmt=auto&app=138&f=JPEG?w=889&h=500',
+                'https://img0.baidu.com/it/u=3222079260,4146877074&fm=253&fmt=auto&app=138&f=JPEG?w=800&h=500'
+            ]
+            function load() {
+                let options = {
+                    // root: document.querySelector('#screen'),
+                    rootMargin: '0px',
+                    threshold: 0
+                }
+                const callback = (entries, observer) => {
+                    entries.forEach((entry) => {
+                        console.log('entry.intersectionRatio', entry.intersectionRatio)
+                        if(entry.intersectionRatio > 0 && count < arr.length) {
+                            const target = document.querySelector(`#img${count + 1}`)
+                            console.log('target', target)
+                            target.src = arr[count]
+                            count++
+                        }
+                    });
+                };
+                
+                let observer = new IntersectionObserver(callback, options);
+                for(let i=0;i<arr.length;i++) {
+                    const target = document.querySelector(`#img${i + 1}`)
+                    observer.observe(target);
+                }
+            }
+            load()
+        </script>
+        
+    </body>
+
+</html>
