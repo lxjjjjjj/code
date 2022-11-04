@@ -1,5 +1,6 @@
 [原文链接](https://juejin.cn/post/6844904034181070861)
 [csrf攻击](https://tech.meituan.com/2018/10/11/fe-security-csrf.html)
+
 # Cookie认证机制
 
 ```
@@ -42,6 +43,13 @@ secure
 httpOnly
 如果给某个 cookie 设置了 httpOnly 属性，则无法通过 JS 脚本 读取到该 cookie 的信息，但还是能通过 Application 中手动修改 cookie，所以只是在一定程度上可以防止 XSS 攻击，不是绝对的安全
 
+### cookie缺点
+
+Cookie 存储在客户端，可随意篡改，不安全
+有大小限制，最大为 4kb
+有数量限制，一般一个浏览器对于一个网站只能存不超过 20 个 Cookie，浏览器一般只允许存放 300个 Cookie
+Android 和 IOS 对 Cookie 支持性不好 Cookie 是不可跨域的，但是一级域名和二级域名是允许共享使用的（靠的是 domain）
+
 ## 什么是 Session
 session 是另一种记录服务器和客户端会话状态的机制
 session 是基于 cookie 实现的，session 存储在服务器端，sessionId 会被存储到客户端的cookie 中
@@ -55,8 +63,8 @@ Cookie 和 Session 的区别
 存取值的类型不同：Cookie 只支持存字符串数据，想要设置其他类型的数据，需要将其转换成字符串，Session 可以存任意数据类型。
 有效期不同： Cookie 可设置为长时间保持，比如我们经常使用的默认登录功能，Session 一般失效时间较短，客户端关闭（默认情况下）或者 Session 超时都会失效。
 存储大小不同： 单个 Cookie 保存的数据不能超过 4K，Session 可存储数据远高于 Cookie，但是当访问量过多，会占用过多的服务器资源。
-
-
+存取值的类型不同： Cookie 只支持字符串数据，Session 可以存任意数据类型；
+有效期不同：Cookie可设置为长时间保持，Session 一般失效时间较短；
 # Token认证机制
 
 ```
@@ -67,6 +75,21 @@ Cookie 和 Session 的区别
 5.客户端每次向服务端请求资源的时候需要带着服务端签发的 token
 6.服务端收到请求，然后去验证客户端请求里面带着的 token ，如果验证成功，就向客户端返回请求的数据
 ```
+## 优点
+1.服务端无状态化、可扩展性好： Token 机制在服务端不需要存储会话（Session）信息，因为 Token 自身包含了其所标识用户的相关信息，这有利于在多个服务间共享用户状态
+
+2.支持 APP 移动端设备；
+
+3.安全性好： 有效避免 CSRF 攻击（因为不需要 Cookie）
+
+4.支持跨程序调用： 因为 Cookie 是不允许跨域访问的，而 Token 则不存在这个问题
+
+## 缺点
+
+1.配合： 需要前后端配合处理；
+2.占带宽： 正常情况下比 sid 更大，消耗更多流量，挤占更多宽带
+3.性能问题： 虽说验证 Token 时不用再去访问数据库或远程服务进行权限校验，但是需要对 Token 加解密等操作，所以会更耗性能；
+4.有效期短： 为了避免 Token 被盗用，一般 Token 的有效期会设置的较短，所以就有了 Refresh Token；
 ## token认证机制出现的原因
 ```
 - cookie认证需要后台存一份session_id到数据库，多服务器时需要session共享。Session是在服务器端的，而 token 是在客户端的。
@@ -107,30 +130,60 @@ Session 和 Token 并不矛盾，作为身份认证 Token 安全性比 Session �
 
 ## JWT认证
 
+Token 的使用方式以及组成，我们不难发现，服务端验证客户端发送过来的 Token 时，还需要查询数据库获取用户基本信息，然后验证 Token 是否有效；这样每次请求验证都要查询数据库，增加了查库带来的延迟等性能消耗；那么这时候业界常用的 JWT 就应运而生了！！！
+
 JSON Web Token（简称 JWT）是目前最流行的跨域认证解决方案。是一种认证授权机制。
+
 JWT 是为了在网络应用环境间传递声明而执行的一种基于 JSON 的开放标准（RFC 7519）。JWT 的声明一般被用来在身份提供者和服务提供者间传递被认证的用户身份信息，以便于从资源服务器获取资源。比如用在用户登录上。可以使用 HMAC 算法或者是 RSA 的公/私秘钥对 JWT 进行签名。因为数字签名的存在，这些传递的信息是可信的。
 
-**jwt认证的构成**
+### 什么是JWT
 
-Header header典型的由两部分组成：token的类型（“JWT”）和算法名称（比如：HMAC SHA256或者RSA等等）。
+JWT 是 Auth0 提出的通过 对 JSON 进行加密签名来实现授权验证的方案；
+
+就是登录成功后将相关用户信息组成 JSON 对象，然后对这个对象进行某种方式的加密，返回给客户端；
+
+客户端在下次请求时带上这个 Token；
+
+服务端再收到请求时校验 token 合法性，其实也就是在校验请求的合法性。
+
+**jwt认证的构成**
+JWT 由三部分组成： Header 头部、 Payload 负载 和 Signature 签名
+
+它是一个很长的字符串，中间用点（.）分隔成三个部分。列如 ：
+
+ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+#### Header header典型的由两部分组成
+token的类型（“JWT”）和算法名称（比如：HMAC SHA256或者RSA等等）。
 {
-    'alg': "HS256",
-    'typ': "JWT"
+    'alg': "HS256", // alg：使用的 Hash 算法，例如 HMAC SHA256 或 RSA.
+    'typ': "JWT" // typ：代表 Token 的类型，这里使用的是 JWT 类型；
 }
 
-标准声明：这里有一组预定义的声明，它们不是强制的，但是推荐。
-iss（jwt 签发者）、sub（jwt 所面向的用户）、aud（接收 jwt 的一方）、exp（jwt 过期时间，必须大于签发时间）nbf（定于在什么时间之前，该 jwt 不可用）、iat（jwt 的签发时间）、jti（jwt 唯一身份表示，主要用来作为一次性 token，从而回避重放攻击）
+#### Payload 负载
+它包含一些声明 Claim (实体的描述，通常是一个 User 信息，还包括一些其他的元数据) ，用来存放实际需要传递的数据，JWT 规定了7个官方字段：
 
-公有声明：可以 添加任何信息，一般添加用户相关信息或者其他业务需要的必要信息，不建议加敏感信息，因为在客户端可解密
+iss (issuer)：签发人
+exp (expiration time)：过期时间
+sub (subject)：主题
+aud (audience)：受众
+nbf (Not Before)：生效时间
+iat (Issued At)：签发时间
+jti (JWT ID)：编号
+除了官方字段，你还可以在这个部分定义私有字段，下面就是一个例子。
 
-私有声明：提供者和消费者共同定义的声明，一般不建议存放敏感信息，这意味着可归类于敏文信息。用于在同意使用它们的各方之间共享信息，并且不是注册的或公开的声明。
+ {
+   "sub": "1234567890",
+   "name": "John Doe",
+   "admin": true
+ }
+#### Signature 签名
+Signature 部分是对前两部分的签名，防止数据篡改。 首先，需要指定一个密钥（secret）。这个密钥只有服务器才知道，不能泄露给用户。然后，使用 Header 里面指定的签名算法（默认是 HMAC SHA256），按照下面的公式产生签名。
 
-签证（signature）
-
-header（base64 后的）
-payload（base64 后的）
-secret 秘钥（盐）
-注意：secret是保存在服务器端的，jwt的签发生成也是在服务器端的，secret就是用来进行jwt的签发和jwt的验证，所以，它就是你服务端的私钥，在任何场景都不应该流露出去。一旦客户端得知这个secret, 那就意味着客户端是可以自我签发jwt了。
+ HMACSHA256(
+   base64UrlEncode(header) + "." +
+   base64UrlEncode(payload),
+   secret)
 
 ### 方式一
 
@@ -288,14 +341,77 @@ JWT 适合一次性的命令认证，颁发一个有效期极短的 JWT，即使
 
 # OAuth 2.0 
 
-```
-是一个行业的标准授权协议。OAuth 2.0 专注于简化客户端开发人员，同时为 Web 应用程序，桌面应用程序，手机和客厅设备提供特定的授权流程。
-它的最终目的是为第三方应用颁发一个有时效性的令牌 token。使得第三方应用能够通过该令牌获取相关的资源。常见的场景就是：第三方登录。当你想要登录某个论坛，但没有账号，而这个论坛接入了如 QQ、Facebook 等登录功能，在你使用 QQ 登录的过程中就使用的 OAuth 2.0 协议。
+[原文链接](https://mp.weixin.qq.com/s?__biz=MzU2Mjg0NDY5Ng==&mid=2247487991&idx=1&sn=9d231fd2ffca433e9c4059450f6d1e6c&chksm=fc621480cb159d96408f75505f0385dd4e7b48eae389c2e5397ee781212581138164826ab21f&cur_album_id=1791804093934469123&scene=189#wechat_redirect)
 
-A 网站让用户跳转到 GitHub。
-GitHub 要求用户登录，然后询问"A 网站要求获得 xx 权限，你是否同意？"
-用户同意，GitHub 就会重定向回 A 网站，同时发回一个授权码。
-A 网站使用授权码，向 GitHub 请求令牌。
-GitHub 返回令牌.
-A 网站使用令牌，向 GitHub 请求用户数据。
-```
+OAuth 是一个开放标准，允许用户授权第三方网站 (CSDN、思否等) 访问他们存储在另外的服务提供者上的信息，而不需要将用户名和密码提供给第三方网站；
+
+常见的提供 OAuth 认证服务的厂商：支付宝、QQ、微信、微博
+
+简单说，OAuth 就是一种授权机制。数据的所有者告诉系统，同意授权第三方应用进入系统，获取这些数据。系统从而产生一个短期的进入令牌（Token），用来代替密码，供第三方应用使用。
+
+令牌（Token） 与 密码（Password） 的作用是一样的，都可以进入系统，但是有三点差异:
+
+令牌是短期的，到期会自动失效：用户自己无法修改。密码一般长期有效，用户不修改，就不会发生变化。
+令牌可以被数据所有者撤销，会立即失效。
+令牌有权限范围（scope）：对于网络服务来说，只读令牌就比读写令牌更安全。密码一般是完整权限。
+
+OAuth 2.0 对于如何颁发令牌的细节，规定得非常详细。具体来说，一共分成四种授权模式 （Authorization Grant） ，适用于不同的互联网场景。
+
+无论哪个模式都拥有三个必要角色：客户端、授权服务器、资源服务器，有的还有用户（资源拥有者），下面简单介绍下四种授权模式。
+
+## 授权码模式
+
+授权码（Authorization Code Grant) 方式，指的是第三方应用先申请一个授权码，然后再用该码获取令牌。
+
+这种方式是最常用的流程，安全性也最高，它适用于那些有后端服务的 Web 应用。授权码通过前端传送，令牌则是储存在后端，而且所有与资源服务器的通信都在后端完成。这样的前后端分离，可以避免令牌泄漏。
+
+一句话概括：客户端换取授权码，客户端使用授权码换token，客户端使用token访问资源
+
+授权码模式的步骤详解
+
+1、客户端：
+
+打开网站 A，点击登录按钮，请求 A 服务，A 服务重定向 (重定向地址如下) 至授权服务器 (如QQ、微信授权服务)。
+
+ https://qq.com/oauth/authorize?
+   response_type=code&
+   client_id=CLIENT_ID&
+   redirect_uri=CALLBACK_URL&
+   scope=read
+上面 URL 中，response_type 参数表示要求返回授权码（code），client_id 参数让 B 知道是谁在请求，redirect_uri 参数是 B 接受或拒绝请求后的跳转网址，scope 参数表示要求的授权范围（这里是只读）
+
+2、授权服务器：
+
+授权服务网站 会要求用户登录，然后询问是否同意给予 A 网站授权。用户表示同意，这时授权服务网站 就会跳回 redirect_uri 参数指定的网址。跳转时，会传回一个授权码，就像下面这样。
+
+https://a.com/callback?code=AUTHORIZATION_CODE
+上面URL中，code 参数就是授权码。
+
+
+3、网站 A 服务器：
+
+拿到授权码以后，就可以向 授权服务器 (qq.com) 请求令牌，请求地址如下：
+
+ https://qq.com/oauth/token?
+  client_id=CLIENT_ID&
+  client_secret=CLIENT_SECRET&
+  grant_type=authorization_code&
+  code=AUTHORIZATION_CODE&
+  redirect_uri=CALLBACK_URL
+上面 URL 中，client_id 参数和client_secret参数用来让授权服务器 确认 A 的身份（client_secret 参数是保密的，因此只能在后端发请求），grant_type参数的值是AUTHORIZATION_CODE，表示采用的授权方式是授权码，code 参数是上一步拿到的授权码，redirect_uri 参数是令牌颁发后的回调网址。
+
+
+4、授权服务器：
+
+收到请求以后，验证通过，就会颁发令牌。具体做法是向 redirect_uri 指定的网址，发送一段 JSON 数据。
+
+ {    
+   "access_token":"ACCESS_TOKEN",
+   "token_type":"bearer",
+   "expires_in":2592000,
+   "refresh_token":"REFRESH_TOKEN",
+   "scope":"read",
+   "uid":100101,
+   "info":{...}
+ }
+上面 JSON 数据中，access_token 字段就是令牌，A 网站在后端拿到了，然后返回给客户端即可。
