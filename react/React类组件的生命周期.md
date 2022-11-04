@@ -10,6 +10,7 @@ constructor(初始化) -> static getDerivedStateFromProps(获取最新的属性�
 static getDerivedStateFromProps(获取最新的属性和状态) -> 是否重新渲染(shouldComponentUpdate) -> render(更新vDOM) -> getSnapshotBeforeUpdate(获取更新之前的状态) -> componentDidUpdate(更新后挂载成真实DOM)
 
 componentWillUnMount，在卸载组件之前做一些事情，通常用来清除定时器等副作用操作。那么挂载阶段和更新阶段中的生命周期我们来逐一看下每个运行点及作用。
+
 # constructor
 在同一个类组件对象只会运行一次。所以经常来做一些初始化的操作。同一个组件对象被多次创建，它们的construcotr互不干扰。
 
@@ -282,6 +283,10 @@ componentWillMount
 componentWillReceiveProps
 componentWillUpdate
 执行setState会造成组件的多次渲染
+
+这两天看了点东西，我自问自答自己提出的一个问题。react为什么要废除componentWillmount componentWillUpdate 和componentWillReceiveProps？
+react分为render phase 和commit phase的，而像componentWillmount componentWillUpdate 和componentWillReceiveProps等几个生命周期函数（包括render）都是属于render phase的，在fiber机制提出前，render phase阶段是不可被打断的（同步渲染），但是同步渲染会有体验问题，比如有几千个组件在渲染时，用户是没办法和浏览器进行交互的（js线程被占用）。在fiber机制提出后，render phase阶段可被打断，被打断后再次执行（优先级别），就会有以上提到的几个生命周期函数被多次调用。所以被废弃掉。componentwillmount 这个生命周期函数之前，有很多程序猿在里面写一些有副作用的code，比如ajax调用，但这种做法react官方是不推荐的。可是又不能禁止。看16.7之后，它推出的新的生命周期getDerivedStateFromProp 函数，就是一个static函数，在里面拿不到this也无法setstate，更符合纯函数的概念。
+
 # componentWillReceiveProps
 [原文链接](https://juejin.cn/post/6844903539391594509)
 在componentWillReceiveProps中想作任何变更最好都将两个状态进行比较，假如状态有异才执行下一步。不然容易造成组件的多次渲染，并且这些渲染都是没有意义的。因为每次组件接收到props和state都会触发这个生命周期的执行
