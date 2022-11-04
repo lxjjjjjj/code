@@ -1,3 +1,39 @@
+[Dan函数组件和class组件的区别](https://overreacted.io/zh-hans/how-are-function-components-different-from-classes/)
+
+# function 和 class 的区别
+
+对于一个场景，你将看到一个当前账号选择框以及两个上面 ProfilePage 的实现 —— 每个都渲染了一个 Follow 按钮。
+
+尝试按照以下顺序来分别使用这两个按钮：
+
+* 点击 其中某一个 Follow 按钮。
+* 在3秒内 切换 选中的账号。
+* 查看 弹出的文本。
+* 你将看到一个奇特的区别:
+[示例代码](https://codesandbox.io/s/pjqnl16lm7?file=/src/ProfilePageFunction.js)
+当使用 函数式组件 实现的 ProfilePage, 当前账号是 Dan 时点击 Follow 按钮，然后立马切换当前账号到 Sophie，弹出的文本将依旧是 'Followed Dan'。当使用 类组件 实现的 ProfilePage, 弹出的文本将是 'Followed Sophie'：
+
+在这个例子中，第一个行为是正确的。如果我关注一个人，然后导航到了另一个人的账号，我的组件不应该混淆我关注了谁。 在这里，类组件的实现很明显是错误的。
+
+这个类方法从 this.props.user 中读取数据。在 React 中 Props 是不可变(immutable)的，所以他们永远不会改变。然而，this是，而且永远是，可变(mutable)的。事实上，这就是类组件 this 存在的意义。React本身会随着时间的推移而改变，以便你可以在渲染方法以及生命周期方法中得到最新的实例。如果函数组件不存在如何解决
+
+```
+class ProfilePage extends React.Component {
+  showMessage = (user) => {
+    alert('Followed ' + user);
+  };
+
+  handleClick = () => {
+    const {user} = this.props;
+    setTimeout(() => this.showMessage(user), 3000);
+  };
+
+  render() {
+    return <button onClick={this.handleClick}>Follow</button>;
+  }
+}
+```
+
 # 对副作用的理解不同了
 
 hooks是函数式编程理念的诠释，将之前一个class组件维护的多个状态拆分，可以将一个相同的state改变产生的副作用放到相同的hooks中，这样可以集中更新。不仅可以使代码更好维护，更可以在react做diff算法过程中优化性能。
