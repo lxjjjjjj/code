@@ -161,7 +161,7 @@ console.log("document:after react mount");
 
 
 // function btnClickHandler(event) {
-// event.stopPropagation();
+// + event.stopPropagation();
 // console.log("btn clicked");
 // }
 
