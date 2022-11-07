@@ -354,12 +354,14 @@ Node结果：
 
 # 浏览器的事件循环
 
-浏览器执行微任务，当某个宏任务执行完后,会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务，执行宏任务的过程中，遇到微任务，依次加入微任务队列。栈空后，再次读取微任务队列里的任务，依次类推。
+所有同步任务都在主线程上执行，形成一个执行栈（execution context stack）。对于消耗时间久会对浏览器渲染产生阻塞的行为放到异步队列中执行。浏览器执行微任务，当某个宏任务执行完后,会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务，执行宏任务的过程中，遇到微任务，依次加入微任务队列。栈空后，再次读取微任务队列里的任务，依次类推。
 浏览器中的时间环中 EventLoop 会清空当前 macro 下产生的所有 micaro 的 callback 。
 
 
-[原文链接](https://juejin.cn/post/7079092748929728548)
 
+[原文链接](https://juejin.cn/post/7079092748929728548)
+[原文链接2](https://juejin.cn/post/6932263539839074311)
+## 一个浏览器页面的线程
 浏览器内核是多线程，在内核控制下各线程相互配合以保持同步，一个浏览器通常由以下常驻线程组成：
 
 - GUI 渲染线程
@@ -389,6 +391,211 @@ Node结果：
 
 * 宏任务队列 Macrotask Queue: ajax、Dom监听、setTimeout、setInterval、 setImmediate、script（整体代码）、 I/O 操作、UI 渲染等。
 * 微任务队列 Microtask Queue: Promise的then回调、 Mutation Observer API、queueMicrotask
+
+
+## 宏任务队列、微任务队列、渲染任务执行的特点
+Tasks(宏任务队列) 只执行一个。执行完了就进入主进程，主进程可能决定进入其他两个异步队列，也可能自己执行到空了再回来。 补充：对于“只执行一个”的理解，可以考虑设置 2 个相同时间的 timeout，两个并不会一起执行，而依然是分批的。
+
+Animation callbacks(渲染任务) 执行队列里的全部任务，但如果任务本身又新增 Animation callback 就不会当场执行了，因为那是下一个循环 补充：同 Tasks(宏任务队列)，可以考虑连续调用两句 requestAnimationFrame，它们会在同一次事件循环内执行，有别于 Tasks (宏任务队列)
+
+Microtasks 直接执行到空队列才继续。因此如果任务本身又新增 Microtasks，也会一直执行下去。所以上面的例子才会产生阻塞。 补充：因为是当次执行，因此如果既设置了 setTimeout(0) 又设置了 Promise.then()，优先执行 Microtasks。
+
+### 测试题
+
+```
+console.log('Start')
+setTimeout(() => console.log('Timeout 1'), 0)
+setTimeout(() => console.log('Timeout 2'),0)
+Promise.resolve().then(()=>{
+for(let i=0;i<100000;i++){}
+  console.log('Promise 1')
+})
+Promise.resolve().then(() => console.log('Promise 2'))
+console.log('End');
+```
+答案 Start, End, Promise 1, Promise 2, Timeout 1, Timeout 2
+```
+let button =document.querySelector('#button');
+∂
+button.addEventListener('click',function CB1() {
+  console.log('Listener 1');
+  setTimeout(() => console.log('Timeout 1'))
+  Promise.resolve().then(() => console.log('Promise 1'))
+});
+button.addEventListener('click',function CB1(){
+  console.log('Listener 2');
+  setTimeout(() => console.log('Timeout 2'))  
+  Promise.resolve().then(() => console.log('Promise 2'))
+});
+```
+## 宏任务队列
+每个页面都对应线程进程。而该进程又有多个线程，比如 JS 线程、渲染线程、IO 线程、网络线程、定时器线程等等，**这些线程之间的通信是通过向对象的任务队列中添加一个任务（postTask）来实现的。宏任务的本质也就是线程间通信的一个消息队列。宏任务的真面目是浏览器派发，与 JS 引擎无关的，参与了 Event Loop 调度的任务。**每次执行栈执行的代码就是一个宏任务，从事件队列中获取一个事件回调放入到执行栈中执行也是一个宏任务。**浏览器为了能够使JS内部macro-task(宏任务)与DOM任务能够有序的执行，会在一个宏任务执行完成之后，在下一个宏任务开始之前，对页面进行重新渲染。**
+script（代码块）
+setTimeout / setInterval
+setImmediate
+I/O
+UI render
+postMessage
+MessageChannel
+## 微任务队列
+微任务是在运行宏任务/同步任务的时候产生的，是属于当前任务的，所以它不需要浏览器的支持，内置在 JS 当中，直接在 JS 的引擎中就被执行掉了。可以理解是在宏任务执行完成之后立即执行的任务。他在渲染之前，无需等待渲染，所以的他响应速度要比宏任务快。在一个宏任务运行期间产生的所有微任务都在当前宏任务之前完成之后立即执行。 Microtasks 就是在 当次 事件循环的 结尾 立刻执行 的任务。 Promise.then() 内部的代码就属于 microtasks。相对而言，之前的异步队列 (Task queue) 也叫做 macrotasks，不过一般还是简称为 tasks。这段代码是在执行 microtasks 的时候，又把自己添加到了 microtasks 中，看上去是和那个 setTimeout 内部继续 setTimeout 类似。但实际效果却和第一段 addEventListener 内部 while(true) 一样，是会阻塞主进程的。这和 microtasks 内部的执行机制有关。
+
+process.nextTick
+Promise
+Async/Await
+MutationObserver
+
+## 渲染任务
+
+其实在同步任务、异步任务之外还有渲染任务。页面并不是时时刻刻去渲染的，而是有他固定的节奏去渲染（render steps），一般情况浏览器的渲染是每秒60次，遵循W3C规则的浏览器是跟随电脑的刷新频率进行渲染。在它内部分为三个小步骤：
+
+Structure - 构建 DOM 树的结构
+Layout - 确认每个 DOM 的大致位置（排版）
+Paint - 绘制每个 DOM 具体的内容（绘制）
+
+## 特殊的requestAnimationFrame
+
+requestAnimationFrame是一个特殊的异步任务，他不会被加入到异步任务队列，而是被加入到渲染任务，他在渲染任务的三个步骤之前执行，用来处理渲染相关的工作。
+
+## requestAnimationFrame和setTimeout有什么不同
+他们的不同可以从他们所属的任务找出不一样。requestAnimationFrame属于渲染任务setTimeout属于宏任务。同个一个例子再来看看他们的区别
+```
+functuin callBack() {
+	move()； // 让元素移动1PX
+    requestAnimationFrame(callBack);
+}
+
+functuin callBack() {
+	move()； // 让元素移动1PX
+    setTimeout(() => {
+    	callBack();
+    }, 0);
+}
+```
+这两种方法来让 box 移动起来。但实际测试发现，使用 setTimeout 移动的 box 要比 requestAnimationFrame 速度快得多。这表明单位时间内 callback 被调用的次数是不一样的。
+这是因为 setTimeout 在每次运行结束时都把自己添加到异步队列。等渲染过程的时候（不是每次执行异步队列都会进到渲染循环）异步队列已经运行过很多次了，所以渲染部分会一下会更新很多像素，而不是 1 像素。 requestAnimationFrame 只在渲染过程之前运行，因此严格遵守“执行一次渲染一次”，所以一次只移动 1 像素，是我们预期的方式。
+如果在低端环境兼容，常规也会写作 setTimeout(callback,1000/60) 来大致模拟 60 fps 的情况，但本质上 setTimeout 并不适合用来处理渲染相关的工作。因此和渲染动画相关的，多用 requestAnimationFrame，不会有掉帧的问题（即某一帧没有渲染，下一帧把两次的结果一起渲染了）
+
+## 浏览器对同步代码的合并
+[原文链接](https://mp.weixin.qq.com/s/DSaLOOF0yBe8mEP5zywXng)
+先看这段代码，效果其实并不会box先显示在影藏，它是浏览器的一种自我优化策略，现代浏览器都有渲染队列的机制，会把它们捆绑在一起执行。我们经常在优化的时候会说，减少DOM的回流和重绘的一种手段就是DOM的读写分离，就是因为浏览器的渲染队列机制。
+
+代码分析2
+```
+box.style.display = 'none';
+box.style.display = 'block';
+box.style.display = 'none';
+
+```
+```
+document.body.appendChild(el)
+el.style.display = 'none'
+```
+这两句代码先把一个元素添加到 body，然后隐藏它。从直观上来理解，可能大部分人觉得如此操作会导致页面闪动，因此编码时经常会交换两句的顺序：先隐藏再添加。
+
+但实际上两者写法都不会造成闪动，因为他们都是同步代码。浏览器会把同步代码捆绑在一起执行，然后以执行结果为当前状态进行渲染。因此无论两句是什么顺序，浏览器都会执行完成后再一起渲染，因此结果是相同的。
+
+代码分析1
+```
+button.addEventListener('click',()=>{
+while(true);
+})
+```
+点击后会导致异步队列永远执行，因此不单单主进程，渲染过程也同样被阻塞而无法执行，因此页面无法再选中（因为选中时页面表现有所变化，文字有背景色，鼠标也变成 text），也无法再更换内容。（但鼠标却可以动！）
+
+如果我们把代码改成这样
+```
+function loop() {
+  setTimeout(loop,0)
+}
+loop()
+```
+每个异步任务的执行效果都是加入一个新的异步任务，新的异步任务将在下一次被执行，因此就不会存在阻塞。主进程和渲染过程都能正常进行。
+
+我们的本意是从让 box 元素的位置从 0 一下子 移动到 1000，然后 动画移动 到 500。
+```
+box.style.transform = 'translateX(1000px)'
+box.style.tranition = 'transform 1s ease'
+box.style.transform = 'translateX(500px)'
+```
+我们的本意是从让 box 元素的位置从 0 一下子 移动到 1000，然后 动画移动 到 500。
+
+但实际情况是从 0 动画移动 到 500。这也是由于浏览器的合并优化造成的。第一句设置位置到 1000 的代码被忽略了。
+
+解决方法有 2 个：
+第一种：我们刚才提过的 requestAnimationFrame。思路是让设置 box 的初始位置（第一句代码）在同步代码执行；让设置 box 的动画效果（第二句代码）和设置 box 的重点位置（第三句代码）放到下一帧执行。
+但要注意， requestAnimationFrame 是在渲染过程 之前 执行的，因此直接写成
+```
+box.style.transform = 'translateX(1000px)'
+requestAnimationFrame(()=>{
+  box.style.tranition = 'transform 1s ease'
+  box.style.transform = 'translateX(500px)'
+})
+```
+是无效的，因为这样这三句代码依然是在同一帧中出现。那如何让后两句代码放到下一帧呢？这时候我们想到一句话：没有什么问题是一个 requestAnimationFrame 解决不了的，如果有，那就用两个：
+```
+box.style.transform = 'translateX(1000px)'
+requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+    box.style.tranition = 'transform 1s ease'
+    box.style.transform = 'translateX(500px)'
+  })
+})
+```
+在渲染过程之前，再一次注册 requestAnimationFrame，这就能够让后两句代码放到下一帧去执行了，问题解决。（当然代码看上去有点奇怪）
+
+第二种：你之所以没有在平时的代码中看到这样奇葩的嵌套用法，是因为还有更简单的实现方式，并且同样能够解决问题。这个问题的根源在于浏览器的合并优化，那么打断它的优化，就能解决问题。
+
+```
+box.style.transform = 'translateX(1000px)'
+getComputedStyle(box) // 伪代码，只要获取一下当前的计算样式即可
+box.style.tranition = 'transform 1s ease'
+box.style.transform = 'translateX(500px)'
+
+```
+## 一段神奇的代码
+```
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 1');
+    });
+    console.log('listener 1'); 
+});
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 2');
+    });
+    console.log('listener 2'); 
+});
+```
+在浏览器上运行点击按钮，输出结果：
+
+listener 1、microtask 1、listener2、microtask 2
+
+```
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 1');
+    });
+    console.log('listener 1'); 
+});
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 2');
+    });
+    console.log('listener 2'); 
+});
+button.click();
+```
+输出结果有所不用：
+
+listener 1 、listener 2、microtask 1 、microtask 2
+
+为什么会出现这样的情况了？
+
+第一种情况下，浏览器并不知道会有几个listener，会一个一个执行，当前执行完成之后，在看看后面还没有其他的listener，当第一个listener执行完成之后，主任务为空了，执行异步任务输出microtask 1。再执行第二个listener。
+第二种情况，使用button.click，浏览器会把click手机到事件队列中，依次同步执行。当同步执行完成之后，再执行异步任务。
+
 
 ## chromeV8引擎对async await的优化
 原理上执行await之后的async2函数本来已经跳出async1函数了，此时已经将async1函数的浏览器的主线程执行权力交给了async下面的函数执行。所以async1 end应该是promise1和promise2后面执行的。但是chrome优化之后，这种情况的话相当于直接把await后面的代码注册为一个微任务，可以简单理解为promise.then(await下面的代码)。然后跳出async1函数，执行其他代码。所以async1 end比promise1和promise2先执行。

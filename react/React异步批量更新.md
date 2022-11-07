@@ -182,3 +182,41 @@ A: 前文说到 setTimeout 里面会同步是由于 setTimeout 会把里面的�
 ## Q: 为什么不用Promise.resolve().then() 去替代事务机制?
 A: 我也看到很多文章直接用 Promise.resolve().then() 来模拟，但我觉得应该是不对的，在我看来这两者有本质的差异。Promise.resolve().then 是利用了微任务的原理进行延迟执行，这个延迟更新的时间就不太好控制了，如果当前宏任务内有一些耗时任务执行？如果又插入了其他微任务呢？而React 倡导的是函数式编程，函数式编程的思想是一切透明，可控，可预测。放入微任务明显颗粒度不足，可控性不强，我猜这才是 React 方面实现事务机制的根本原因。
 
+# 为什么React采取异步更新
+[原文链接](https://github.com/facebook/react/issues/11527)
+
+## 保证内部一致性
+即使state是同步更新，props也不是。props（在重新渲染父组件之前，您无法知道，如果您同步执行此操作，批处理就会消失。）
+
+比如一个例子,也就是多个子组件公用一个父亲的state，那么我们将更新这个state的方法也当作props传到子组件中，调用this.props.onIncrement();更新父组件的state，但是由于父组件不重新渲染，那子组件是获取不到新的state，那么同步的更新就失效了。在 React 中，只有在协调和刷新之后才更新和更新，所以你会看到this.state在重构之前和之后都被打印出来。this.props这使得提升状态安全。
+
+```
+当您仅使用状态时，如果它同步刷新（如您所建议的那样），则此模式将起作用：
+
+console.log(this.state.value) // 0
+this.setState({ value: this.state.value + 1 });
+console.log(this.state.value) // 1
+this.setState({ value: this.state.value + 1 });
+console.log(this.state.value) // 2
+但是，假设需要提升此状态以在几个组件之间共享，因此您将其移动到父级：
+
+-this.setState({ value: this.state.value + 1 });
++this.props.onIncrement(); // Does the same thing in a parent
+我想强调的是，在依赖setState()于此的典型 React 应用程序中，这是您每天都会进行的最常见的一种特定于 React 的重构。
+
+但是，这破坏了我们的代码！
+
+console.log(this.props.value) // 0
+this.props.onIncrement();
+console.log(this.props.value) // 0
+this.props.onIncrement();
+console.log(this.props.value) // 0
+```
+## 启用并发更新(react18的模式)
+React一直在探究一种“异步渲染”的一种方式是，React 可以根据调用的来源为调用分配不同的优先级setState()：事件处理程序、网络响应、动画等。
+
+比如：如果您正在键入消息，则需要立即刷新组件setState()中的调用。但是，如果您在键入时TextBox收到一条新消息，最好将新消息的呈现延迟到某个阈值（例如一秒），而不是让键入由于阻塞线程而结结巴巴。
+
+异步渲染不仅仅是性能优化。我们认为这是 React 组件模型可以做什么的根本性转变。
+
+如果导航速度足够快（大约在一秒钟内），闪烁并立即隐藏微调器会导致用户体验下降。更糟糕的是，如果您有多个级别的组件具有不同的异步依赖项（数据、代码、图像），您最终会得到一连串短暂闪烁的微调器。由于所有的 DOM 重排，这既在视觉上令人不快，又使您的应用程序在实践中变慢。它也是许多样板代码的来源。

@@ -195,3 +195,24 @@ export function render(_ctx, _cache, $props, $setup, $data, $options) {
 
 函数式编程对于ts静态编译更友好
 
+# 编译优化
+vue 2.x 更新粒度 组件级别
+vue 3.x 更新粒度 动态内容的数量相关
+```
+<template>
+  <div id="content">
+    <p class="text">1</p>
+    <p class="text">2</p>
+    <p class="text">3</p>
+    <p class="text">{{message}}</p>
+    <p class="text">4</p>
+    <p class="text">5</p>
+    <p class="text">6</p>
+  </div>
+</template>
+```
+
+虽然这段代码中只有一个动态节点，但在如果 message 发生改变，单个组件内部依然需要遍历该组件的整个 vnode 树，所以这里有很多 diff 和遍历其实都是不需要的，这就会导致 vnode 的性能跟模版大小正相关，跟动态节点的数量无关，当一些组件的整个模版内只有少量动态节点时，这些遍历都是性能的浪费。
+Vue.js 3.0 做到了，它通过编译阶段对静态模板的分析，编译生成了 Block tree。Block tree 是一个将模版基于动态节点指令切割的嵌套区块，每个区块内部的节点结构是固定的，而且每个区块只需要以一个 Array 来追踪自身包含的动态节点。
+借助 Block tree，Vue.js 将 vnode 更新性能由与模版整体大小相关提升为与动态内容的数量相关，这是一个非常大的性能突破。
+
