@@ -15,7 +15,7 @@
 ```
 # 实现
 keep-alive作为一个抽象组件，在建立父子关系的时候会利用组件的abstract属性，不将keep-alive渲染在dom上。
-keep-alive的render方法和普通的组件render方法不同，通过slot获取到第一个子组件之后，看是否符合缓存策略，如果没有命中那么直接返回vnode，否则走如下的缓存逻辑，如果cache缓存中有vnode那么就直接取缓存的vnode，并且将key删除，将新的keypush到数组结尾。如果缓存没有那么就新增cache数据，并且新增key，并且当keys.length大于max的值的时候，就删除数组第一个值。最远没有使用过的值（LRU缓存策略）
+keep-alive的render方法和普通的组件render方法不同，通过slot获取到第一个子组件之后，看是否符合缓存策略，如果没有命中那么直接返回vnode，否则走如下的缓存逻辑，如果cache缓存中有vnode那么就直接取缓存的vnode，并且将key删除，将新的key push到数组结尾。如果缓存没有那么就新增cache数据，并且新增key，并且当keys.length大于max的值的时候，就删除数组第一个值。最远没有使用过的值（LRU缓存策略）
 ```
 export default {
   name: 'keep-alive',
@@ -184,7 +184,7 @@ let vm = new Vue({
 我们之前分析过，当数据发送变化，在 patch 的过程中会执行 patchVnode 的逻辑，它会对比新旧 vnode 节点，甚至对比它们的子节点去做更新逻辑，但是对于组件 vnode 而言，是没有 children 的，那么对于 <keep-alive> 组件而言，如何更新它包裹的内容呢？原来 patchVnode 在做各种 diff 之前，会先执行 prepatch 的钩子函数,由于 <keep-alive> 组件本质上支持了 slot，所以它执行 prepatch 的时候，需要对自己的 children，也就是这些 slots 做重新解析，并触发 <keep-alive> 组件实例 $forceUpdate 逻辑，也就是重新执行 <keep-alive> 的 render 方法，这个时候如果它包裹的第一个组件 vnode 命中缓存，则直接返回缓存中的 vnode.componentInstance，在我们的例子中就是缓存的 A 组件，接着又会执行 patch 过程，再次执行到 createComponent 方法,这个时候 isReactivated 为 true（isReactivated属性是通过判断是否有组件实例和组件的keepAlive值是否为true判断），并且在执行 init 钩子函数的时候不会再执行组件的 mount 过程了,能看出在reactivateComponent方法内只会执行实例的activate生命周期
 
 ### 总结
-keep-alive通过自定义 render 函数并且利用了插槽，组件包裹的子元素——也就是插槽是是通过<keep-alive>的prepatch方法中调用$forthUpdate执行render函数，slot组件执行createComponent做更新的，如果是缓存过的组件就不会再执行create和mounted生命周期，只会执行attached生命周期
+keep-alive通过自定义 render 函数并且利用了插槽(slot)，组件包裹的子元素——也就是插槽(slot)是是通过<keep-alive>的prepatch方法中调用$forthUpdate执行render函数，slot组件执行createComponent做更新的，如果是缓存过的组件就不会再执行create和mounted生命周期，只会执行attached生命周期
 ```
 const componentVNodeHooks = {
   prepatch (oldVnode: MountedComponentVNode, vnode: MountedComponentVNode) {

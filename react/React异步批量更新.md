@@ -220,3 +220,39 @@ React一直在探究一种“异步渲染”的一种方式是，React 可以根
 异步渲染不仅仅是性能优化。我们认为这是 React 组件模型可以做什么的根本性转变。
 
 如果导航速度足够快（大约在一秒钟内），闪烁并立即隐藏微调器会导致用户体验下降。更糟糕的是，如果您有多个级别的组件具有不同的异步依赖项（数据、代码、图像），您最终会得到一连串短暂闪烁的微调器。由于所有的 DOM 重排，这既在视觉上令人不快，又使您的应用程序在实践中变慢。它也是许多样板代码的来源。
+
+# React版本升级setState之后的生命周期的变化
+[原文链接](https://juejin.cn/post/6996312731519303687)
+不管同步异步，setState 在被调用过后， React 做了什么？如果你对 React 版本的更新的历史比较了解，在不同 React 版本 setSatate 触发之后可能会存在一些小的差异，但是整体的思路是一样的。
+React15
+
+触发 setState
+shouldComponentUpdate
+componentWillUpdate
+render
+componentDidUpdate
+
+React16.3
+
+触发 setState
+shouldComponentUpdate
+render
+getSnpshotBeforeUpdate
+componentDidUpdate
+
+React16.4
+
+触发 setState
+getDerivedStateFromProps
+shouldComponentUpdate
+render
+getSnapshotBeforeUpdate
+componentDidUpdate
+
+从这个简易的流程图可以看到，当触发 setState 之后，会有一个完整的更新流程，涉及了包括 re-render（重渲染） 在内的多个步骤。re-render 本身涉及对 DOM 的操作，它会带来较大的性能开销。假如说“一次 setState 就触发一个完整的更新流程”这个结论成立，那么每一次 setState 的调用都会触发一次 re-render，我们的视图很可能没刷新几次就卡死了。
+
+## 合成事件、生命周期和setState的关系
+[原文链接](https://juejin.cn/post/6996312731519303687)
+在 onClick、onFocus 等事件中，由于合成事件封装了一层，所以可以将 isBatchingUpdates 的状态更新为 true；在 React 的生命周期函数中，同样可以将 isBatchingUpdates 的状态更新为 true。那么在 React 自己的生命周期事件和合成事件中，可以拿到 isBatchingUpdates 的控制权，将状态放进队列，控制执行节奏。而在外部的原生事件中，并没有外层的封装与拦截，无法更新 isBatchingUpdates 的状态为 true。这就造成 isBatchingUpdates 的状态只会为 false，且立即执行。所以在 addEventListener 、setTimeout、setInterval 这些原生事件中都会同步更新。
+
+
