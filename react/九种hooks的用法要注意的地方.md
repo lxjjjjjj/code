@@ -1,3 +1,4 @@
+[原文链接](https://juejin.cn/post/7118937685653192735)
 # useState
 ## 产生闭包的问题
 ```
@@ -30,83 +31,22 @@ export {
   DemoState
 }
 ```
-## 批量更新原则
-[原文链接](https://juejin.cn/post/7000742887583383583)
-state 的变化 React 内部遵循的是批量更新原则。所谓异步批量是指在一次页面更新中如果涉及多次 state 修改时，会合并多次 state 修改的结果得到最终结果从而进行一次页面更新。react什么时候会合并多次更新，什么时候并不会合并多次更新。
-
-1.凡是React可以管控的地方，他就是异步批量更新。比如事件函数，生命周期函数中，组件内部同步代码。
-2.凡是React不能管控的地方，就是同步批量更新。比如setTimeout,setInterval,源生DOM事件中，包括Promise中都是同步批量更新。
+① 在函数组件一次执行上下文中，state 的值是固定不变的。
+② 如果两次 dispatchAction 传入相同的 state 值，那么组件就不会更新。
 ```
-import React from 'react'
-class Counter extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = {
-        number: 0,
-      };
+export default function Index(){
+    const [ state  , dispatchState ] = useState({ name:'alien' })
+    const  handleClick = ()=>{ // 点击按钮，视图没有更新。
+        state.name = 'Alien'
+        dispatchState(state) // 直接改变 `state`，在内存中指向的地址相同。
     }
-    // 在事件处理函数中setState的调用会批量异步执行
-    // 但是加了setTimeout之后，更新就是同步的 会一次加两个数
-    // 但是如果不加异步的话 就是虽然执行了两次相加操作 但是只会加一次数
-    handleClick = (event) => {
-        // setTimeout(() => {
-        //     this.setState({ number: this.state.number + 1 });
-        //     console.log(this.state); // 1
-        //     this.setState({ number: this.state.number + 1 });
-        //     console.log(this.state); // 2
-        // });
-        Promise.resolve().then(() => {
-			this.setState({ number: this.state.number + 1 });
-			console.log(this.state); // 1
-			this.setState({ number: this.state.number + 1 });
-			console.log(this.state); // 2
-		});
-        // 这样能拿到值的原因是因为state是个队列 每次更新的时候都会把上一次的值传给一下个更新函数，所以能拿到上一次的值
-        this.setState((state) => {
-            console.log(state.number, 'number'); // 上一次是1
-            return { number: state.number + 1 };
-        })
-        console.log(this.state); // 1
-        this.setState((state) => {
-            console.log(state.number, 'number'); // 上一次是1
-            return { number: state.number + 1 };
-        });
-        console.log(this.state); // 2
-    };
-  
-    render() {
-      return (
-        <div>
-          <p>{this.state.number}</p>
-          <button onClick={this.handleClick}>+</button>
-        </div>
-      );
-    }
-  }
-const element = <Counter></Counter>;
-ReactDOM.render(element, document.getElementById('root'));
-
-```
-函数式这么写也拿不到新的值
-```
-function Counter(){
-    const [number, setNumber] = useState(0)
-    const handleClick = () => {
-        setNumber(number + 1)
-        console.log('number',number)
-        setNumber(number + 1)
-        console.log('number',number)
-    }
-    return (
-        <div>
-            <p>{number}</p>
-            <button onClick={handleClick}>+</button>
-        </div>
-        );
+    return <div>
+         <span> { state.name }</span>
+        <button onClick={ handleClick }  >changeName++</button>
+    </div>
 }
 ```
-在 React 18 中通过 createRoot 中对外部事件处理程序进行批量处理，换句话说最新的 React 中关于 setTimeout、setInterval 等不能管控的地方都变为了批量更新。
-
+③ 当触发 dispatchAction 在当前执行上下文中获取不到最新的 state, 只有再下一次组件 rerender 中才能获取到。
 
 # useEffect
 

@@ -251,8 +251,124 @@ componentDidUpdate
 
 从这个简易的流程图可以看到，当触发 setState 之后，会有一个完整的更新流程，涉及了包括 re-render（重渲染） 在内的多个步骤。re-render 本身涉及对 DOM 的操作，它会带来较大的性能开销。假如说“一次 setState 就触发一个完整的更新流程”这个结论成立，那么每一次 setState 的调用都会触发一次 re-render，我们的视图很可能没刷新几次就卡死了。
 
-## 合成事件、生命周期和setState的关系
+# 合成事件、生命周期和setState的关系
 [原文链接](https://juejin.cn/post/6996312731519303687)
 在 onClick、onFocus 等事件中，由于合成事件封装了一层，所以可以将 isBatchingUpdates 的状态更新为 true；在 React 的生命周期函数中，同样可以将 isBatchingUpdates 的状态更新为 true。那么在 React 自己的生命周期事件和合成事件中，可以拿到 isBatchingUpdates 的控制权，将状态放进队列，控制执行节奏。而在外部的原生事件中，并没有外层的封装与拦截，无法更新 isBatchingUpdates 的状态为 true。这就造成 isBatchingUpdates 的状态只会为 false，且立即执行。所以在 addEventListener 、setTimeout、setInterval 这些原生事件中都会同步更新。
+
+# 批量更新原则
+[原文链接](https://juejin.cn/post/7000742887583383583)
+state 的变化 React 内部遵循的是批量更新原则。所谓异步批量是指在一次页面更新中如果涉及多次 state 修改时，会合并多次 state 修改的结果得到最终结果从而进行一次页面更新。react什么时候会合并多次更新，什么时候并不会合并多次更新。
+
+1.凡是React可以管控的地方，他就是异步批量更新。比如事件函数，生命周期函数中，组件内部同步代码。
+2.凡是React不能管控的地方，就是同步批量更新。比如setTimeout,setInterval,源生DOM事件中，包括Promise中都是同步批量更新。
+```
+import React from 'react'
+class Counter extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        number: 0,
+      };
+    }
+    // 在事件处理函数中setState的调用会批量异步执行
+    // 但是加了setTimeout之后，更新就是同步的 会一次加两个数
+    // 但是如果不加异步的话 就是虽然执行了两次相加操作 但是只会加一次数
+    handleClick = (event) => {
+        // setTimeout(() => {
+        //     this.setState({ number: this.state.number + 1 });
+        //     console.log(this.state); // 1
+        //     this.setState({ number: this.state.number + 1 });
+        //     console.log(this.state); // 2
+        // });
+        Promise.resolve().then(() => {
+			this.setState({ number: this.state.number + 1 });
+			console.log(this.state); // 1
+			this.setState({ number: this.state.number + 1 });
+			console.log(this.state); // 2
+		});
+        // 这样能拿到值的原因是因为state是个队列 每次更新的时候都会把上一次的值传给一下个更新函数，所以能拿到上一次的值
+        this.setState((state) => {
+            console.log(state.number, 'number'); // 上一次是1
+            return { number: state.number + 1 };
+        })
+        console.log(this.state); // 1
+        this.setState((state) => {
+            console.log(state.number, 'number'); // 上一次是1
+            return { number: state.number + 1 };
+        });
+        console.log(this.state); // 2
+    };
+  
+    render() {
+      return (
+        <div>
+          <p>{this.state.number}</p>
+          <button onClick={this.handleClick}>+</button>
+        </div>
+      );
+    }
+  }
+const element = <Counter></Counter>;
+ReactDOM.render(element, document.getElementById('root'));
+
+```
+函数式这样写也是一样的异步批量更新
+```
+function Counter(){
+    const [number, setNumber] = useState(0)
+    const handleClick = () => {
+        setNumber(number + 1)
+        console.log('number',number)
+        setNumber(number + 1)
+        console.log('number',number)
+    }
+    return (
+        <div>
+            <p>{number}</p>
+            <button onClick={handleClick}>+</button>
+        </div>
+        );
+}
+```
+如果想要同步批量更新需要写成
+```
+function Counter(){
+    const [number, setNumber] = useState(0)
+    const handleClick = () => {
+        setTimeout(() => {
+            setNumber(number + 1)
+            console.log('number',number)
+            setNumber(number + 1)
+            console.log('number',number)
+        })
+    }
+    return (
+        <div>
+            <p>{number}</p>
+            <button onClick={handleClick}>+</button>
+        </div>
+        );
+}
+```
+或者(其实这也是异步批量更新只不过可以拿到之前的值)
+```
+function Counter(){
+    const [number, setNumber] = useState(0)
+    const handleClick = () => {
+        setNumber(number => number + 1)
+        console.log('number',number)
+        setNumber(number => number + 1)
+        console.log('number',number)
+    }
+    return (
+        <div>
+            <p>{number}</p>
+            <button onClick={handleClick}>+</button>
+        </div>
+        );
+}
+```
+在 React 18 中通过 createRoot 中对外部事件处理程序进行批量处理，换句话说最新的 React 中关于 setTimeout、setInterval 等不能管控的地方都变为了批量更新。
+
 
 
