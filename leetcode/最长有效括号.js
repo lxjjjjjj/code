@@ -11,3 +11,7 @@
 // 输入：s = ""
 // 输出：0
 
+function longKuohao(){
+    
+}
+
