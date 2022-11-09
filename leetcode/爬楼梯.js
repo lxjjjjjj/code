@@ -17,5 +17,19 @@
 // 2. 1 阶 + 2 阶
 // 3. 2 阶 + 1 阶
 
+function step(num) {
+    let time = 0
+    function loop(num) {
+        if(num === 0) {
+            time++
+            return
+        }
+        loop(num - 1)
+        loop(num - 2)
+    }
+    return time
+}
+console.log(step(2))
+
 
 
