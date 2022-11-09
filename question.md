@@ -23,3 +23,6 @@ vscode插件如何转化语义化样式为原子类样式
 import() 和 import...from的区别
 === 和 == 区别
 null 和 undefined 区别
+
+[新鲜的面试题](https://juejin.cn/post/7142690757722243102#heading-1)
+[手写题面试题](https://github.com/Advanced-Frontend/Daily-Interview-Question/issues/378)
