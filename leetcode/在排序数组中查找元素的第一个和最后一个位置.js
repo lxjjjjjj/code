@@ -23,5 +23,27 @@
  * @return {number[]}
  */
 var searchRange = function(nums, target) {
-    
+    if(!nums.length) {
+        return [-1, -1]
+    }
+    let index = [0, nums.length - 1], mid = Math.floor((nums.length - 1) / 2), res = []
+    if(nums[mid] >= target && nums.length > 2) {
+        index = [0, mid]
+    }
+    if(nums[mid] < target && nums.length > 2) {
+        index = [mid, nums.length - 1]
+    }
+    console.log('index', index)
+    for(let i = index[0]; i <= index[1]; i++) {
+        console.log('nums[i]', nums[i], 'target', target)
+        if(nums[i] === target){
+            res.push(i)
+        }
+    }
+    console.log('res', res)
+    if(res.length === 1) return [res[0], res[0]]
+    return [res[0] === undefined ? -1 : res[0], res[res.length - 1] === undefined ? -1 : res[res.length - 1]]
 };
+// console.log(searchRange([5,7,7,8,8,10], 6))
+// console.log(searchRange([5,7,7,8,8,10], 8))
+console.log(searchRange([2,2], 2))
