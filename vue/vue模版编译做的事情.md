@@ -1,0 +1,3 @@
+模版如何和render做关联的
+
+模版编译生成的render函数 会在组件mount和update的时候创建watcher，在new watcher的时候将render函数传给watcher执行收集依赖
