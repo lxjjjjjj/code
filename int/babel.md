@@ -13,20 +13,16 @@ Babel 是一个 JS 编译器，Babel 是一个工具链，主要用于将 ECMASc
 
 最新ES Api，比如Promise、最新ES实例/静态方法，比如String.prototype.include、语法层面的转化preset-env完全可以胜任。但是一些内置方法模块，仅仅通过preset-env的语法转化是无法进行识别转化的
 
-babel内置的polyfill包
+**babel内置的polyfill包**
 
-```
-@babel/polyfill
+* @babel/polyfill
+* @babel/runtime
+* @babel/plugin-transform-runtime
 
-@babel/runtime
-
-@babel/plugin-transform-runtime
-```
 # babel-core
 
-```
 babel在编译代码过程中核心的库就是@babel/core。babel-core其实相当于@babel/parse和@babel/generator这两个包的合体
-```
+
 大概做的事情
 ```
 const core = require('@babel/core');
@@ -53,7 +49,7 @@ function babelLoader(sourceCode, options) {
 ## 插件顺序
 如果两个转换插件都将处理“程序（Program）”的某个代码片段，则将根据转换插件或 preset 的排列顺序依次执行。
 * 插件在 Presets 前运行。
-* 插件顺序从前往后排列。
+* plugin 执行顺序从前往后排列。
 * Preset 顺序是颠倒的（从后往前）。
   
 ```
@@ -418,10 +414,9 @@ babel-preset-react这个预设起到的就是将jsx进行转译的作用。
 
 # 使用polyfill的总结
 
-```
 在babel中实现polyfill主要有两种方式：
 
-一种是通过@babel/polyfill配合preset-env去使用，这种方式可能会存在污染全局作用域。
+## 一种是通过@babel/polyfill配合preset-env去使用，这种方式可能会存在污染全局作用域。
 
 Preset-env 下使用方式的entry和usage的最佳实践
 
@@ -433,7 +428,7 @@ entry 方式不是一无是处，我们在使用 Babel 时会将 Babel 编译排
 
 
 
-一种是通过@babel/runtime配合@babel/plugin-transform-runtime去使用，这种方式并不会污染作用域。
+## 一种是通过@babel/runtime配合@babel/plugin-transform-runtime去使用，这种方式并不会污染作用域。
 
 @babel/runtime 在转译会在每个模块中各自实现一遍一些 _extend()， classCallCheck() 之类的辅助工具函数，当我们项目中的模块比较多时每个项目中都实现一次这些方法，这无疑是一种噩梦。
 @babel/plugin-transform-runtime 这个插件正式基于 @babel/runtime 可以更加智能化的分析我们的代码，同时 @babel/plugin-transform-runtime 支持一个 helper 参数默认为 true 它会提取 @babel/runtime 编译过程中一些重复的工具函数变成外部模块引入的方式。
@@ -456,7 +451,6 @@ entry 方式不是一无是处，我们在使用 Babel 时会将 Babel 编译排
 但是切记设置 runtime 的 corejs:false 选项，关闭 runtime 提供的 polyfill 的功能，仅保留一种 polyfill 提供方案。
 最后，无论是哪一种 polyfill 的方式，我强烈推荐你使用 corejs@3 版本来提供 polyfill。
 
-```
 
 ```
 import commonjs from 'rollup-plugin-commonjs';
@@ -571,12 +565,12 @@ Tree Shaking必须基于Es Module模块
 import { cloneDeep } from 'lodash'
 
 // ... 业务代码
-复制代码
+
 当你这样使用lodash时，由于打包出来的lodash并不是基于esm模块规范的。所以我们无法达到Tree Shaking的效果。
 import cloneDeep from 'lodash/cloneDeep'
 
 // ... 业务代码
-复制代码
+
 此时，由于lodash中的cloneDeep方法存在的位置是一个独立的文件--lodash/cloneDeep文件。
 当我们这样引入时，相当于仅仅引入了一个js文件而已。就可以显著的减少引入的体积从而删除无用的代码。
 
