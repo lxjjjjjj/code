@@ -1,7 +1,11 @@
 [原文链接](https://github.com/lihongxun945/myblog/issues/21)
+[Lucas HC回答Vue和React的区别](https://www.zhihu.com/question/301860721/answer/724759264)
 # Vue & React单向数据流的实现不同
 
 单向数据流是只能有一个方向修改状态，优点是所有状态可记录，可跟踪，维护性强。Vue在父子组件的单向数据流的实现上和react不同，表现在子组件想要改变父组件渲染模版的数据变化，调用emit传值即可，但是react是通过父组件传给子组件函数，然后子组件调用父组件函数，父组件函数通过回调函数传值实现更改数据。此外Vue在组件内部维护着双向绑定的语法糖实现形式上的双向数据流。双向数据流是数据变化会让页面重新渲染从而更新视图，页面也会通过用户的交互、产生状态、数据的变化，我们编写代码将视图对数据的更新同步到数据。优点是在表单交互较多的场景下，会简化大量业务无关的代码。缺点也是不易维护。
+
+尤雨溪说 双向绑定是对表单来说的，表单的双向绑定，说到底不过是 value 的单向绑定 + onChange 事件侦听的一个语法糖。这个并不是 React 和 Vue 在理念上真正的差别体现。同时，单向数据流不是 Vue 或者 React 的差别，而是 Vue 和 React 的共同默契选择。单向数据流核心是在于避免组件的自身（未来可复用）状态设计，它强调把 state hoist 出来进行集中管理。
+
 
 ### 单向数据流 
 
@@ -86,8 +90,12 @@ React
 
 
 # 设计理念不同 Vue推崇可变数据 React推崇不可变数据
+React 和 Vue 在理念上的差别，且对后续设计实现产生不可逆影响的是：Vue 进行数据拦截/代理，它对侦测数据的变化更敏感、更精确，也间接对一些后续实现（比如 hooks，function based API）提供了很大的便利。这个我们后面会提到；React 推崇函数式，它直接进行局部重新刷新（或者重新渲染），这样更粗暴，但是更简单，让我们的开发回到了上古时代，就是刷新呗，前端开发非常简单。但是 React 并不知道什么时候“应该去刷新”，触发局部重新变化是由开发者手动调用 setState 完成。
 
-Vue 通过 getter/setter 以及一些函数的劫持，能精确知道数据变化，不需要特别的优化就能达到很好的性能
+React setState 引起局部重新刷新。为了达到更好的性能，React 暴漏给开发者 shouldComponentUpdate 这个生命周期 hook，来避免不需要的重新渲染（相比之下，Vue 由于采用依赖追踪，默认就是优化状态：你动了多少数据，就触发多少更新，不多也不少，而 React 对数据变化毫无感知，它就提供 React.createElement 调用已生成 virtual dom）。另外 React 为了弥补不必要的更新，会对 setState 的行为进行合并操作。因此 setState 有时候会是异步更新，但并不是总是“异步”
+
+Vue 通过 getter/setter 以及一些函数的劫持，能精确知道数据变化，不需要特别的优化就能达到很好的性能, vue的响应式也导致对于基本类型的监听要换成对象监听。
+
 React 默认是通过比较引用的方式进行的，如果不优化（PureComponent/shouldComponentUpdate）可能导致大量不必要的VDOM的重新渲染
 为什么 React 不精确监听数据变化呢？这是因为 Vue 和 React 设计理念上的区别，Vue 使用的是可变数据，而React更强调数据的不可变。所以应该说没有好坏之分，Vue更加简单，而React构建大型应用的时候更加鲁棒。Vue是支持双向绑定的。
 
@@ -399,11 +407,95 @@ Vue是在和组件JS代码分离的单独的模板中，通过指令来实现的
 对这一点，我个人比较喜欢React的做法，因为他更加纯粹更加原生，而Vue的做法显得有些独特，会把HTML弄得很乱。举个例子，说明React的好处：
 
 react中render函数是支持闭包特性的，所以我们import的组件在render中可以直接调用。但是在Vue中，由于模板中使用的数据都必须挂在 this 上进行一次中转，所以我们import 一个组件完了之后，还需要在 components 中再声明下，这样显然是很奇怪但又不得不这样的做法。
+
 # 各自优势
 vue的优势包括：框架内部封装的多，更容易上手，简单的语法及项目创建， 更快的渲染速度和更小的体积
 
 react的优势包括： react更灵活，更接近原生的js、可操控性强，对于能力强的人，更容易造出更个性化的项目
 
+
+React 设计是改变开发者，提供强大而复杂的机制，开发者按照我的来；Vue 是适应开发者，让开发者怎么爽怎么来。
+
+# React和Vue对于数据绑定和Immutable的区别导致他们hooks的区别
+[原文链接](https://juejin.cn/post/6844903877574295560#heading-2)
+
+React 并不知道什么时候“应该去刷新”，触发局部重新变化是由开发者手动调用 setState 完成。React setState 引起局部重新刷新。为了达到更好的性能，React 暴漏给开发者 shouldComponentUpdate 这个生命周期 hook，来避免不需要的重新渲染（相比之下，Vue 由于采用依赖追踪，默认就是优化状态：你动了多少数据，就触发多少更新，不多也不少，而 React 对数据变化毫无感知，它就提供 React.createElement 调用已生成 virtual dom
+
+这个设计上的差别，直接影响了 hooks 的实现和表现。
+
+React hook 底层是基于链表（Array）实现，每次组件被 render 的时候都会顺序执行所有的 hooks，因为底层是链表，每一个 hook 的 next 是指向下一个 hook 的，所以要求开发者不能在不同 hooks 调用中使用判断条件，因为 if 会导致顺序不正确，从而导致报错。
+
+相反，vue hook 只会被注册调用一次，vue 之所以能避开这些麻烦的问题，根本原因在于它对数据的响应是基于响应式的，是对数据进行了代理的。他不需要链表进行 hooks 记录，它对数据直接代理观察。
+
+
+Vue hook 的 一个例子
+
+```
+function useMouse() {
+  const x = value(0)
+  const y = value(0)
+  const update = e => {
+    x.value = e.pageX
+    y.value = e.pageY
+  }
+  onMounted(() => {
+    window.addEventListener('mousemove', update)
+  })
+  onUnmounted(() => {
+    window.removeEventListener('mousemove', update)
+  })
+  return { x, y }
+}
+
+// in consuming component
+const Component = {
+  setup() {
+    const { x, y } = useMouse()
+    const { z } = useOtherLogic()
+    return { x, y, z }
+  },
+  template: `<div>{{ x }} {{ y }} {{ z }}</div>`
+}
+```
+可以看到，useMouse 将所有与 “处理鼠标位置” 相关的逻辑都封装了进去，乍一看与 React Hooks 很像，但是有两个区别：
+
+useMouse 函数内改变 x、y 后，不会重新触发 setup 执行。
+x y 拿到的都是 Wrapper 而不是原始值，且这个值会动态变化。
+
+另一个重要 API 就是 watch，它的作用类似 React Hooks 的 useEffect，但实现原理和调用时机其实完全不一样。
+watch 的目的是监听某些变量变化后执行逻辑，比如当 id 变化后重新取数：
+const MyComponent = {
+  props: {
+    id: Number
+  },
+  setup(props) {
+    const data = value(null)
+    watch(() => props.id, async (id) => {
+      data.value = await fetchData(id)
+    })
+  }
+}
+复制代码之所以要 watch，因为在 Vue 中，setup 函数仅执行一次，所以不像 React Function Component，每次组件 props 变化都会重新执行，因此无论是在变量、props 变化时如果想做一些事情，都需要包裹在 watch 中。
+
+后面还有 unwatching、生命周期函数、依赖注入，都是一些语法定义[自定义hooks的api](https://github.com/vuejs/rfcs/blob/function-apis/active-rfcs/0000-function-api.md#dependency-injection)
+
+# Vue 和 React 对于事件处理的不同
+
+从事件 API 上我们就能看出前端框架在设计的一个不同思路： React 设计是改变开发者，提供强大而复杂的机制，开发者按照我的来；Vue 是适应开发者，让开发者怎么爽怎么来。
+
+vue没有事件合成只是单纯的bind绑定当前组件
+
+# 预编译优化
+
+Vue3.0的预编译优化
+
+之所以能够做到预编译优化，是因为 Vue core 可以静态分析 template，在解析模版时，整个 parse 的过程是利用正则表达式顺序解析模板，当解析到开始标签、闭合标签、文本的时候都会分别执行对应的回调函数，来达到构造 AST 树的目的。
+
+React 能否像 Vue 那样进行预编译优化？？？
+
+Vue 需要做数据双向绑定，需要进行数据拦截或代理，那它就需要在预编译阶段静态分析模版，分析出视图依赖了哪些数据，进行响应式处理。而 React 就是局部重新渲染，React 拿到的或者说掌管的，所负责的就是一堆递归 React.createElement 的执行调用，它无法从模版层面进行静态分析。
+
+因此 React JSX 过度的灵活性导致运行时可以用于优化的信息不足。但是，在 React 框架之外，我们作为开发者还是可以通过工程化手段达到类似的目的，因为我们能够接触到 JSX 编译成 React.createElement 的整个过程。开发者在项目中开发 babel 插件，实现 JSX 编译成 React.createElement，那么优化手段就是是从编写 babel 插件开始：
 
 
 

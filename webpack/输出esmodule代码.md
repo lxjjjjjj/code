@@ -1,0 +1,2 @@
+4以前不支持输出es module模块
+4以后支持输出es module模块
