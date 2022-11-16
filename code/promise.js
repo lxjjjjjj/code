@@ -259,7 +259,7 @@ function myPromiseAll(args) {
             })
         }
         if(iteratorIndex === 0){
-            resovle(results)
+            resolve(results)
         }
     })
 }
@@ -329,7 +329,7 @@ const promises = [
   Promise.resolve('result'),
 ]
 
-Promise.any(promises).then((value) => {
+myPromiseAll(promises).then((value) => {
   console.log('value: ', value)
 }).catch((err) => {
   console.log('err: ', err)
@@ -338,20 +338,20 @@ Promise.any(promises).then((value) => {
 // value:  result
 
 // 如果所有传入的 promises 都失败：
-const promises = [
-  Promise.reject('ERROR A'),
-  Promise.reject('ERROR B'),
-  Promise.reject('ERROR C'),
-]
+// const promises = [
+//   Promise.reject('ERROR A'),
+//   Promise.reject('ERROR B'),
+//   Promise.reject('ERROR C'),
+// ]
 
-Promise.any(promises).then((value) => {
-  console.log('value：', value)
-}).catch((err) => {
-  console.log('err：', err)
-  console.log(err.message)
-  console.log(err.name)
-  console.log(err.errors)
-})
+// Promise.any(promises).then((value) => {
+//   console.log('value：', value)
+// }).catch((err) => {
+//   console.log('err：', err)
+//   console.log(err.message)
+//   console.log(err.name)
+//   console.log(err.errors)
+// })
 
 // err： AggregateError: All promises were rejected
 // All promises were rejected
