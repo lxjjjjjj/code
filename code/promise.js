@@ -276,7 +276,7 @@ function myPromiseAllsettled(args) {
             let resultIndex = iteratorIndex
             iteratorIndex += 1
             Promise.resolve(item).then((res) => {
-                res[resultIndex] = res
+                results[resultIndex] = res
                 fullCount += 1
                 if(iteratorIndex === fullCount){
                     resolve(results)
@@ -286,7 +286,7 @@ function myPromiseAllsettled(args) {
                     status: 'reject',
                     value: item
                 }
-                res[resultIndex] = result
+                results[resultIndex] = result
                 fullCount += 1
                 if(iteratorIndex === fullCount){
                     resolve(results)
@@ -329,7 +329,7 @@ const promises = [
   Promise.resolve('result'),
 ]
 
-myPromiseAll(promises).then((value) => {
+myPromiseRace(promises).then((value) => {
   console.log('value: ', value)
 }).catch((err) => {
   console.log('err: ', err)
