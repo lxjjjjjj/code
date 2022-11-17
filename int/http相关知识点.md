@@ -570,12 +570,12 @@ chrome 80版本后浏览器默认的SameSite策略为Lax，该策略中对于当
 
 
 # Cache-Control请求头
-
+[原文链接](https://juejin.cn/post/7127194919235485733)
 ## 1.可缓存性 
-1.Cache-Control: public 代表http请求返回的内容所经过的任何路径中，http代理服务器，客户端，服务器都可以缓存
+1.Cache-Control: public 代表http请求返回的内容所经过的任何路径中，http代理服务器，客户端，服务器都可以缓存、表示资源即可以被浏览器缓存也可以被代理服务器缓存
 2.Cache-Control: private 只有发起请求的浏览器才能缓存
-3.Cache-Control: no-catch 本地，proxy服务器可以缓存 但是使用之前要去服务器验证
-4.Cache-Control: no-store是本地和proxy服务器都不能缓存
+3.Cache-Control: no-catch 强制进行协商缓存
+4.Cache-Control: no-store 是本地和proxy服务器都不能缓存
 ## 2.到期max-age=<seconds>
 Cache-Control: max-age=<seconds>可以代替max-age在服务器才生效
 Cache-Control: s-maxage=<seconds>可以代替max-age但是只有在代理服务器才生效，优先级比max-age高
@@ -644,6 +644,11 @@ Expires 是 HTTP/1 的产物，受限于本地时间，如果修改了本地时�
 
 ## 协商缓存
 协商缓存就是强制缓存失效后，浏览器携带缓存标识向服务器发起请求，由服务器根据缓存标识决定是否使用缓存的过程，主要有以下两种情况： 协商缓存可以通过设置两种 HTTP Header 实现：Last-Modified 和 ETag 。
+
+Etag的缺点：
+
+ETag需要计算文件指纹这样意味着，服务端需要更多的计算开销。。如果文件尺寸大，数量多，并且计算频繁，那么ETag的计算就会影响服务器的性能。显然，ETag在这样的场景下就不是很适合。ETag有强验证和弱验证，所谓将强验证，ETag生成的哈希码深入到每个字节。哪怕文件中只有一个字节改变了，也会生成不同的哈希值，它可以保证文件内容绝对的不变。但是，强验证非常消耗计算量。ETag还有一个弱验证，弱验证是提取文件的部分属性来生成哈希值。因为不必精确到每个字节，所以他的整体速度会比强验证快，但是准确率不高。会降低协商缓存的有效性。
+
 
 协商缓存生效，返回304和Not Modified
           发起http请求                      缓存失效返回缓存标识                 携带缓存标识发起http请求
