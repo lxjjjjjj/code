@@ -1,6 +1,7 @@
 [原文链接](https://juejin.cn/post/7118937685653192735)
 [原文链接](https://juejin.cn/post/7146107198215553055)
 # useState
+[闭包解析](https://juejin.cn/post/7164694515587448863)
 ## 产生闭包的问题
 ```
 import React, { useState } from 'react'
