@@ -26,7 +26,7 @@ apply接收两个参数，第一个参数为函数上下文this，第二个参�
 ```
 function apply(context,args){
     context = context || window
-    const symbolFn = new Symbol()
+    const symbolFn = Symbol()
     context[symbolFn] = this
     const fn = context[symbolFn](...args)
     delete context[symbolFn]
@@ -57,7 +57,24 @@ function bind(context, ...outerArgs) {
 }
 ```
 
+```
+Function.prototype.myBind = function (ctx, ...args) {
+ // fn.myBind(ctx, [arg1, arg2])
 
+ // this是正在执行的函数
+ const fn = this
+ // 保证 ctx[key] 的唯一性，避免和用户设置的 context[key] 冲突
+ const key = Symbol()
+ // 将执行函数设置到指定的上下文对象上
+ ctx[key] = fn
+ // 返回一个可执行函数
+ // bind 方法支持预设一部分参数，剩下的参数通过返回的函数设置，具有柯里化的作用
+ return function(...otherArgs) {
+  // 执行函数
+  return ctx[key](...args, ...otherArgs)
+ }
+}
+```
 # 如果对象自己有个apply方法我们怎么调用原有的apply方法呢
 
 ```

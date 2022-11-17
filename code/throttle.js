@@ -33,7 +33,7 @@ function throttle(func, delay){
       const context = this;
       const args = arguments;
   
-      clearTimeout(timer);
+      timer && clearTimeout(timer);
       if(remaining <= 0){
         func.apply(context,args);
         startTime = Date.now();
