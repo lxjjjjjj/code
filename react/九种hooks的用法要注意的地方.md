@@ -1,4 +1,5 @@
 [原文链接](https://juejin.cn/post/7118937685653192735)
+[原文链接](https://juejin.cn/post/7146107198215553055)
 # useState
 ## 产生闭包的问题
 ```
@@ -73,6 +74,8 @@ useEffect(() => {
 
 # useMemo & useCallback 配合 React.memo
 
+常见用来缓存useEffect的依赖和缓存子组件props的值
+
 非常常见的就是，父组件的更新引起子组件不必要的更新，因为父组件接收了一个参数，那个参数都是每次父组件渲染都会重新生成的参数，可以使用useMemo和useCallback和React.memo来避免不必要的渲染.[对应例子的three]
 
 ```
@@ -114,7 +117,53 @@ Context 提供了一种在组件之间共享此类值的方式，而不必显式
 
 可以通过 React.createContext 创建 context 对象，在跟组件中通过 Context.Provider 的 value 属性进行传递 username ，从而在 Function Component 中使用 useContext(Context) 获取对应的值。
 
+但是useContext的值变化，用到这个值的任何组件都会发生更新渲染，所以应当封装一个Provider组件。这样避免无用多余的渲染
 
+这样APP是一个无状态的组件，那么Tip不会根据每次context的state的变化而变化
+```
+
+function Counter() {
+  return (
+    <>
+      Count: {state.count}
+      <button onClick={() => dispatch({ type: "decrement" })}>-</button>
+      <button onClick={() => dispatch({ type: "increment" })}>+</button>
+    </>
+  );
+}
+function reducer(state, action) {
+    switch (action.type) {
+      case "increment":
+        return { count: state.count + 1 };
+      case "decrement":
+        return { count: state.count - 1 };
+      default:
+        throw new Error();
+    }
+  }
+function Provider(props) {
+  const initialState = { count: 0 };
+  const ContainerContext = createContext(initialState);
+  const [state, dispatch] = useReducer(reducer, initialState);
+  // 当Provider存在父组件，那么父组件的重新渲染会带动Provider的渲染，那么Provider传的参数值也会变化，也会导致使用了context值的组件更新
+  const value = useMemo(() => ({ state, dispatch }), [state]);
+  return (
+    <ContainerContext.Provider value={{ state, dispatch }}>
+      {props.children}
+    </ContainerContext.Provider>
+  );
+}
+
+const App = () => {
+  return (
+    <Provider>
+      <Counter />
+    </Provider>
+    <Tip />
+  );
+};
+
+```
 # useReducer
 在useEffect中调用useReducer可以把依赖去掉，它可以把更新逻辑和描述发生了什么分开。reducer调用也不是在effect里。当你dispatch的时候，React只是记住了action - 它会在下一次渲染中再次调用reducer。
 ```
