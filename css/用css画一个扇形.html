@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <style>
+            .father{
+                height: 400px;
+                width: 400px;
+                transform: rotate(90deg);
+                /* background: lightgoldenrodyellow; */
+            }
+            .content{
+                overflow: hidden;
+                height: 400px;
+                width: 400px;
+                /* background: lightcoral; */
+                position: absolute;
+                z-index: 999;
+                clip: rect(0px, 400px, 400px, 200px);
+            }
+            .container{
+                height: 400px;
+                width: 400px;
+                background: lightblue;
+                position: absolute;
+                border-radius: 50%;
+                clip: rect(0px, 200px, 400px, 0);
+                transform: rotate(30deg);
+            }
+        </style>
+    </head>
+    <body>
+       
+        <div class="father">
+            <div class="content">
+                <div class="container"></div>
+            </div>
+        </div>
+        <script>
+            // 1.最外层盒子.father主要用来控制整个扇形的旋转角度以及定位等整体的布局
+            // 2.第二个盒子.content主要是用来控制扇叶是朝左还是朝右显示
+            // 3.最里面的盒子.container控制的是扇形的角度，可以实现任意角度
+            // CSS clip 是一个极少使用，但又确实存在的属性。而且，它其实在CSS2时代就有了。
+            // w3school 上有这么一句话：clip 属性剪裁绝对定位元素。也就是说，只有 position:absolute 的时候才是生效的。
+
+            // rect(<top> <right> <bottom> <left>)      
+            // <top> 和 <bottom> 指定相对于盒子上边框边界 的偏移，
+            // <right> 和 <left> 指定了相对于盒子左边框边界 的偏移。 
+            // <top>、<right>、<bottom> 和 <left> 的值可以是 <length> 值或 auto。
+
+        </script>
+        
+    </body>
+
+</html>
