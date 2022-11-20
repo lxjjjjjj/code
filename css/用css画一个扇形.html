@@ -1,10 +1,11 @@
 <html>
     <head>
         <style>
+            /* css中的clip属性中的rect */
             .father{
                 height: 400px;
                 width: 400px;
-                transform: rotate(90deg);
+                /* transform: rotate(90deg); */
                 /* background: lightgoldenrodyellow; */
             }
             .content{
@@ -14,6 +15,7 @@
                 /* background: lightcoral; */
                 position: absolute;
                 z-index: 999;
+                /* 控制扇形朝右还是朝左 */
                 clip: rect(0px, 400px, 400px, 200px);
             }
             .container{
@@ -22,9 +24,11 @@
                 background: lightblue;
                 position: absolute;
                 border-radius: 50%;
+                /* 200 和 400 决定了这个扇形可以画成0-90范围还是0-180范围 */
                 clip: rect(0px, 200px, 400px, 0);
                 transform: rotate(30deg);
             }
+            /* css3中的旋转 */
         </style>
     </head>
     <body>
