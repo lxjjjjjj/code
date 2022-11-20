@@ -1,4 +1,15 @@
 [原文链接](https://juejin.cn/post/7087933643821154312)
+[message channel](https://developer.mozilla.org/zh-CN/docs/Web/API/MessageChannel)
+[使用message的issue](https://github.com/facebook/react/pull/16214)
+
+为什么不使用setTimeout的原因 是因为每次setTimeout都有4ms左右的偏差
+
+<!-- setImmediate 宏任务 ie下生效  大约要20ms--> 
+<!-- setTimeout 宏任务 4ms -->
+<!-- MessageChannel 宏任务 消息通道 小于4ms-->
+
+<!-- MutationObserver 微任务 -->
+<!-- Promise.then 微任务 -->
 
 # 前言
 
