@@ -41,7 +41,7 @@ function throttle(func, wait) {
     let startTime = Date.now()
     return function() {
         let curTime = Date.now()
-        let remaining = delay - (curTime - startTime);
+        let remaining = wait - (curTime - startTime);
         const context = this
         const args = arguments
         timer && clearTimeout(timer)
