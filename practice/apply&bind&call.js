@@ -15,7 +15,7 @@ function call(context, ...args) {
     context[symbol] = fn
     const res = context[symbol](...args)
     delete context[symbolFn]
-    return fn
+    return res
 }
 
 function bind(context, ...outerArgs) {
