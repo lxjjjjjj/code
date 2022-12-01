@@ -11,8 +11,8 @@
 ```
 # Vue项目中是怎么引入Vuex
 1)安装Vuex，再通过import Vuex from 'vuex'引入
-2)先 var store = new Vuex.Store({...}),再把store作为参数的一个属性值，new Vue({store})
-3)通过Vue.use(Vuex) 使得每个组件都可以拥有store实例
+2)先 var store = new Vuex.Store({...})
+3)通过Vue.use(store) 使得每个组件都可以拥有store实例
 
 ## 综上分析vuex大致结构
 ```
