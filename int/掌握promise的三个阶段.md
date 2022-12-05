@@ -298,3 +298,80 @@ const timer = setInterval(() => {
    console.log(manager.loading)
 }, 300)
 ```
+# 提前加载应用
+
+有这样一个场景：页面的数据量较大，通过缓存类将数据缓存在了本地，下一次可以直接使用缓存，在一定数据规模时，本地的缓存初始化和读取策略也会比较耗时。这个时候我们可以继续等待缓存类初始完成并读取本地数据，也可以不等待缓存类，而是直接提前去后台请求数据。两种方法最终谁先返回的时间不确定。那么为了让我们的数据第一时间准备好，让用户尽可能早地看到页面，我们可以通过 Promise 来做加载优化。
+
+策略是页面加载后，立马调用 Promise 封装的后台请求，去后台请求数据。同时初始化缓存类并调用 Promise 封装的本地读取数据。最后在显示数据的时候，看谁先返回用谁的。
+
+[原图](https://mmbiz.qpic.cn/mmbiz_png/lP9iauFI73zicAcmRcibdxnTRBqbEVv6k2iaur7dhHyAFrHjlEfYF1ez0gic6UibTy0IzcXVicRIO2A1ial5DrjSmI1ibdg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+# 中断场景应用
+
+实际应用中，还有这样一种场景：我们正在发送多个请求用于请求数据，等待完成后将数据插入到不同的 dom 元素中，而如果在中途 dom 元素被销毁了（比如 react 在 useEffect 中请求的数据时，组件销毁），这时就可能会报错。因此我们需要提前中断正在请求的 Promise，不让其进入到 then 中执行回调。
+```
+useEffect(() => {
+    let dataPromise = new Promise(...);
+    let data = await dataPromise();
+    // TODO 接下来处理 data，此时本组件可能已经销毁了，dom 也不存在了，所以需要在下面对 Promise 进行中断
+
+    return (() => {
+      // TODO 组件销毁时，对 dataPromise 进行中断或取消
+    })
+
+});
+```
+我们可以对生成的 Promise 对象进行再一次包装，返回一个新的 Promise 对象，而新的对象上被我们增加了 cancel 方法，用于取消。这里的原理就是在 cancel 方法里面去阻止 Promise 对象执行 then()方法。
+
+下面构造了一个 cancelPromise 用于和原始 Promise 竞速，最终返回合并后的 Promise，外层如果调用了 cancel 方法，cancelPromise 将提前结束，整个 Promise 结束。
+
+```
+function getPromiseWithCancel(originPromise) {
+  let cancel = (v) => {};
+  let isCancel = false;
+  const cancelPromise = new Promise(function (resolve, reject) {
+    cancel = e => {
+      isCancel = true;
+      reject(e);
+    };
+  });
+  const groupPromise = Promise.race([originPromise, cancelPromise])
+  .catch(e => {
+    if (isCancel) {
+      // 主动取消时，不触发外层的 catch
+      return new Promise(() => {});
+    } else {
+      return Promise.reject(e);
+    }
+  });
+  return Object.assign(groupPromise, { cancel });
+}
+
+// 使用如下
+const originPromise = axios.get(url);
+const promiseWithCancel = getPromiseWithCancel(originPromise);
+promiseWithCancel.then((data) => {
+  console.log('渲染数据', data);
+});
+promiseWithCancel.cancel(); // 取消 Promise，将不会再进入 then() 渲染数据
+
+```
+# Promise 深入理解之控制反转
+
+熟悉了 Promise 的基本运用后，我们再来深入点理解。Promise 和 callback 还有个本质区别，就是控制权反转。
+
+callback 模式下，回调函数是由业务层传递给封装层的，封装层在任务结束时执行了回调函数。
+
+[原图](https://mmbiz.qpic.cn/mmbiz_png/lP9iauFI73zicAcmRcibdxnTRBqbEVv6k2ialffaNicAMZJGxVda6dmfLocjpC6lneUUicIj35nPOk6T3JKELBvNPG8A/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+
+而 Promise 模式下，业务层并没有把回调函数直接传递给封装层( Promise 对象内部)，封装层在任务结束时也不知道要做什么回调，只是通过 resolve 或 reject 来通知到  业务层，从而由业务层自己在 then() 或 reject() 里面去控制自己的回调执行。
+
+[原图](https://mmbiz.qpic.cn/mmbiz_png/lP9iauFI73zicAcmRcibdxnTRBqbEVv6k2ia1sGENib6R5DJ3ZYSAND75IiaIicDibkVegz2ic0AUSiaHSzSj2fW2uK5JjGg/640?wx_fmt=png&wxfrom=5&wx_lazy=1&wx_co=1)
+
+这里可能理解起来有点绕，换种等效的简单理解：我们知道函数一般是分定义 + 调用步骤的，先定义，后调用。谁调用了函数，就表示谁在控制这个函数的执行。
+
+那么我们来看 callback 模式下，业务层将回调函数的定义传给了封装层，封装层在内部完成了回调函数的调用执行，业务层并没有调用回调函数，甚至业务层都看不到其调用代码，所以回调函数的执行控制权在封装层。
+
+而 Promise 模式下，回调函数的调用执行是在 then() 里面完成的，是由业务层发起的，业务层不仅能看到回调函数的调用代码，也能修改，因此回调函数的控制权在业务层。
+
