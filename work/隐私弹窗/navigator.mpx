@@ -1,0 +1,102 @@
+<!-- FIXME:临时方案，为了绕过mpx对navigator的open-type不能是exit && target="miniProgram" 的强校验 -->
+<!-- 注：xxx.ali.mpx 不走校验 -->
+<template>
+  <navigator
+    open-type="exit"
+    target="miniProgram"
+    onTouchStart="exit"
+  >{{ text }}</navigator>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {},
+    properties: {
+      text: {
+        type: String,
+        value: '不同意'
+      }
+    },
+    attached() {},
+    methods: {
+      exit() {
+        this.triggerEvent('disagree')
+
+        // 支付宝连续进行redirect时，真机会触发页面栈重复错误，同时也会导致navigator的open-type="exit"不可用，此处做兼容处理
+        // 支付宝小程序navigator组件tap事件不可用，此处用touchstart代替
+        // 文档没提供，功能有不可用风险，用toast进行兜底
+        if(typeof my.exit === 'function') {
+          my.exit()
+        } else {
+          my.showToast({
+            type: 'none',
+            content: '未授权无法进入小程序，请点击右上角退出按钮退出小程序～',
+            duration: 5000
+          });
+        }
+      }
+    }
+  })
+</script>
+
+<style lang="stylus">
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>
+
+
+
+<template>
+  <navigator
+    class="disagree-navigator"
+    target="miniProgram"
+    open-type="exit"
+    bindtap="tapBtn">{{text}}</navigator>
+</template>
+
+<script>
+  import { createComponent } from '@mpxjs/core'
+
+  createComponent({
+    data: {
+    },
+    properties: {
+      text: {
+        type: String,
+        value: '不同意'
+      }
+    },
+    computed: {
+    },
+    attached() {
+    },
+    methods: {
+      tapBtn () {
+        this.triggerEvent('disagree')
+      }
+    },
+  })
+</script>
+
+<style lang="stylus" scoped>
+.disagree-navigator
+  width: 98%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity 1
+            
+</style>
+
+<script type="application/json">
+  {
+    "component": true
+  }
+</script>

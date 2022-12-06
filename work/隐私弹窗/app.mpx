@@ -1,0 +1,18 @@
+<script>
+  import mpx from '@mpxjs/core'
+
+  // app.js
+  App({})
+</script>
+
+<style>
+
+</style>
+
+<script type="application/json">
+  {
+    "pages": [
+      "./pages/webview-page/index.mpx"
+    ]
+  }
+</script>

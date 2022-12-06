@@ -1,0 +1,25 @@
+<template>
+  <web-view src="{{linkURL}}"></web-view>
+</template>
+
+<script>
+  import { createPage } from '@mpxjs/core'
+
+  createPage({
+    data: {
+      linkURL: ''
+    },
+    computed: {},
+    watch: {},
+    methods: {},
+    onLoad (query) {
+      if (query.url) {
+        this.linkURL = decodeURIComponent(query.url)
+      }
+    }
+  })
+</script>
+
+<script type="application/json">
+  {}
+</script>

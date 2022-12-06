@@ -1,0 +1,1002 @@
+<template>
+<view wx:if="{{isShowScene && !fakeShow}}" class="authorize-scene-wrap" catchtouchmove="emptyFunction">
+  <view wx:class="{{modalStyle}}" wx:if="{{tempContent}}">
+    <image wx:if="{{useClose}}" src="https://ut-static.udache.com/webx/mini-pics/ZTqAp-jRe4rc20nDhmPIC_close36.png" class="close" bindtap="close"></image>
+    <view class="title">{{tempContent.title}}</view>
+    <view class="content">
+      <view class="detail">
+        <scroll-view scroll-y="true" class="detail-content">
+          <text class="content-text">{{tempContent.content}}</text>
+        </scroll-view>
+      </view>
+      <view wx:if="{{isArrayLink}}">
+        <view wx:for="{{tempContent.link_text}}" class="link" style="{{'color:' + themeColor}}" bindtap="jumpLinkWebview(index)">
+          <text class="link-text">{{item}}</text>
+          <mpx-icon wx:if="{{useArrow}}" class="link-icon" type="click"/>
+        </view>
+      </view>
+      <view wx:else class="link" style="{{'color:' + themeColor}}" bindtap="jumpLinkWebview">
+        <text class="link-text">{{tempContent.link_text}}</text>
+        <mpx-icon wx:if="{{useArrow}}" class="link-icon" type="click"/>
+      </view>
+    </view>
+    <view class="footer" wx:class="{{footerStyle}}">
+      <disagree-navigator
+        wx:if="{{disagreeExit || (!useCustomDisagree && !canBack)}}"
+        style="{{disagreebuttonStyle}}"
+        text="{{disagreeContent}}"
+        class="optionBtn disagree"
+        binddisagree="disagree"></disagree-navigator>
+      <view
+        wx:else
+        style="{{disagreebuttonStyle}}"
+        class="optionBtn disagree"
+        bindtap="disagree">{{disagreeContent}}</view>
+      <view
+        style="{{agreeBtnStyle}}{{agreebuttonStyle}}"
+        class="optionBtn agree"
+        bindtap="agree">{{agreeContent}}</view>
+    </view>
+  </view>
+</view>
+<view wx:if="{{isShowScene && fakeShow && fake_content}}" class="authorize-scene-wrap">
+  <view class="authorize-bottom-retain" catchtap="hideFake">
+    <view class="authorize-bottom-retain-container" style="{{bottomStyle}}">
+      <view class="text" catchtap="emptyFunction">{{fake_content.content}}</view>
+      <view class="btn" catchtap="hideFake">{{fake_content.btn_text}}</view>
+    </view>
+  </view>
+</view>
+</template>
+
+<script>
+  import mpx, { createComponent } from '@mpxjs/core'
+  import { jumpWebview } from '../../utils/mpx-proxy'
+  import store from '../../store'
+  import { Omega } from '@didi/tracker-mpapp' 
+  import { getProxy } from '@mpxjs/api-proxy';
+  import { getStorage } from '../../utils/mpx-proxy'
+  const proxy = getProxy({ usePromise: true });
+  createComponent({
+    data: {
+      isShowScene: false,
+      canBack: false,
+      // TODO: 调试数据示例，可删除
+      curContent: {
+        doc_id: 0,
+        status: 0,
+        title: '法律条款及隐私政策',
+        content: '弹窗文案，第一次签署同下面政策摘要，升级签署同更新提示',
+        link_text: '相关法律条款及隐私政策',
+        link_url: 'https://s.didi.cn/AIj',
+        agree_btn_text: '同意',
+        disagree_btn_text: '不同意',
+        biz_id: 0,
+        lang: 'zh-CN',
+        content_summary: '政策摘要',
+        content_update: '政策更新提示'
+      },
+      retainShow: false,
+      fakeShow: false,
+      docIds: [],
+      lastScene: '',
+      lastApiData: {
+        scene: '',
+        scene_list: [],
+        extraData: null,
+        path: '',
+        agree: () => {},
+        disagree: () => {}
+      },
+      isLinkJump: false
+    },
+    properties: {
+      scene: {
+        type: String,
+        value: ''
+      },
+      disagreeExit: { // 点击不同意，是否直接退出小程序
+        type: Boolean,
+        value: false
+      },
+      useCustomDisagree: { // 点击不同意，自定义行为
+        type: Boolean,
+        value: false
+      },
+      themeColor: {
+        type: String,
+        value: '#ff7f41'
+      },
+      useCustomContent: {
+        type: Boolean,
+        value: false
+      },
+      customContent: {
+        type: Object
+      },
+      agreebuttonStyle: {
+        type: String,
+        value: ''
+      },
+      disagreebuttonStyle: {
+        type: String,
+        value: ''
+      },
+      type: {
+        type: Number,
+        value: 2
+      },
+      retainInfo: {
+        type: Object,
+        value: {}
+      },
+      omega_params: {
+        type: Object,
+        value: {}
+      },
+      fake_content: {
+        type: Object,
+        value: {}
+      },
+      disagreeContext: {
+        type: String,
+        value: ''
+      },
+      agreeContext: {
+        type: String,
+        value: ''
+      },
+      useArrow: {
+        type: Boolean,
+        value: true
+      },
+      useClose: {
+        type: Boolean,
+        value: false
+      }
+    },
+    computed: {
+      ...store.mapState(['popList', 'config', 'needAsignhomeScene', 'apiData']),
+      sceneMap () {
+        return this.popList && this.popList.scene_map || {}
+      },
+      docMap () {
+        return this.popList && this.popList.doc_map || {}
+      },
+      agreeBtnStyle() {
+        return 'background:' + this.themeColor + ';'
+      },
+      // 当前scene 是否为homeScene
+      isHome() {
+        return this.scene === (this.config.homeScene || 'app')
+      },
+      modalStyle() {
+        return this.retainShow ? {
+          'authorize-retain-middle-modal' : this.type === 1 || this.type === 3,
+          'authorize-retain-slide-modal' : this.type === 2 || this.type === 4
+        } : {
+          'authorize-middle-modal' : this.type === 1 || this.type === 3,
+          'authorize-slide-modal' : this.type === 2 || this.type === 4
+        }
+      },
+      footerStyle() {
+        return {
+          'footer-one' : this.type === 1,
+          'footer-two' : this.type === 3
+        }
+      },
+      tempContent() {
+        return this.retainShow ? this.retainInfo : this.curContent
+      },
+      bottomStyle() {
+        const systemInfo = mpx.getSystemInfoSync()
+        const isIPhoneX = systemInfo && systemInfo.model && ~systemInfo.model.search(/iPhone ?(X|1[1-9]+)/)
+        return `bottom:${isIPhoneX ? 84 : 64}px`
+      },
+      disagreeContent() {
+        return this.retainShow ? this.tempContent.disagree_btn_text : this.disagreeContext || this.tempContent.disagree_btn_text
+      },
+      agreeContent() {
+        return this.retainShow ? this.tempContent.agree_btn_text : this.agreeContext || this.tempContent.agree_btn_text
+      },
+      isArrayLink() {
+        return Array.isArray(this.tempContent.link_url) && this.tempContent.link_url.length
+      },
+      currentPage() {
+        const currentPages = getCurrentPages()
+        return currentPages[currentPages.length - 1].route
+      }
+    },
+    watch: {
+      scene: {
+        handler(newVal, oldVal) {
+          if(newVal) {
+            const currentPages = getCurrentPages()
+            if (currentPages.length > 1) {
+              // 支付宝小程序连续redirectTo会持续增加页面栈，在此判断如果是home场景，并且栈顶的两个页面route相同时，判断为是连续redirectTo导致，不同意应该直接退出小程序
+              if(__mpx_mode__ === 'ali'
+                && this.isHome
+                && currentPages[currentPages.length - 1].route === currentPages[currentPages.length - 2].route
+              ) {
+                this.canBack = false
+              } else {
+                this.canBack = true
+              }
+            }
+            if(this.useCustomContent && this.customContent && Object.keys(this.customContent).length) {
+              this.showDlg() 
+              return
+            }
+            // 非自定义内容时候从百川拉取数据
+            console.log('this.apiData?.path === this.currentPage()', this.apiData?.path === this.currentPage)
+            if(this.apiData.scene && this.apiData?.path === this.currentPage) {
+              this.dealScene()
+            } else {
+              this.config.scene_str = newVal
+              this.tryGetConfig().finally(() => {
+                this.dealScene()
+              })
+            }
+          }
+        },
+        immediate: true
+      },
+      customContent: {
+        handler(newVal, oldVal) {
+          // 使用自定义内容时候，采用开发者传入的数据
+          if(newVal && this.useCustomContent) {
+            this.curContent = newVal
+          }
+        },
+        immediate: true
+      },
+      'apiData': {
+        handler(newVal, oldVal) {
+          const currentPages = getCurrentPages()
+          if(this.apiData?.path === this.currentPage && newVal?.scene) {
+            this.scene = newVal.scene
+          }
+        },
+        immediate: true,
+        deep: true
+      }
+    },
+    detached() {
+      this.reset()
+      this.$nextTick(() => {
+        console.log('this.scene detached', this.scene, this.apiData, this.setConfig)
+      })
+    },
+    ready() {
+      wx.onAppHide(() => {
+        this.apiData?.scene && this.reset()
+      })
+    },
+    pageLifetimes: {
+      hide() {
+        // 跳到其他金刚位页面hide正常清空api数据 隐私弹窗跳转到h5页面的hide需要保留数据
+        this.lastApiData = this.apiData
+        this.lastScene = this.scene
+        this.reset()
+      },
+      show() {
+        if(this.isLinkJump) {
+          this.scene = this.lastScene
+          this.setApiData(this.lastApiData)
+          this.isLinkJump = false
+        } 
+      }
+    },
+    methods: {
+      ...store.mapActions(['tryGetConfig', 'sign']),
+      ...store.mapMutations(['setNeedAsignhomeScene', 'resetApiData','setAPI', 'setConfig', 'setApiData']),
+      showDlg() {
+        this.isShowScene = true
+        this.triggerEvent('show')
+        this.sendSwLog()
+      },
+      agree(type) {
+        this.triggerEvent('agree')
+        typeof this.apiData.agree === 'function' && this.apiData.agree()
+        type !== 'default' && Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(1))
+        // 非自定义内容时点击同意上报百川：this.isShowScene判断是点击出发的agree
+        if(!this.useCustomContent && this.isShowScene && this.sendAgreeLog()) {
+          if(this.docIds.length) {
+            this.docIds.forEach((docId, index) => {
+              this.sign({
+                scene: this.scene.split(',')[index],
+                docid: docId
+              })
+            }) 
+          }
+        }
+        this.isShowScene = false
+        this.retainShow = false
+        this.fakeShow = false
+        this.reset()
+      },
+      disagree() {
+        Omega.trackEvent('pub_xcx_scene_pop_ck', '场景隐私弹窗-点击', this.getClickLogParams(2))
+        if(Object.keys(this.retainInfo).length && !this.retainShow){
+          Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(2))
+          this.retainShow = true
+          Omega.trackEvent('userteam_home_policydialog_sw', '场景隐私弹窗二期-展现', this.getClickLogParams())
+          return
+        }
+        if(Object.keys(this.fake_content).length && !Object.keys(this.retainInfo).length && !this.fakeShow){
+          Omega.trackEvent('userteam_home_retainfull_sw', '场景隐私弹窗假首页-展示', this.getClickLogParams())
+          Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(2))
+          this.retainShow = false
+          this.fakeShow = true
+          return
+        }
+        if(Object.keys(this.fake_content).length && !this.fakeShow && this.retainShow){
+          Omega.trackEvent('userteam_home_retainfull_sw', '场景隐私弹窗假首页-展示', this.getClickLogParams())
+          Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(2))
+          this.retainShow = false
+          this.fakeShow = true
+          return 
+        }
+        Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(2))
+        if(this.apiData.scene) {
+          this.isShowScene = false
+          typeof this.apiData.disagree === 'function' && this.apiData.disagree()
+          this.scene = ''
+          return 
+        }
+        if (this.useCustomDisagree) {
+          this.triggerEvent('disagree')
+        } else {
+          proxy.navigateBack()
+        }
+        this.scene = ''
+      },
+      backPreviousPage() {
+        proxy.navigateBack()
+      },
+      jumpLinkWebview(index) {
+        Omega.trackEvent('pub_xcx_scene_pop_ck', '场景隐私弹窗-点击', this.getClickLogParams(3))
+        Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(3))
+        this.isLinkJump = true
+        index ? jumpWebview(this.curContent.link_url[index]) : jumpWebview(this.curContent.link_url)
+      },
+      sendSwLog() {
+        let params = {
+          appid: this.config.appid,
+          scene: this.scene
+        }
+        if (!this.useCustomContent && this.sceneMap && this.docIds.length) {
+          params['docid'] = []
+          this.docIds.forEach(docId => {
+            params['docid'].push(docId)
+          })
+          params['docid'] = params['docid'].join(',')
+        }
+        Omega.trackEvent('pub_xcx_scene_pop_sw', '场景隐私弹窗-展现', params)
+        Omega.trackEvent('userteam_home_policydialog_sw', '场景隐私弹窗二期-展现', this.getClickLogParams())
+        return true
+      },
+      sendAgreeLog() {
+        Omega.trackEvent('pub_xcx_scene_pop_ck', '场景隐私弹窗-点击', this.getClickLogParams(1))
+        return true
+      },
+      getClickLogParams(ckType) {
+        let params = {
+          appid: this.config.appid,
+          scene: this.scene,
+          ck_type: ckType,
+          dialog_type: this.retainShow ? 'retain' : 'policy',
+          ...this.omega_params
+        }
+        if (!this.useCustomContent && this.sceneMap && this.docIds.length) {
+          params['docid'] = []
+          this.docIds.forEach(docId => {
+            params['docid'].push(docId)
+          })
+          params['docid'] = params['docid'].join(',')
+        }
+        return params
+      },
+      hideFake(){
+        Omega.trackEvent('userteam_home_retainfull_ck', '场景隐私弹窗假首页-点击', this.getClickLogParams())
+        this.fakeShow = false
+        this.retainShow = false
+        Omega.trackEvent('userteam_home_policydialog_sw', '场景隐私弹窗二期-展现', this.getClickLogParams())
+      },
+      dealScene() {
+        const sceneList = this.scene.split(',')
+        const extraSceneList = this.apiData?.scene_list || []
+        if(sceneList.length) {
+          this.docIds = sceneList.map(cur => this.sceneMap[cur]).filter(cur => cur)
+        }
+        if (this.needAsignhomeScene && this.isHome && this.docIds.length) {
+          // 如果：当前是homeScene，并且开屏弹窗已弹过，那么需要直接签署homeScene，不弹出homeScene
+          // 否则：sceneMap中有就弹，没有就不弹
+          let homeScene = this.config.homeScene || 'app'
+          this.sign({
+            scene: homeScene,
+            docid: this.sceneMap[homeScene]
+          }).then(() => {
+            this.setNeedAsignhomeScene(false)
+          })
+          this.agree('default')
+        } else if (this.docIds.length) {
+          const curLinkText = []
+          const curLinkUrl = []
+          this.docIds.map((docId, index)=> {
+            const sceneContent = this.docMap[docId]
+            this.curContent.content = this.apiData?.extraData?.content || sceneContent.content
+            this.curContent.title = this.apiData?.extraData?.title || sceneContent.title
+            const customLinkInfo = extraSceneList.filter(sceneData => sceneData.scene_id === sceneList[index])?.[0] || {}
+            sceneContent.link_url = customLinkInfo.link_url || sceneContent.link_url
+            sceneContent.link_text = customLinkInfo.link_text || sceneContent.link_text
+            curLinkUrl.push(sceneContent.link_url)
+            curLinkText.push(sceneContent.link_text)
+          })
+          this.curContent.link_text = curLinkText
+          this.curContent.link_url = curLinkUrl
+          this.curContent && this.showDlg()
+        } else {
+          this.agree('default')
+        }
+      },
+      close() {
+        Omega.trackEvent('pub_xcx_scene_pop_ck', '场景隐私弹窗-点击', this.getClickLogParams(0))
+        Omega.trackEvent('userteam_home_policydialog_ck', '场景隐私弹窗二期-点击', this.getClickLogParams(0))
+        if(this.apiData.scene) {
+          this.isShowScene = false
+          typeof this.apiData.disagree === 'function' && this.apiData.disagree()
+          this.scene = ''
+          return 
+        }
+        if (this.useCustomDisagree) {
+          this.triggerEvent('disagree')
+        } else {
+          proxy.navigateBack()
+        }
+        this.scene = ''
+      },
+      reset() {
+        this.resetApiData()
+        this.setConfig(Object.assign({
+          ...this.config,
+          scene_str: ''
+        }))
+        this.scene = ''
+      }
+    }
+  })
+</script>
+
+<style lang="stylus" scoped>
+  flexSet($j=center,$d=row)
+    display flex
+    flex-direction $d
+    align-items center
+    justify-content $j
+  .close
+    position absolute
+    top 12px
+    right 12px
+    height 13px
+    width 13px
+  .authorize-scene-wrap
+    position fixed
+    z-index 2147483647
+    top 0
+    left 0
+    width 100vw
+    height 100vh
+    background-color rgba(2, 11, 26, 0.4)
+    flexSet()
+    .authorize-middle-modal
+      flexSet(flex-start, column)
+      position relative
+      width 560rpx
+      background #fff
+      border-radius 20rpx
+      overflow hidden
+      @media screen and (min-aspect-ratio: 1/1)
+        transform scale(0.5)
+      .title
+        font-family PingFangSC-Medium
+        font-size 40rpx
+        font-weight 500
+        margin-top 48rpx
+        width 100%
+        box-sizing border-box
+        padding 0 48rpx
+      .content
+        width 100%
+        box-sizing border-box
+        padding 0 48rpx
+        .link
+          margin-top 20rpx
+          flexSet(flex-start)
+          &+.link
+            margin-top 10rpx
+          .link-text
+            max-width 440rpx
+            white-space nowrap
+            text-overflow ellipsis
+            overflow hidden
+            font-family PingFangSC-Regular
+            font-size 28rpx
+            font-weight 400
+            display block
+            height 40rpx
+            line-height 40rpx
+          .link-icon
+            flexSet(flex-start)
+            width 24rpx
+            height 24rpx
+        .detail
+          width 464rpx
+          height 316rpx
+          margin-top 20rpx
+          background #F7F9FC
+          overflow hidden
+          border-radius 8rpx
+          @media screen and (min-aspect-ratio: 1/1)
+            height 230rpx
+          .detail-content
+            height 280rpx
+            width 435rpx
+            margin 10rpx 10rpx 0 20rpx
+            overflow-y scroll
+            @media screen and (min-aspect-ratio: 1/1)
+              height 220rpx
+            .content-text
+              font-family PingFangSC-Regular
+              font-size 12px
+              color #444
+              font-weight 400
+              margin-right 18rpx
+              display block
+            &::-webkit-scrollbar 
+              width 4rpx
+              height 292rpx
+              background #DEE0EA
+              border-radius 8rpx
+            &::-webkit-scrollbar-thumb
+              width 4rpx
+              height 70rpx
+              background #999999
+              border-radius 8rpx
+      .footer-one
+        margin 44rpx 0 40rpx
+        display flex
+        width 100%
+        box-sizing border-box
+        justify-content space-between
+        .optionBtn
+          width 225rpx
+          height 74rpx
+          margin 0
+          padding 0
+          border-width 0
+          font-family PingFangSC-Regular
+          font-size 32rpx
+          color #444
+          font-weight 400
+          line-height 1
+          box-sizing border-box
+          flexSet()
+          border-radius 13rpx
+          &:after
+            border 0
+        .disagree
+          border: 1rpx solid rgba(255, 127, 65, .8);
+          margin-left 48rpx
+        .agree
+          color #fff
+          border-radius 13rpx
+          margin-right 48rpx
+      .footer-two
+        margin-top 32rpx
+        display flex
+        flex-direction column
+        width 100%
+        .optionBtn
+          width 100%
+          height 94rpx
+          margin 0
+          padding 0
+          border-width 0
+          font-family PingFangSC-Regular
+          font-size 32rpx
+          color #444
+          font-weight 400
+          line-height 1
+          box-sizing border-box
+          flexSet()
+          &:after
+            border 0
+        .disagree
+          border: 1rpx solid rgba(255, 127, 65, .8);
+          padding-left 48rpx
+        .agree
+          color: #fff
+          padding-right 48rpx
+    .authorize-slide-modal
+      position fixed
+      bottom 0
+      flexSet(center, column)
+      width 100vw
+      background #fff
+      border-radius 20rpx 20rpx 0 0
+      overflow hidden
+      padding 0 38rpx
+      box-sizing border-box
+      @media screen and (min-aspect-ratio: 1/1)
+        transform scale(0.5)
+        border-radius 20rpx
+      .title
+        font-family PingFangSC-Medium
+        font-size 40rpx
+        font-weight 500
+        margin-top 48rpx
+        width 100%
+      .content
+        width 100%
+        .link
+          margin-top 20rpx
+          flexSet(flex-start)
+          &+.link
+            margin-top 10rpx
+          .link-text
+            max-width: 600rpx
+            white-space nowrap
+            text-overflow ellipsis
+            overflow hidden
+            font-family PingFangSC-Regular
+            font-size 28rpx
+            font-weight 400
+            display block
+            height 40rpx
+            line-height 40rpx
+          .link-icon
+            flexSet(flex-start)
+            width 24rpx
+            height 24rpx
+        .detail
+          width 100%
+          height 280rpx
+          margin-top 10rpx
+          overflow hidden
+          background #F7F9FC
+          border-radius 4px
+          @media screen and (min-aspect-ratio: 1/1)
+            height 230rpx
+          .detail-content
+            width 100%
+            font-size 12px
+            height 280rpx
+            padding 18rpx 24rpx 31rpx 24rpx
+            box-sizing border-box
+            overflow-y scroll
+            @media screen and (min-aspect-ratio: 1/1)
+              height 220rpx
+            .content-text
+              font-family PingFangSC-Regular
+              font-size 12px
+              color #333333
+              font-weight 400
+              display block
+              margin-right 18rpx
+            &::-webkit-scrollbar 
+              width 4rpx
+              height 292rpx
+              background #DEE0EA
+              border-radius 8rpx
+            &::-webkit-scrollbar-thumb
+              width 4rpx
+              height 70rpx
+              background #999999
+              border-radius 8rpx
+      .footer
+        margin 41rpx 0 58rpx
+        display flex
+        width 100%
+        justify-content space-between
+        .optionBtn
+          width 320rpx
+          height 94rpx
+          margin 0
+          padding 0
+          border-width 0
+          font-family PingFangSC-Regular
+          font-size 32rpx
+          color #444
+          font-weight 400
+          line-height 1
+          box-sizing border-box
+          flexSet()
+          border-radius 13rpx
+          &:after
+            border 0
+        .disagree
+          border: 1rpx solid rgba(255, 127, 65, .8);
+        .agree
+          color: #fff
+          border-radius: 13rpx
+    .authorize-retain-middle-modal
+        flexSet(flex-start, column)
+        position relative
+        width 560rpx
+        background #fff
+        border-radius 20rpx
+        overflow hidden
+        @media screen and (min-aspect-ratio: 1/1)
+          transform scale(0.5)
+        .title
+          font-family PingFangSC-Medium
+          font-size 40rpx
+          font-weight 500
+          margin-top 48rpx
+          width 100%
+          text-align center
+        .content
+          width 100%
+          box-sizing border-box
+          padding 0 52rpx
+          .link
+            margin-top 20rpx
+            flexSet(flex-start)
+            &+.link
+              margin-top 10rpx
+            .link-text
+              max-width 440rpx
+              white-space nowrap
+              text-overflow ellipsis
+              overflow hidden
+              font-family PingFangSC-Regular
+              font-size 28rpx
+              font-weight 400
+              display block
+              height 40rpx
+              line-height 40rpx
+            .link-icon
+              flexSet(flex-start)
+              width 24rpx
+              height 24rpx
+          .detail
+            width 100%
+            height 240rpx
+            margin-top 20rpx
+            overflow hidden
+            @media screen and (min-aspect-ratio: 1/1)
+              height 230rpx
+            .detail-content
+              width 100%
+              height 240rpx
+              font-family PingFangSC-Regular
+              font-size 17px
+              color #333333
+              font-weight 400
+              overflow-y scroll
+              @media screen and (min-aspect-ratio: 1/1)
+                height 220rpx
+              .content-text
+                font-family PingFangSC-Regular
+                font-size 17px
+                color #333333
+                font-weight 400
+                display block
+              &::-webkit-scrollbar 
+                width 4rpx
+                height 292rpx
+                background #DEE0EA
+                border-radius 8rpx
+              &::-webkit-scrollbar-thumb
+                width 4rpx
+                height 70rpx
+                background #999999
+                border-radius 8rpx
+        .footer-one
+          margin 44rpx 0 40rpx
+          display flex
+          width 100%
+          box-sizing border-box
+          padding 0 48rpx
+          justify-content space-between
+          .optionBtn
+            width 225rpx
+            height 74rpx
+            margin 0
+            padding 0
+            border-width 0
+            font-family PingFangSC-Regular
+            font-size 32rpx
+            color #444
+            font-weight 400
+            line-height 1
+            box-sizing border-box
+            flexSet()
+            border-radius 13rpx
+            &:after
+              border 0
+          .disagree
+            border 1px solid rgba(151,151,151,1);
+            opacity 0.6
+          .agree
+            color #fff
+            border-radius 13rpx
+        .footer-two
+          margin-top 32rpx
+          display flex
+          flex-direction column
+          width 100%
+          .optionBtn
+            width 100%
+            height 94rpx
+            margin 0
+            padding 0
+            border-width 0
+            font-family PingFangSC-Regular
+            font-size 32rpx
+            color #444
+            font-weight 400
+            line-height 1
+            box-sizing border-box
+            flexSet()
+            &:after
+              border 0
+          .disagree
+            color #444
+            opacity 0.6
+          .agree
+            color #fff
+    .authorize-retain-slide-modal
+      position fixed
+      bottom 0
+      flexSet(center, column)
+      width 100vw
+      background #fff
+      border-radius 20rpx 20rpx 0 0
+      overflow hidden
+      padding 0 38rpx
+      box-sizing border-box
+      @media screen and (min-aspect-ratio: 1/1)
+        transform scale(0.5)
+        border-radius 20rpx
+      .title
+        font-family PingFangSC-Medium
+        font-size 40rpx
+        font-weight 500
+        margin-top 48rpx
+        width 100%
+        text-align center
+      .content
+        width 100%
+        .link
+          margin-top 20rpx
+          flexSet(flex-start)
+          &+.link
+            margin-top 10rpx
+          .link-text
+            max-width 440rpx
+            white-space nowrap
+            text-overflow ellipsis
+            overflow hidden
+            font-family PingFangSC-Regular
+            font-size 28rpx
+            font-weight 400
+            display block
+            height 40rpx
+            line-height 40rpx
+          .link-icon
+            flexSet(flex-start)
+            width 24rpx
+            height 24rpx
+        .detail
+          width 100%
+          height 240rpx
+          margin-top 20rpx
+          overflow hidden
+          @media screen and (min-aspect-ratio: 1/1)
+            height 230rpx
+          .detail-content
+            width 100%
+            height 240rpx
+            padding 16rpx 0 0 0
+            box-sizing border-box
+            overflow-y scroll
+            @media screen and (min-aspect-ratio: 1/1)
+              height 220rpx
+            .content-text
+              font-family PingFangSC-Regular
+              font-size 17px
+              color #333333
+              font-weight 400
+              display block
+              margin-right 18rpx
+            &::-webkit-scrollbar 
+              width 4rpx
+              height 292rpx
+              background #DEE0EA
+              border-radius 8rpx
+            &::-webkit-scrollbar-thumb
+              width 4rpx
+              height 70rpx
+              background #999999
+              border-radius 8rpx
+      .footer
+        margin 24rpx 0 58rpx
+        display flex
+        width 100%
+        justify-content space-between
+        .optionBtn
+          width 320rpx
+          height 94rpx
+          margin 0
+          padding 0
+          border-width 0
+          font-family PingFangSC-Regular
+          font-size 32rpx
+          color #444
+          font-weight 400
+          line-height 1
+          box-sizing border-box
+          flexSet()
+          border-radius 13rpx
+          &:after
+            border 0
+        .disagree
+          border: 1px solid rgba(151,151,151,1);;
+        .agree
+          color: #fff
+          border-radius: 13rpx
+    .authorize-bottom-retain
+      position fixed
+      left 0
+      right 0
+      width 100vw
+      height 100vh
+      bottom 0
+      background rgba(255,255,255,0)
+      @media screen and (min-aspect-ratio: 1/1)
+        transform scale(0.5)
+      .authorize-bottom-retain-container
+        opacity 0.94
+        background #FFFFFF
+        box-shadow inset 0rpx 2rpx 2rpx 0rpx rgba(255,255,255,1)
+        box-shadow 0rpx -2rpx 7rpx 0rpx rgba(0,0,0,0.08)
+        width 100%
+        height 93rpx
+        box-sizing border-box
+        padding 23px
+        position fixed
+        flexSet(space-between)
+        .text
+          font-family PingFangSC-Medium
+          font-size 17px
+          color #333333
+          font-weight 500
+          width 238px
+          text-overflow ellipsis
+          overflow hidden
+          white-space no-wrap
+        .btn
+          background #FF7F41
+          border-radius 13rpx
+          color #FFFFFF
+          font-family PingFangSC-Medium
+          font-size 15px
+          color #FFFFFF
+          font-weight 500
+          height 59rpx
+          line-height 59rpx
+          text-align center
+          width 159rpx
+</style>
+
+<script type="application/json">
+  {
+    "component": true,
+    "usingComponents": {
+      "mpx-icon": "@didi/mpx-ui/src/components/icon/icon",
+      "disagree-navigator": "../disagree-navigator/disagree-navigator"
+    }
+  }
+</script>
