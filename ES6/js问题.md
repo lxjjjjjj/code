@@ -1,7 +1,7 @@
-为什么typeof null 的结果是object
+# 为什么typeof null 的结果是object
 
 ```
-ull是一种基本数据类型，存储在栈区；而typeof null的结果却是Object，而Object是引用数据类型，存储在堆区。其次，根据代码alert (person instance of Object)输出结果为false,我们可以知道null并不是Object的实例，两者之间存在矛盾
+null是一种基本数据类型，存储在栈区；而typeof null的结果却是Object，而Object是引用数据类型，存储在堆区。其次，根据代码alert (person instance of Object)输出结果为false,我们可以知道null并不是Object的实例，两者之间存在矛盾
 
 在 javascript 的最初版本中，使用的 32位系统，js为了性能优化，使用低位来存储变量的类型信息
 
@@ -15,12 +15,12 @@ null	全为0
 
 在判断数据类型时，是根据机器码低位标识来判断的，而null的机器码标识为全0，而对象的机器码低位标识为000。所以typeof null的结果被误判为Object
 ```
-如何判断一个对象是Promise对象
+# 如何判断一个对象是Promise对象
 ```
 let a = new Promise((resolve,reject)=>{resolve()});
 console.log(a instanceof Promise);// true
 ```
-?. 中文名为可选链 和 ?? 中文名为空位合并运算符
+# ?. 中文名为可选链 和 ?? 中文名为空位合并运算符
 
 ```
 const a = 0 || '林三心' // 林三心
@@ -38,7 +38,7 @@ const d = undefined ?? '林三心' // 林三心
 const e = null ?? '林三心' // 林三心
 
 ```
-Promise.any
+# Promise.any
 
 ```
 E12新增的Promise的方法
@@ -78,16 +78,16 @@ Promise.any([fn(2000), fn(3000), fn(1000)]).then(res => {
 })
 
 ```
-数字分隔符
+# 数字分隔符
 
-```
+
 const num = 1000000000
 
 // 使用数字分隔符
 const num = 1_000_000_000
 
-```
-||= 和 &&=
+
+# ||= 和 &&=
 
 ```
 或等于(||=)   a ||= b 等同于 a || (a = b);
@@ -95,7 +95,7 @@ const num = 1_000_000_000
 且等于(&&=)   a &&= b 等同于 a && (a = b);
 
 ```
-对象计算属性
+# 对象计算属性
 
 ```
 if (type === 'boy') {
@@ -113,11 +113,8 @@ this.setData({
 })
 
 ```
+# Promise.allSettled
 
-
-Promise.allSettled
-
-```
 ES11新增的Promise的方法
 
 接收一个Promise数组，数组中如有非Promise项，则此项当做成功
@@ -141,7 +138,7 @@ Promise.allSettled([fn(2000, true), fn(3000), fn(1000)]).then(res => {
 ]
 })
 
-Promise.all输出
+# Promise.all输出
 
 function fn(time, isResolve) {
   return new Promise((resolve, reject) => {
@@ -179,10 +176,10 @@ Promise.then (async)
 (anonymous) @ VM188:9
 
 所以Promise.all是输出截止到输出错误为止 有错误 后面的就不再输出了
-```
 
 
-String.trimStart && String.trimEnd
+
+# String.trimStart && String.trimEnd
 
 ```
 咱们都知道JavaScript有个trim方法，可以清除字符串首尾的空格
@@ -199,7 +196,7 @@ console.log(str.trimEnd()) // '   林三心'
 
 ```
 
-Object.fromEntries
+# Object.fromEntries
 
 ```
 前面ES8的Object.entries是把对象转成键值对数组，而Object.fromEntries则相反，是把键值对数组转为对象
@@ -225,7 +222,7 @@ console.log(obj) // { name: '林三心', age: 22, gender: '男' }
 
 ```
 
-求幂运算符
+# 求幂运算符
 
 ```
 以前求幂，我们需要这么写
@@ -236,7 +233,7 @@ ES7提供了求幂运算符：**
 
 const num = 3 ** 2 // 9
 ```
-for await of
+# for await of
 
 ```
 function fn (time) {
@@ -280,7 +277,34 @@ asyncFn()
 500毫秒后我成功啦！！！
 
 ```
-Promise.finally
+```
+function fn (time) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(`${time}毫秒后我成功啦！！！`)
+    }, time)
+  })
+}
+function async() { console.log('这是个同步任务')}
+async function asyncFn () {
+  const arr = [fn(3000), fn(1000),async(),fn(1000), fn(2000), async(),fn(500)]
+  for await (let x of arr) {
+    console.log(x)
+  }
+}
+
+asyncFn();
+这是个同步任务
+这是个同步任务
+3000毫秒后我成功啦！！！
+1000毫秒后我成功啦！！！
+undefined
+1000毫秒后我成功啦！！！
+2000毫秒后我成功啦！！！
+undefined
+500毫秒后我成功啦！！！
+```
+# Promise.finally
 
 ```
 新增的Promise方法，无论失败或者成功状态，都会执行这个函数
@@ -301,7 +325,7 @@ new Promise((resolve, reject) => {
 
 
 ```
-Array.flat
+# Array.flat
 
 ```
 有一个二维数组，我想让他变成一维数组：
@@ -330,25 +354,25 @@ console.log(arr.flat(Infinity))
 
 ```
 
-Array.flatMap
+# Array.flatMap
 
 ```
 
 现在给你一个需求
 let arr = ["科比 詹姆斯 安东尼", "利拉德 罗斯 麦科勒姆"];
-复制代码
+
 将上面数组转为
 [ '科比', '詹姆斯', '安东尼', '利拉德', '罗斯', '麦科勒姆' ]
 
-第一时间想到map + flat
+第一时间想到 map + flat
 console.log(arr.map(x => x.split(" ")).flat());
 // [ '科比', '詹姆斯', '安东尼', '利拉德', '罗斯', '麦科勒姆' ]
 
-flatMap就是flat + map，一个方法顶两个
+flatMap 就是flat + map，一个方法顶两个
 console.log(arr.flatMap(x => x.split(" ")));
 // [ '科比', '詹姆斯', '安东尼', '利拉德', '罗斯', '麦科勒姆' ]
 ```
-BigInt
+# BigInt
 
 ```
 BigInt是ES10新加的一种JavaScript数据类型，用来表示表示大于 2^53 - 1 的整数，2^53 - 1是ES10之前，JavaScript所能表示最大的数字
@@ -365,17 +389,16 @@ const hugeHex = BigInt("0x1fffffffffffff");
 
 const hugeBin = BigInt("0b11111111111111111111111111111111111111111111111111111");
 // 9007199254740991n
-复制代码
+
 哦对了，既然是JavaScript新的数据类型，那他的typeof是啥？
 const bigNum = BigInt(1728371927189372189739217)
 console.log(typeof bigNum) // bigint
-复制代码
+
 所以以后面试官问你JavaScript有多少种数据类型，别傻傻答6种了，要答8种，把ES6的Symbol和ES10的BigInt也加上去
 
 ```
 
-
-数组的 indexOf 和 includes 方法的区别
+# 数组的 indexOf 和 includes 方法的区别
 
 ```
 const arr = [1, 2, NaN]
@@ -386,7 +409,7 @@ console.log(arr.includes(NaN)) // true includes能找到NaN
 ```
 
 
-Set
+# Set
 
 ```
 先说说Set的基本用法
@@ -411,7 +434,7 @@ set2.delete(2)
 console.log(set2) // Set(4) { 1, 3, 4, '林三心' }
 
 ```
-Map
+# Map
 
 ```
 Map对比object最大的好处就是，key不受类型限制
@@ -436,10 +459,10 @@ console.log(map2) // Map(3) { true => 1, 1 => 2, '哈哈' => '嘻嘻嘻' }
 
 ```
 
-for of 和 for in
+# for of 和 for in
 ```
-for in ：遍历方法，可遍历对象和数组
-for of ：遍历方法，只能遍历数组，不能遍历非iterable对象
+for in ：遍历方法，可遍历对象和数组，得到的是key
+for of ：遍历方法，只能遍历数组，不能遍历非iterable对象 遍历的是值
 
 先看for in：
 const obj = { name: '林三心', age: 22, gender: '男' }
@@ -462,9 +485,21 @@ for(let item of arr) {
   console.log(item)
 }
 1 2 3 4 5
+
+const map2 = new Map([[true, 1], [1, 2], ['哈哈', '嘻嘻嘻']]);
+for(let item of map2) {
+  console.log(item)
+};
+// [true, 1] [1, 2] ['哈哈', '嘻嘻嘻']
+
+const set2 = new Set([1, 2, 3, 'aaaa', 'bbbb']); 
+for(let item of set2) {
+  console.log(item)
+};
+// 1 2 3 aaaa bbbb
 ```
 
-函数的length
+# 函数的length
 ```
 123['toString'].length + 123 = 124
 
@@ -496,7 +531,7 @@ console.log(fn1.length) // 1
 
 length 是函数对象的一个属性值，指该函数有多少个必须要传入的参数，即形参的个数。形参的数量不包括剩余参数个数，仅包括第一个具有默认值之前的参数个数
 ```
-a == 1 && a == 2 && a == 3 如何让这个表达式的结果是true
+# a == 1 && a == 2 && a == 3 如何让这个表达式的结果是true
 
 ```
 对象类型转换
@@ -530,7 +565,7 @@ Object.defineProperty(window, 'a', { // 这里要window，这样的话下面才�
 console.log(a == 1 && a == 2 && a == 3) // true
 
 ```
-将Map对象排序
+# 将Map对象排序
 
 ```
 const map = new Map()
@@ -556,9 +591,10 @@ const map2 = new Map(arr) // 成功转化
 console.log(map2) // Map { 1 => '林一心', 2 => '林二心', 3 => '林三心', 4 => '林四心', 5 => '林五心' }
 
 ```
-解构默认赋值，剩余参数
+# 解构
+[原文链接](https://juejin.cn/post/6844904119342202888)
 
-```
+## 默认解构
 let [ a, b = 1 ] = [ '林三心' ]
 console.log(a, b) // a = '林三心'  b = 1
 
@@ -572,7 +608,211 @@ let [ a, b = 1 ] = [ '林三心', null ]
 console.log(a, b) // a = '林三心'  b = null
 
 当解构变量对应的数组元素是undefined且解构变量拥有默认值时，该变量等于默认值，如果对应的元素非undefined，则该变量等于对应的元素
-```
+
+## “模式匹配”赋值
+
+这属于“模式匹配”，只要等号两边的模式相同，左边的变量就会被赋予对应的值。
+let [num_s,nums,num_e] = [1,[2,3,4],5];
+console.log(num_s) // logs 1
+console.log(nums) // logs [2,3,4]
+console.log(num_e) // logs 5
+
+## 用逗号跳过元素
+let [num1,,,num4] = [1,2,3,4];
+console.log(num1) // logs 1
+console.log(num4) // logs 4
+
+let [,num2,,num4] = [1,2,3,4];
+console.log(num2) // logs 2
+console.log(num4) // logs 4
+
+查看变量赋值左侧的数组。注意这里不是只有一个逗号，而是三个。逗号分隔符用于跳过数组中的值。所以如果你想要跳过数组中的一个项，只要用逗号就可以了。
+
+## 数组中的其余部分的赋值
+如果我们想将数组中的一些元素赋值给变量，而将数组中的其余元素存为一个数组赋值给指定的变量怎么办？在这种情况下，我们可以这样做：
+let [num1,...nums] = [1,2,3,4];
+console.log(num1) // logs 1
+console.log(nums) // logs [2,3,4]
+应用这种方式，你可以轻松的把剩余的元素赋值给一个指定的变量。
+
+## 解构失败，赋值undefined
+let [num1] = [];
+let [num2, num3] = [1];
+console.log(num1) // logs undefined
+console.log(num3) // logs undefined
+代码中的变量num1与变量num3 按照模式匹配原则，并没有对应的值与之匹配，故而返回undefined。而变量num2  按照模式匹配原则，被赋值为2。
+
+## 函数的解构赋值
+解构赋值还可以从函数返回的数组中提取数据。假设我们有一个返回数组的函数，如下例所示：
+function getLists() {
+    let lists = [1,2,3,4,5]
+    return lists;
+}
+let [num1,...nums] = getLists();
+
+console.log(num1); // logs 1
+console.log(nums); // logs [2,3,4,5]
+## 使用默认值
+数组的解构赋值可以给变量设定默认值，以防万一从数组中提取的值是 undefined（防止解构失败的情况）
+let [name = "暂无姓名",sex = "女"] = ["April"];
+
+console.log(name); // "April"
+console.log(sex); // "女"
+代码中变量name 默认的值为 "暂无姓名" 但是按照左右模式匹配的原则,name 被赋值为 "April" ,因为变量sex并未匹配到值，所以它的值依旧是默认值"女"。
+
+注意点1：ES6 内部使用严格相等运算符（===），判断一个位置是否有值。所以，只有当一个数组成员严格等于undefined，默认值才会生效。
+let [num1 = 1] = [undefined];
+console.log(num1) // logs 1
+
+let [num2 = 2] = [null];
+console.log(num2) // logs null
+代码中，因为null不严格等于undefined，默认值就不会生效。故而输出了 null
+
+注意点2：如果默认值是函数，这个函数就会非常的懒，即只有在用到的时候，才会执行函数。
+ function getLists(){
+    let lists = [1,2,3,4,5]
+    return lists; 
+ }
+let [lists = getLists()] = [1];
+console.log(lists) // logs 1
+// 因为变量 lists 可以匹配到值，所以函数 getLists() 并不会执行。
+
+ function getLists(){
+    let lists = [1,2,3,4,5]
+    return lists; 
+ }
+let [lists = getLists()] = [];
+console.log(lists) // logs [1,2,3,4,5]
+// 因为变量 lists 无法匹配到值，函数 getLists() 就会执行。故而返回数据 [1,2,3,4,5]
+
+注意点3：默认值可以引用解构赋值的其他变量，但该变量必须已经声明。
+let [x = 1, y = x] = [];     // logs x=1; y=1
+let [x = 1, y = x] = [2];    // logs x=2; y=2
+let [x = 1, y = x] = [1, 2]; // logs x=1; y=2
+let [x = y, y = 1] = [];     //logs 这就要报错啦，因为x用y做默认值时，y还没有声明。
+
+## 交换变量
+let num1 = 1;
+let num2 = 2;
+
+[num1,num2] = [num2,num1];
+
+console.log({num1}); // logs 2
+console.log({num2}); // logs 1
+
+## 对象的解构赋值
+为什么要用对象的解构赋值呢？？
+ let profiles = {
+    name:'April',
+    nickname:"二十七刻",
+    sign:"不以物喜，不以己悲。"
+ }
+   
+let name = profiles.name;
+let nickname = profiles.nickname;
+let sign = profiles.sign;
+
+console.log({name}) // "April"
+console.log({nickname})// "二十七刻"
+console.log({sign}) // "不以物喜，不以己悲。"
+假设我们要从对象profiles中获取数据并赋值给新变量。就得不断的重复着取值与赋值。代码冗长且不利于维护。利用对象的解构赋值，就不存在这一问题了。
+## 同属性名赋值
+对象的解构赋值变量必须与属性同名，才能取到正确的值。如下：
+let profiles = {
+     name:'April', 
+     nickname:"二十七刻", 
+     sign:"不以物喜，不以己悲。"
+}
+let {name,nickname,sign} = profiles;
+
+console.log({name})    // logs "April"
+console.log({nickname})// logs "二十七刻"
+console.log({sign})    // logs "不以物喜，不以己悲。"
+解构失败，赋值undefined
+let profiles = {
+    name:'April',
+    nickname:"二十七刻",
+    sign:"不以物喜，不以己悲。"
+}
+let {name,sex} = profiles;
+
+console.log(name) // logs "April"
+console.log(sex) // logs undefined
+上面代码中，因为profiles对象没有 sex属性，所以变量sex取不到值，所以就赋值undefined。
+在赋值之前申明变量
+在对象的解构赋值中，变量可以在赋值之前申明。如下：
+let profiles = {
+    name:'April',
+    nickname:"二十七刻",
+    sign:"不以物喜，不以己悲。"
+}
+let name,nickname,sign;
+{name,nickname,sign} = profiles;
+
+console.log(name) // logs Error : "Unexpected token ="
+嘿呀～报错了！为什么？？？
+原因：因为忘记在{}外层写()了。
+注意1 ：当使用没有声明的对象字面量解构赋值时，必须使用()的赋值语句。因为 JavaScript 引擎会将{name,nickname,sign}理解成一个代码块，而不是对象字面量。
+注意2 ：使用此语法时，上一行代码一定要以;结束掉，否则的话会被当作函数，执行上一行的代码。
+就是这个奇怪的语法 :({} = '');
+正确的做法如下：
+let profiles = {
+    name:'April',
+    nickname:"二十七刻",
+    sign:"不以物喜，不以己悲。"
+}
+let name,nickname,sign;
+({name,nickname,sign} = profiles);
+
+console.log({name},{nickname},{sign})
+// logs {name: "April"} {nickname: "二十七刻"} {sign: "不以物喜，不以己悲。"}
+## 使用新的变量名
+如果我们想用新的变量名来替代对象的属性名怎么办呢？代码如下：
+let profiles = {
+    name:"April",
+    age:"27"
+}
+let {name:userName,age:userAge} = profiles;
+
+console.log(userName) // logs "April"
+console.log(userAge) // logs "27"
+由此可知，对象的解构赋值其实就是let {name:name,age:age} = {name:"April",age:"27"}代码的简写。也就是说，对象的解构赋值的内部机制，是先找到同名属性，然后再赋给对应的变量。真正被赋值的是后者，而不是前者。
+上面代码中，name是匹配的模式，userName才是变量。真正被赋值的是变量userName，而不是模式name。
+## 使用默认值
+对象的解构赋值可以给变量设定默认值，以防万一从对象中获取的值是 undefined（防止解构失败的情况）需要注意的是：默认值生效的条件是，对象的属性值严格等于undefined。
+let staff = {name: "April", country: "China", job: "Developer"};
+let {name = "暂无姓名", age = "暂无年龄"} = staff;
+
+console.log({name}); // logs "April"
+console.log({age}); // logs "暂无年龄"
+代码中变量name的默认值为“暂无姓名”,但是对象staff中有属性为name的字段，所以就被赋值April,而对象staff中并没有age这个属性，所以被赋值为"暂无年龄"，取了它自己的默认值。
+## 计算属性名称
+计算属性名是另一个对象特性，也适用于对象的解构赋值。你可以通过一个表达式指定一个属性的名称，把它放在[]中，如下：
+let staff = {name: "April", country: "China", job: "Developer"};
+let prop = "name";
+let {[prop]: name} = staff;
+
+console.log({name}); // logs "April"
+## 对象中的其余部分的赋值
+解构运算也可以被应运到解构赋值当中，来获取那些还没有被赋值的键值对，这些键值对都被放在一个新的对象里。如下：
+let staff = {name: "April", country: "China", job: "Developer",nickname:"二十七刻"};
+let {country,...infos} = staff;
+
+console.log(country) //logs "China"
+console.log(infos) // logs {name: "April", job: "Developer", nickname: "二十七刻"}
+## 嵌套对象的解构赋值
+let staffs = {
+    group1:[ { id:"007", name:"April"}]
+}
+let {group1,group1:[{id,name}]} = staffs;
+
+console.log(group1) // logs [{ id:"007", name:"April"}]
+console.log(id) // logs "007"
+console.log(name) // logs "April"
+注意，代码中group1是模式，不是变量。如果想把group1也作为变量赋值，就要先进行定义再去赋值。
+
+
+# 输出练习1
 
 ```
 var x = 1;
@@ -600,7 +840,7 @@ f()
 console.log(x) // 全局x无影响，所以：1
 
 ```
-
+# 输出练习2
 ```
 var x = 1;
 function f(x, y = function () { x = 3; console.log(x); }) {
@@ -613,7 +853,7 @@ f()
 console.log(x) // 全局x无影响，所以：1
 
 ```
-
+# 输出练习3
 ```
 var x = 1;
 function f(xx, y = function () { x = 3; console.log(x); }) {
@@ -626,7 +866,7 @@ f()
 console.log(x) // 全局x被y函数改变了，所以：3
 
 ```
-
+# 输出练习4
 ```
 var x = 1;
 function f(x = 4, y = function () { x = 3; console.log(x); }) {
@@ -647,7 +887,7 @@ answer：[1,NaN,NaN]
 ```
 
 ```
-2. [typeof null, null instanceof Object]     answer:["object", false]
+1. [typeof null, null instanceof Object]     answer:["object", false]
 ```
 
 
@@ -1027,7 +1267,7 @@ function getName() {
     name = 'javascript'
 }
 getName()
-复制代码
+
 // (2)
 const elements = {
     button: document.getElementById('button')
@@ -1036,7 +1276,7 @@ function removeButton() {
     document.body.removeChild(elements.button);
 }
 removeButton()
-复制代码
+
 // (3)
 let timer = setInterval(() => {
     const node = document.querySelector('#node') 
@@ -1060,7 +1300,7 @@ A. mouseover
 B. click
 C. mouseleave
 D. mousemove
-复制代码
+
 ```
 
 ```
@@ -1069,7 +1309,7 @@ A. stopDeafault()
 B. stopPropagation()
 C. preventDefault()
 D. preventDefaultEven()
-复制代码
+
 ```
 
 ```
@@ -1078,7 +1318,7 @@ D. preventDefaultEven()
 冒泡 -> 目标 -> 捕获
 目标 -> 冒泡 -> 捕获
 捕获 -> 目标 -> 冒泡
-复制代码
+
 ```
 
 ```
@@ -1095,7 +1335,7 @@ outline
 visiblity
 font-size
 background-color
-复制代码
+
 ```
 
 ```
@@ -1155,7 +1395,7 @@ A. 每一个原型都有一个constructor属性指向关联的构造函数。
 B. 每一个对象都有一个prototype属性。
 C. Object.getPrototypeOf(person) === Person.prototype
 D. person.constructor === Person
-复制代码
+
 ```
 
 ```
@@ -1183,7 +1423,7 @@ function showCase(value) {
     }
 }
 showCase(new String('A'));
-VM6620:13 Case default
+Case default
 ```
 
 ```
@@ -1203,5 +1443,5 @@ function showCase(value) {
     }
 }
 showCase(String('A'));
-VM8700:4 Case A
+Case A
 ```
