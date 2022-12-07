@@ -1,0 +1,9 @@
+
+{
+  "preview": {
+    "type": "node",
+    "desc": "小程序生成二维码工具",
+    "path": "./node/index.js"
+  }
+}
+

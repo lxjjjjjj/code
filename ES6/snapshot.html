@@ -1,0 +1,28 @@
+<html>
+    <head>
+        
+    </head>
+    <body>
+        
+        <script>
+            function Obj() {
+  this.sstring = 'str';
+  this.snum1 = 1;
+  this.snum2 = 1.1;
+  this.sbigInt = BigInt('1');
+  this.ssymbol = Symbol('1');
+  return this
+}
+const obj = new Obj();
+debugger;
+obj.sstring = 'other str';
+obj.snum1 = 2;
+obj.snum2 = 1;
+obj.sbigInt = BigInt('2');
+obj.ssymbol = Symbol('2');
+
+        </script>
+        
+    </body>
+
+</html>
