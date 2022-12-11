@@ -645,3 +645,22 @@ export default {
 但是切记设置 runtime 的 corejs:false 选项，关闭 runtime 提供的 polyfill 的功能，仅保留一种 polyfill 提供方案。
 最后，无论是哪一种 polyfill 的方式，我强烈推荐你使用 corejs@3 版本来提供 polyfill。
 
+# 插件顺序
+插件在 Presets 前运行。
+插件顺序从前往后排列。
+Preset 顺序是颠倒的（从后往前）。
+
+例如:
+{
+    "plugins": ["@babel/plugin-proposal-class-properties", "@babel/plugin-syntax-dynamic-import"]
+}
+
+先执行 @babel/plugin-proposal-class-properties，后执行 @babel/plugin-syntax-dynamic-import
+{
+  "presets": ["@babel/preset-env", "@babel/preset-react"]
+}
+
+preset 的执行顺序是颠倒的，先执行 @babel/preset-react， 后执行 @babel/preset-env。
+
+
+
