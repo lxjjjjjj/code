@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+    <div id="button">
+    </div>
+  <script>
+    let button =document.querySelector('#button');
+
+    button.addEventListener('click',function CB1() {
+        console.log('Listener 1');
+        setTimeout(() => console.log('Timeout 1'))
+        Promise.resolve().then(() => console.log('Promise 1'))
+    });
+    button.addEventListener('click',function CB1(){
+        console.log('Listener 2');
+        setTimeout(() => console.log('Timeout 2'))  
+        Promise.resolve().then(() => console.log('Promise 2'))
+    });
+
+    // Listener 1
+    // Promise 1
+    // Listener 2
+    // Promise 2
+    // Timeout 1
+    // Timeout 2
+
+  </script>
+  <style>
+      #button {
+          height: 200px;
+          width: 200px;
+          border: 1px solid #f00
+      }
+  </style>
+</body>
+</html>

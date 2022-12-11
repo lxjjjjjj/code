@@ -233,7 +233,7 @@ setImmediate(() => console.log('timeout4'));
 如果是 node11 后的版本，会输出timeout1=>timeout2=>next tick=>timeout3=>timeout4
 
 如果是 node11 前的版本，会输出timeout1=>timeout2=>timeout3=>timeout4=>next tick
-## Node 与浏览器的 Event Loop 差异
+## node11 之前 Node 与浏览器的 Event Loop 差异
 浏览器环境下，microtask 的任务队列是每个 macrotask 执行完之后执行。而在 Node.js 中，microtask 会在事件循环的各个阶段之间执行，也就是一个阶段执行完毕，就会去执行 microtask 队列的任务。
 ```
 setTimeout(()=>{
@@ -258,7 +258,7 @@ setTimeout(()=>{
 [浏览器执行图](https://pic2.zhimg.com/v2-d1ca0d6b13501044a5f74c99becbcd3d_b.webp)
 [Nodejs执行图](https://pic1.zhimg.com/v2-963090bd3b681de3313b4466b234f4f0_b.jpg)
 
-### 浏览器和 Node 环境下，microtask 任务队列的执行时机不同
+### node11 之前 浏览器和 Node 环境下，microtask 任务队列的执行时机不同
 
 Node 端，microtask 在事件循环的各个阶段之间执行
 浏览器端，microtask 在事件循环的 macrotask 执行完之后执行
@@ -354,15 +354,17 @@ Node结果：
 
 # 浏览器的事件循环
 
-所有同步任务都在主线程上执行，形成一个执行栈（execution context stack）。对于消耗时间久会对浏览器渲染产生阻塞的行为放到异步队列中执行。浏览器执行微任务，当某个宏任务执行完后,会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务，执行宏任务的过程中，遇到微任务，依次加入微任务队列。栈空后，再次读取微任务队列里的任务，依次类推。
-浏览器中的时间环中 EventLoop 会清空当前 macro 下产生的所有 micaro 的 callback 。
+## 总结
+JS被设计成单线程的，因为JS可以操作DOM，为了保证用户操作和页面展示的一致。对于消耗时间久会对浏览器渲染产生阻塞的行为放到浏览器提供的各种异步队列中执行。浏览器会在打开一个tab页面的时候同时开启，GUI渲染线程、JS引擎线程、timer定时器线程、事件回调线程以及http异步请求线程。JS同步代码会在主线程中执行，形成执行栈，每当遇到不同的异步代码会交给浏览器执行。timer线程执行setTimeout、setInterval代码，http异步请求线程执行请求。DOM监听操作被触发时，事件回调线程会讲其放到任务队列中。当异步执行完，事件回调会将执行完的任务回调放到任务队列中。JS的同步代码执行完就会执行任务队列中的回调。当然任务队列分为微任务队列和宏任务队列。宏任务队列可以有多个，微任务队列只有一个。当某个宏任务执行完后, 会查看是否有微任务队列。如果有，先执行微任务队列中的所有任务，如果没有，会读取宏任务队列中排在最前的任务。每一次执行宏任务之前，都是要确保我微任务的队列是空的。存在插队的情况，也就是说当我微任务执行完了，要开始执行宏任务了（有多个宏任务），宏任务队列当队列中的代码执行了，宏任务队列里面又有微任务代码，又把微任务放入到微任务队列当中。
+
+* 宏任务队列 Macrotask Queue: ajax、Dom监听、setTimeout、setInterval、 setImmediate、script（整体代码）、 I/O 操作、UI 渲染等、postMessage、MessageChannel
+* 微任务队列 Microtask Queue: Promise的then回调、 Mutation Observer API、queueMicrotask
 
 
+[原文链接](https://juejin.cn/post/6932263539839074311)
 
-[原文链接](https://juejin.cn/post/7079092748929728548)
-[原文链接2](https://juejin.cn/post/6932263539839074311)
 ## 一个浏览器页面的线程
-浏览器内核是多线程，在内核控制下各线程相互配合以保持同步，一个浏览器通常由以下常驻线程组成：
+浏览器内核是多线程，在内核控制下各线程相互配合以保持同步，一个浏览器页面通常由以下常驻线程组成：
 
 - GUI 渲染线程
 
@@ -382,68 +384,27 @@ Node结果：
 负责执行异步请求一类的函数的线程，如： Promise，axios，ajax等。主线程依次执行代码时，遇到异步请求，会将函数交给该线程处理，当监听到状态码变更，如果有回调函数，事件触发线程会将回调函数加入到任务队列的尾部，等待JS引擎线程执行。
 
 
-首先js代码先执行主线程的代码，也就是同步的代码，从上至下，遇到异步代码交给浏览器，浏览器专门开了一个线程维护两种队列，一种微任务队列，一种宏任务队列。宏任务队列可以有多个，微任务队列只有一个。JS调用栈是后进先出(LIFO)的。引擎每次从堆栈中取出一个函数，然后从上到下依次运行代码。每当它遇到一些异步代码，如setTimeout，它就把它交给浏览器的相应线程。事件循环(Event loop)不断地监视任务队列(Task Queue)，并按它们排队的顺序一次处理一个回调。每当调用堆栈(call stack)为空时，Event loop获取回调并将其放入堆栈(stack )中进行处理。请记住，如果调用堆栈不是空的，则事件循环不会将任何回调推入堆栈。每一次执行宏任务之前，都是要确保我微任务的队列是空的，也就是说从代码执行的顺序来说微任务优先于宏任务。
-
-存在插队的情况，也就是说当我微任务执行完了，要开始执行宏任务了（有多个宏任务），宏任务队列当队列中的代码执行了，宏任务队列里面又有微任务代码，又把微任务放入到微任务队列当中
-
-从严格的意义来说，紧接着是先进行编译的宏任务，但是此时微任务里面有任务才去执行的微任务队列，而不是直接去执行的。这些异步的代码交给js执行
-
-
-* 宏任务队列 Macrotask Queue: ajax、Dom监听、setTimeout、setInterval、 setImmediate、script（整体代码）、 I/O 操作、UI 渲染等。
-* 微任务队列 Microtask Queue: Promise的then回调、 Mutation Observer API、queueMicrotask
-
-
-## 宏任务队列、微任务队列、渲染任务执行的特点
-Tasks(宏任务队列) 只执行一个。执行完了就进入主进程，主进程可能决定进入其他两个异步队列，也可能自己执行到空了再回来。 补充：对于“只执行一个”的理解，可以考虑设置 2 个相同时间的 timeout，两个并不会一起执行，而依然是分批的。
-
-Animation callbacks(渲染任务) 执行队列里的全部任务，但如果任务本身又新增 Animation callback 就不会当场执行了，因为那是下一个循环 补充：同 Tasks(宏任务队列)，可以考虑连续调用两句 requestAnimationFrame，它们会在同一次事件循环内执行，有别于 Tasks (宏任务队列)
-
-Microtasks 直接执行到空队列才继续。因此如果任务本身又新增 Microtasks，也会一直执行下去。所以上面的例子才会产生阻塞。 补充：因为是当次执行，因此如果既设置了 setTimeout(0) 又设置了 Promise.then()，优先执行 Microtasks。
-
-### 测试题
-
-```
-console.log('Start')
-setTimeout(() => console.log('Timeout 1'), 0)
-setTimeout(() => console.log('Timeout 2'),0)
-Promise.resolve().then(()=>{
-for(let i=0;i<100000;i++){}
-  console.log('Promise 1')
-})
-Promise.resolve().then(() => console.log('Promise 2'))
-console.log('End');
-```
-答案 Start, End, Promise 1, Promise 2, Timeout 1, Timeout 2
-```
-let button =document.querySelector('#button');
-∂
-button.addEventListener('click',function CB1() {
-  console.log('Listener 1');
-  setTimeout(() => console.log('Timeout 1'))
-  Promise.resolve().then(() => console.log('Promise 1'))
-});
-button.addEventListener('click',function CB1(){
-  console.log('Listener 2');
-  setTimeout(() => console.log('Timeout 2'))  
-  Promise.resolve().then(() => console.log('Promise 2'))
-});
-```
 ## 宏任务队列
-每个页面都对应线程进程。而该进程又有多个线程，比如 JS 线程、渲染线程、IO 线程、网络线程、定时器线程等等，**这些线程之间的通信是通过向对象的任务队列中添加一个任务（postTask）来实现的。宏任务的本质也就是线程间通信的一个消息队列。宏任务的真面目是浏览器派发，与 JS 引擎无关的，参与了 Event Loop 调度的任务。**每次执行栈执行的代码就是一个宏任务，从事件队列中获取一个事件回调放入到执行栈中执行也是一个宏任务。**浏览器为了能够使JS内部macro-task(宏任务)与DOM任务能够有序的执行，会在一个宏任务执行完成之后，在下一个宏任务开始之前，对页面进行重新渲染。**
-script（代码块）
-setTimeout / setInterval
-setImmediate
-I/O
-UI render
-postMessage
-MessageChannel
-## 微任务队列
-微任务是在运行宏任务/同步任务的时候产生的，是属于当前任务的，所以它不需要浏览器的支持，内置在 JS 当中，直接在 JS 的引擎中就被执行掉了。可以理解是在宏任务执行完成之后立即执行的任务。他在渲染之前，无需等待渲染，所以的他响应速度要比宏任务快。在一个宏任务运行期间产生的所有微任务都在当前宏任务之前完成之后立即执行。 Microtasks 就是在 当次 事件循环的 结尾 立刻执行 的任务。 Promise.then() 内部的代码就属于 microtasks。相对而言，之前的异步队列 (Task queue) 也叫做 macrotasks，不过一般还是简称为 tasks。这段代码是在执行 microtasks 的时候，又把自己添加到了 microtasks 中，看上去是和那个 setTimeout 内部继续 setTimeout 类似。但实际效果却和第一段 addEventListener 内部 while(true) 一样，是会阻塞主进程的。这和 microtasks 内部的执行机制有关。
 
-process.nextTick
-Promise
-Async/Await
-MutationObserver
+每个页面都对应线程进程。而该进程又有多个线程，比如 JS 线程、渲染线程、IO 线程、网络线程、定时器线程等等，**这些线程之间的通信是通过向对象的任务队列中添加一个任务（postTask）来实现的。宏任务的本质也就是线程间通信的一个消息队列。宏任务的真面目是浏览器派发，与 JS 引擎无关的，参与了 Event Loop 调度的任务。**每次执行栈执行的代码就是一个宏任务，从事件队列中获取一个事件回调放入到执行栈中执行也是一个宏任务。**浏览器为了能够使JS内部macro-task(宏任务)与DOM任务能够有序的执行，会在一个宏任务执行完成之后，在下一个宏任务开始之前，对页面进行重新渲染。**
+
+## micro-task(微任务)
+
+微任务的出现，使得在宏任务执行完，到浏览器渲染之前，可以在这个阶段插入任务的能力。
+
+微任务是在运行宏任务/同步任务的时候产生的，是属于当前任务的，所以它不需要浏览器的支持，内置在 JS 当中，直接在 JS 的引擎中就被执行掉了。
+
+可以理解是在宏任务执行完成之后立即执行的任务。他在渲染之前，无需等待渲染，所以的他响应速度要比宏任务快。在一个宏任务运行期间产生的所有微任务都在当前宏任务之前完成之后立即执行。
+
+简单来说, Microtasks 就是在 当次 事件循环的 结尾 立刻执行 的任务。
+
+function callback() {
+  Promise.resolve().then(callback)
+}
+
+callback()
+
+这段代码是在执行 microtasks 的时候，又把自己添加到了 microtasks 中，看上去是和那个 setTimeout 内部继续 setTimeout 类似。但实际效果却和第一段 addEventListener 内部 while(true) 一样，是会阻塞主进程的。这和 microtasks 内部的执行机制有关。
 
 ## 渲染任务
 
@@ -453,13 +414,12 @@ Structure - 构建 DOM 树的结构
 Layout - 确认每个 DOM 的大致位置（排版）
 Paint - 绘制每个 DOM 具体的内容（绘制）
 
-## 特殊的requestAnimationFrame
+特殊的requestAnimationFrame
 
 requestAnimationFrame是一个特殊的异步任务，他不会被加入到异步任务队列，而是被加入到渲染任务，他在渲染任务的三个步骤之前执行，用来处理渲染相关的工作。
 
 ## requestAnimationFrame和setTimeout有什么不同
-他们的不同可以从他们所属的任务找出不一样。requestAnimationFrame属于渲染任务setTimeout属于宏任务。同个一个例子再来看看他们的区别
-```
+
 functuin callBack() {
 	move()； // 让元素移动1PX
     requestAnimationFrame(callBack);
@@ -471,36 +431,118 @@ functuin callBack() {
     	callBack();
     }, 0);
 }
-```
+
 这两种方法来让 box 移动起来。但实际测试发现，使用 setTimeout 移动的 box 要比 requestAnimationFrame 速度快得多。这表明单位时间内 callback 被调用的次数是不一样的。
 这是因为 setTimeout 在每次运行结束时都把自己添加到异步队列。等渲染过程的时候（不是每次执行异步队列都会进到渲染循环）异步队列已经运行过很多次了，所以渲染部分会一下会更新很多像素，而不是 1 像素。 requestAnimationFrame 只在渲染过程之前运行，因此严格遵守“执行一次渲染一次”，所以一次只移动 1 像素，是我们预期的方式。
-如果在低端环境兼容，常规也会写作 setTimeout(callback,1000/60) 来大致模拟 60 fps 的情况，但本质上 setTimeout 并不适合用来处理渲染相关的工作。因此和渲染动画相关的，多用 requestAnimationFrame，不会有掉帧的问题（即某一帧没有渲染，下一帧把两次的结果一起渲染了）
+
+## 宏任务队列、微任务队列、渲染任务执行的特点
+Tasks(宏任务队列) 只执行一个。执行完了就进入主进程，主进程可能决定进入其他两个异步队列，也可能自己执行到空了再回来。 补充：对于“只执行一个”的理解，可以考虑设置 2 个相同时间的 timeout，两个并不会一起执行，而依然是分批的。
+```
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 1');
+    });
+    console.log('listener 1'); 
+});
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 2');
+    });
+    console.log('listener 2'); 
+});
+// listener 1 microtask 1 listener 2 microtask 2
+```
+Animation callbacks(渲染任务) 执行队列里的全部任务，但如果任务本身又新增 Animation callback 就不会当场执行了，因为那是下一个循环 补充：同 Tasks(宏任务队列)，可以考虑连续调用两句 requestAnimationFrame，它们会在同一次事件循环内执行，有别于 Tasks (宏任务队列)
+
+```
+box.style.transform = 'translateX(1000px)'
+requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+    box.style.tranition = 'transform 1s ease'
+    box.style.transform = 'translateX(500px)'
+  })
+})
+```
+
+Microtasks 直接执行到空队列才继续。因此如果任务本身又新增 Microtasks，也会一直执行下去。所以上面的例子才会产生阻塞。 补充：因为是当次执行，因此如果既设置了 setTimeout(0) 又设置了 Promise.then()，优先执行 Microtasks。
+
+```
+function callback() {
+  Promise.resolve().then(callback)
+}
+
+callback()
+```
+
+## 手动点击触发回调事件和js代码调用点击事件回调的区别
+```
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 1');
+    });
+    console.log('listener 1'); 
+});
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 2');
+    });
+    console.log('listener 2'); 
+});
+
+在浏览器上运行点击按钮，输出结果：
+
+listener 1、microtask 1、listener2、microtask 2
+
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 1');
+    });
+    console.log('listener 1'); 
+});
+botton.addEventListener('click', () => {
+    Promise.resolve().then(() => {
+        console.log('microtask 2');
+    });
+    console.log('listener 2'); 
+});
+button.click();
+
+输出结果有所不用：
+
+listener 1 、listener 2、microtask 1 、microtask 2
+
+```
+为什么会出现这样的情况了？
+
+第一种情况下，浏览器并不知道会有几个listener，会一个一个执行，当前执行完成之后，在看看后面还没有其他的listener，当第一个listener执行完成之后，主任务为空了，执行异步任务输出microtask 1。再执行第二个listener。
+
+第二种情况，使用button.click，浏览器会把click手机到事件队列中，依次同步执行。当同步执行完成之后，再执行异步任务。
 
 ## 浏览器对同步代码的合并
 [原文链接](https://mp.weixin.qq.com/s/DSaLOOF0yBe8mEP5zywXng)
-先看这段代码，效果其实并不会box先显示在影藏，它是浏览器的一种自我优化策略，现代浏览器都有渲染队列的机制，会把它们捆绑在一起执行。我们经常在优化的时候会说，减少DOM的回流和重绘的一种手段就是DOM的读写分离，就是因为浏览器的渲染队列机制。
 
-代码分析2
 ```
 box.style.display = 'none';
 box.style.display = 'block';
 box.style.display = 'none';
-
 ```
+先看这段代码，效果其实并不会box先显示在影藏，它是浏览器的一种自我优化策略，现代浏览器都有渲染队列的机制，会把它们捆绑在一起执行。我们经常在优化的时候会说，减少DOM的回流和重绘的一种手段就是DOM的读写分离，就是因为浏览器的渲染队列机制。
+
 ```
 document.body.appendChild(el)
 el.style.display = 'none'
 ```
-这两句代码先把一个元素添加到 body，然后隐藏它。从直观上来理解，可能大部分人觉得如此操作会导致页面闪动，因此编码时经常会交换两句的顺序：先隐藏再添加。
 
+这两句代码先把一个元素添加到 body，然后隐藏它。从直观上来理解，可能大部分人觉得如此操作会导致页面闪动，因此编码时经常会交换两句的顺序：先隐藏再添加。
 但实际上两者写法都不会造成闪动，因为他们都是同步代码。浏览器会把同步代码捆绑在一起执行，然后以执行结果为当前状态进行渲染。因此无论两句是什么顺序，浏览器都会执行完成后再一起渲染，因此结果是相同的。
 
-代码分析1
+
 ```
 button.addEventListener('click',()=>{
-while(true);
+  while(true);
 })
 ```
+
 点击后会导致异步队列永远执行，因此不单单主进程，渲染过程也同样被阻塞而无法执行，因此页面无法再选中（因为选中时页面表现有所变化，文字有背景色，鼠标也变成 text），也无法再更换内容。（但鼠标却可以动！）
 
 如果我们把代码改成这样
@@ -523,6 +565,7 @@ box.style.transform = 'translateX(500px)'
 但实际情况是从 0 动画移动 到 500。这也是由于浏览器的合并优化造成的。第一句设置位置到 1000 的代码被忽略了。
 
 解决方法有 2 个：
+
 第一种：我们刚才提过的 requestAnimationFrame。思路是让设置 box 的初始位置（第一句代码）在同步代码执行；让设置 box 的动画效果（第二句代码）和设置 box 的重点位置（第三句代码）放到下一帧执行。
 但要注意， requestAnimationFrame 是在渲染过程 之前 执行的，因此直接写成
 ```
@@ -553,84 +596,6 @@ box.style.tranition = 'transform 1s ease'
 box.style.transform = 'translateX(500px)'
 
 ```
-## 一段神奇的代码
-```
-botton.addEventListener('click', () => {
-    Promise.resolve().then(() => {
-        console.log('microtask 1');
-    });
-    console.log('listener 1'); 
-});
-botton.addEventListener('click', () => {
-    Promise.resolve().then(() => {
-        console.log('microtask 2');
-    });
-    console.log('listener 2'); 
-});
-```
-在浏览器上运行点击按钮，输出结果：
-
-listener 1、microtask 1、listener2、microtask 2
-
-```
-botton.addEventListener('click', () => {
-    Promise.resolve().then(() => {
-        console.log('microtask 1');
-    });
-    console.log('listener 1'); 
-});
-botton.addEventListener('click', () => {
-    Promise.resolve().then(() => {
-        console.log('microtask 2');
-    });
-    console.log('listener 2'); 
-});
-button.click();
-```
-输出结果有所不用：
-
-listener 1 、listener 2、microtask 1 、microtask 2
-
-为什么会出现这样的情况了？
-
-第一种情况下，浏览器并不知道会有几个listener，会一个一个执行，当前执行完成之后，在看看后面还没有其他的listener，当第一个listener执行完成之后，主任务为空了，执行异步任务输出microtask 1。再执行第二个listener。
-第二种情况，使用button.click，浏览器会把click手机到事件队列中，依次同步执行。当同步执行完成之后，再执行异步任务。
-
-
-## chromeV8引擎对async await的优化
-原理上执行await之后的async2函数本来已经跳出async1函数了，此时已经将async1函数的浏览器的主线程执行权力交给了async下面的函数执行。所以async1 end应该是promise1和promise2后面执行的。但是chrome优化之后，这种情况的话相当于直接把await后面的代码注册为一个微任务，可以简单理解为promise.then(await下面的代码)。然后跳出async1函数，执行其他代码。所以async1 end比promise1和promise2先执行。
-```
-console.log('script start')
- 
-async function async1() {
-await async2()
-console.log('async1 end')
-}
-async function async2() {
-console.log('async2 end')
-}
-async1()
- 
-setTimeout(function() {
-console.log('setTimeout')
-}, 0)
- 
-new Promise(resolve => {
-console.log('Promise')
-resolve()
-})
-.then(function() {
-console.log('promise1')
-})
-.then(function() {
-console.log('promise2')
-})
- 
-console.log('script end')
- // 旧版输出如下，但是请继续看完本文下面的注意那里，新版有改动
-// script start => async2 end => Promise => script end => promise1 => promise2 => async1 end => setTimeout
-// 新版输出：script start => async2 end => Promise => script end => async1 end => promise1 => promise2 => setTimeout
-```
 
 ## 其他问题
 ```
@@ -652,9 +617,13 @@ function foo() {
 进程再次重复，堆栈不会溢出。
 
 
-# 深入解析你不知道的 EventLoop 和浏览器渲染、帧动画、空闲回调（动图演示）
+# EventLoop 和 浏览器渲染 帧动画 空闲回调的关系
+
 [原文链接](https://juejin.cn/post/6844904165462769678)
 [html官方规范的事件循环调度的场景](https://html.spec.whatwg.org/multipage/webappapis.html#task-queue)
+
+为了协调事件，用户交互，脚本，渲染，网络任务等，浏览器必须使用本节中描述的事件循环。
+
 ## 问题
 ### 1、每一轮 Event Loop 都会伴随着渲染吗？
 事件循环不一定每轮都伴随着重渲染，但是如果有微任务，一定会伴随着微任务执行。决定浏览器视图是否渲染的因素很多，浏览器是非常聪明的。
@@ -667,17 +636,16 @@ resize和scroll事件其实自带节流，它只在 Event Loop 的渲染阶段�
 
 ## 流程
 1、从任务队列中取出一个宏任务并执行。
-
 2、检查微任务队列，执行并清空微任务队列，如果在微任务的执行中又加入了新的微任务，也会在这一步一起执行。
-
-3、进入更新渲染阶段，判断是否需要渲染，这里有一个 rendering opportunity 的概念，也就是说不一定每一轮 event loop 都会对应一次浏览 器渲染，要根据屏幕刷新率、页面性能、页面是否在后台运行来共同决定，通常来说这个渲染间隔是固定的。（所以多个 task 很可能在一次渲染之间执行）
-
-4、浏览器会尽可能的保持帧率稳定，例如页面性能无法维持 60fps（每 16.66ms 渲染一次）的话，那么浏览器就会选择 30fps 的更新速率，而不是偶尔丢帧。
+3、进入更新渲染阶段，判断是否需要渲染，这里有一个 rendering opportunity 的概念，也就是说不一定每一轮 event loop 都会对应一次浏览器渲染，要根据屏幕刷新率、页面性能、页面是否在后台运行来共同决定，通常来说这个渲染间隔是固定的。（所以多个 task 很可能在一次渲染之间执行）。
+(1)、浏览器会尽可能的保持帧率稳定，例如页面性能无法维持 60fps（每 16.66ms 渲染一次）的话，那么浏览器就会选择 30fps 的更新速率，而不是偶尔丢帧。
 如果浏览器上下文不可见，那么页面会降低到 4fps 左右甚至更低。
 如果满足以下条件，也会跳过渲染：
-(1)、浏览器判断更新渲染不会带来视觉上的改变。
-(2)、map of animation frame callbacks 为空，也就是帧动画回调为空，可以通过 requestAnimationFrame 来请求帧动画。
+(2)、浏览器判断更新渲染不会带来视觉上的改变。
+(3)、map of animation frame callbacks 为空，也就是帧动画回调为空，可以通过 requestAnimationFrame 来请求帧动画。
 有时候浏览器希望两次「定时器任务」是合并的，他们之间只会穿插着 microTask的执行，而不会穿插屏幕渲染相关的流程，比如requestAnimationFrame。
+4、如果上述的判断决定本轮不需要渲染，那么下面的几步也不会继续运行：
+有时候浏览器希望两次「定时器任务」是合并的，他们之间只会穿插着 microTask 的执行，而不会穿插屏幕渲染相关的流程（比如requestAnimationFrame，下面会写一个例子）。
 5、对于需要渲染的文档，如果窗口的大小发生了变化，执行监听的 resize 方法。
 6、对于需要渲染的文档，如果页面发生了滚动，执行 scroll 方法。
 7、对于需要渲染的文档，执行帧动画回调，也就是 requestAnimationFrame 的回调。（后文会详解）
@@ -685,18 +653,18 @@ resize和scroll事件其实自带节流，它只在 Event Loop 的渲染阶段�
 9、对于需要渲染的文档，重新渲染绘制用户界面。
 10、判断 task队列和microTask队列是否都为空，如果是的话，则进行 Idle 空闲周期的算法，判断是否要执行 requestIdleCallback 的回调函数。
 
+对于 resize 和 scroll 来说，并不是到了这一步才去执行滚动和缩放，那岂不是要延迟很多？浏览器当然会立刻帮你滚动视图，根据CSSOM 规范所讲，浏览器会保存一个 pending scroll event targets，等到事件循环中的 scroll 这一步，去派发一个事件到对应的目标上，驱动它去执行监听的回调函数而已。resize 也是同理。也就是事件线程会将滚动事件对象在用户触发的时候放到任务队列中。等待JS执行。
 
-对于resize 和 scroll来说，并不是到了这一步才去执行滚动和缩放，那岂不是要延迟很多？浏览器当然会立刻帮你滚动视图，根据CSSOM 规范所讲，浏览器会保存一个 pending scroll event targets，等到事件循环中的 scroll这一步，去派发一个事件到对应的目标上，驱动它去执行监听的回调函数而已。resize也是同理。
-
-## 「宏任务」、「微任务」、「渲染」之间的关系
+## 多任务队列
 事件循环中可能会有一个或多个任务队列，这些队列分别为了处理：多个宏任务队列，一个微任务队列
 
-鼠标和键盘事件
-其他的一些 Task
+http异步请求队列、DOM事件队列、GUI渲染队列、timer队列
 
 浏览器会在保持任务顺序的前提下，可能分配四分之三的优先权给鼠标和键盘事件，保证用户的输入得到最高优先级的响应，而剩下的优先级交给其他 Task，并且保证不会“饿死”它们。
 
-宏任务可能会合并一起渲染、但是宏任务执行时产生的微任务是一定会执行的
+这个规范也导致 Vue 2.0.0-rc.7 这个版本 nextTick 采用了从微任务 MutationObserver 更换成宏任务 postMessage 而导致了一个 Issue。简单描述一下就是采用了 task 实现的 nextTick，在用户持续滚动的情况下 nextTick 任务被延后了很久才去执行，导致动画跟不上滚动了。迫于无奈，尤大还是改回了 microTask 去实现 nextTick，当然目前来说 promise.then 微任务已经比较稳定了，并且 Chrome 也已经实现了 queueMicroTask 这个官方 API。不久的未来，我们想要调用微任务队列的话，也可以节省掉实例化 Promise 在开销了。
+
+宏任务可能会合并一起渲染、但是宏任务执行时产生的微任务是一定会执行的。
 ## requestAnimationFrame
 
 ### 在重新渲染前调用。
@@ -749,7 +717,7 @@ setTimeout(() => {
 queueMicrotask(() => console.log("mic"))
 queueMicrotask(() => console.log("mic"))
 
-理想结果
+理想结果 --- 每一个宏任务之后都紧跟着一次渲染
 mic
 mic
 sto
@@ -757,7 +725,7 @@ rAF
 sto
 rAF
 
-真实结果
+真实结果 --- 浏览器会合并这两个定时器任务
 mic
 mic
 sto
@@ -765,18 +733,125 @@ sto
 rAF
 rAF
 ```
+
+
 ## requestIdleCallback
 意图是让我们把一些计算量较大但是又没那么紧急的任务放到空闲时间去执行。不要去影响浏览器中优先级较高的任务，比如动画绘制、用户输入等等。
 
+### 渲染有序进行
+Run Task -> Update Rendering -> idle callback | Run Task -> Update Rendering -> idle callback
+
+当然，这种有序的 浏览器 -> 用户 -> 浏览器 -> 用户 的调度基于一个前提，就是我们要把任务切分成比较小的片，不能说浏览器把空闲时间让给你了，你去执行一个耗时 10s 的任务，那肯定也会把浏览器给阻塞住的。这就要求我们去读取 rIC 提供给你的 deadline 里的时间，去动态的安排我们切分的小任务。浏览器信任了你，你也不能辜负它呀。
+
+### 渲染长期空闲
+
+还有一种情况，也有可能在几帧的时间内浏览器都是空闲的，并没有发生任何影响视图的操作，它也就不需要去绘制页面：
+
+Update Rendering -> 50ms deadline -> Update Rendering
+
+这种情况下为什么还是会有 50ms 的 deadline 呢？是因为浏览器为了提前应对一些可能会突发的用户交互操作，比如用户输入文字。如果给的时间太长了，你的任务把主线程卡住了，那么用户的交互就得不到回应了。50ms 可以确保用户在无感知的延迟下得到回应。
+
+
 1、当浏览器判断这个页面对用户不可见时，这个回调执行的频率可能被降低到 10 秒执行一次，甚至更低。这点在解读 EventLoop 中也有提及。
-2、如果浏览器的工作比较繁忙的时候，不能保证它会提供空闲时间去执行 rIC 的回调，而且可能会长期的推迟下去。所以如果你需要保证你的任务在一定时间内一定要执行掉，那么你可以给 rIC 传入第二个参数 timeout。这会强制浏览器不管多忙，都在超过这个时间之后去执行 rIC 的回调函数。所以要谨慎使用，因为它会打断浏览器本身优先级更高的工作。
+
+2、如果浏览器的工作比较繁忙的时候，不能保证它会提供空闲时间去执行 rIC 的回调，而且可能会长期的推迟下去。所以如果你需要保证你的任务在一定时间内一定要执行掉，那么你可以给 rIC 传入第二个参数 timeout。
+这会强制浏览器不管多忙，都在超过这个时间之后去执行 rIC 的回调函数。所以要谨慎使用，因为它会打断浏览器本身优先级更高的工作。
+
 3、最长期限为 50 毫秒，是根据研究得出的，研究表明，人们通常认为 100 毫秒内对用户输入的响应是瞬时的。 将闲置截止期限设置为 50ms 意味着即使在闲置任务开始后立即发生用户输入，浏览器仍然有剩余的 50ms 可以在其中响应用户输入而不会产生用户可察觉的滞后。
+
 4、每次调用 timeRemaining() 函数判断是否有剩余时间的时候，如果浏览器判断此时有优先级更高的任务，那么会动态的把这个值设置为 0，否则就是用预先设置好的 deadline - now 去计算。
+
 5、这个 timeRemaining() 的计算非常动态，会根据很多因素去决定，所以不要指望这个时间是稳定的。
 
+### 动画例子
 
+#### 滚动
 
+如果我鼠标不做任何动作和交互，直接在控制台通过 rIC 去打印这次空闲任务的剩余时间，一般都稳定维持在 49.xx ms，因为此时浏览器没有什么优先级更高的任务要去处理。
 
+而如果我不停的滚动浏览器，不断的触发浏览器的重新绘制的话，这个时间就变的非常不稳定了。
+
+通过这个例子，你可以更加有体感的感受到什么样叫做「繁忙」，什么样叫做「空闲」。
+
+#### 动画
+
+这个动画的例子很简单，就是利用rAF在每帧渲染前的回调中把方块的位置向右移动 10px。
+
+```
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #SomeElementYouWantToAnimate {
+        height: 200px;
+        width: 200px;
+        background: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="SomeElementYouWantToAnimate"></div>
+    <script>
+      var start = null
+      var element = document.getElementById("SomeElementYouWantToAnimate")
+      element.style.position = "absolute"
+
+      function step(timestamp) {
+        if (!start) start = timestamp
+        var progress = timestamp - start
+        element.style.left = Math.min(progress / 10, 200) + "px"
+        if (progress < 2000) {
+          window.requestAnimationFrame(step)
+        }
+      }
+      // 动画
+      window.requestAnimationFrame(step)
+
+      // 空闲调度
+      window.requestIdleCallback(() => {
+        alert("rIC")
+      })
+    </script>
+  </body>
+</html>
+```
+注意在最后我加了一个 requestIdleCallback 的函数，回调里会 alert('rIC')，来看一下演示效果：
+
+alert 在最开始的时候就执行了，为什么会这样呢一下，想一下「空闲」的概念，我们每一帧仅仅是把 left 的值移动了一下，做了这一个简单的渲染，没有占满空闲时间，所以可能在最开始的时候，浏览器就找到机会去调用 rIC 的回调函数了。
+
+我们简单的修改一下 step 函数，在里面加一个很重的任务，1000 次循环打印。
+```
+function step(timestamp) {
+  if (!start) start = timestamp
+  var progress = timestamp - start
+  element.style.left = Math.min(progress / 10, 200) + "px"
+  let i = 1000
+  while (i > 0) {
+    console.log("i", i)
+    i--
+  }
+  if (progress < 2000) {
+    window.requestAnimationFrame(step)
+  }
+}
+```
+
+其实和我们预期的一样，由于浏览器的每一帧都"太忙了",导致它真的就无视我们的 rIC 函数了。
+
+如果给 rIC 函数加一个 timeout 呢：
+
+// 空闲调度
+window.requestIdleCallback(
+  () => {
+    alert("rID")
+  },
+  { timeout: 500 },
+)
+
+浏览器会在大概 500ms 的时候，不管有多忙，都去强制执行 rIC 函数，这个机制可以防止我们的空闲任务被“饿死”。
 
 
 

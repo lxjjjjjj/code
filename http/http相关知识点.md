@@ -644,6 +644,7 @@ Expires 是 HTTP/1 的产物，受限于本地时间，如果修改了本地时�
 强缓存不关心服务器端文件是否已经更新，这可能会导致加载文件不是服务器端最新的内容，那我们如何获知服务器端内容是否已经发生了更新呢？此时我们需要用到协商缓存策略。
 
 ## 协商缓存
+
 协商缓存就是强制缓存失效后，浏览器携带缓存标识向服务器发起请求，由服务器根据缓存标识决定是否使用缓存的过程，主要有以下两种情况： 协商缓存可以通过设置两种 HTTP Header 实现：Last-Modified 和 ETag 。
 
 Etag的缺点：
@@ -660,8 +661,11 @@ ETag需要计算文件指纹这样意味着，服务端需要更多的计算开�
 浏览器-----------------------> 浏览器缓存  -----------------------> 浏览器 ---------------------------> 浏览器  --------------------------------------------> 浏览器缓存
 
 ### Last-Modified 和 If-Modified-Since
+
 Last-Modified值是这个资源在服务器上的最后修改时间,浏览器下一次请求这个资源，浏览器检测到有 Last-Modified这个header，于是添加If-Modified-Since这个header，值就是Last-Modified中的值；服务器再次收到这个资源请求，会根据 If-Modified-Since 中的值与服务器中这个资源的最后修改时间对比，如果没有变化，返回304和空的响应体，直接从缓存读取，如果If-Modified-Since的时间小于服务器中这个资源的最后修改时间，说明文件有更新，于是返回新的资源文件和200。
+
 ### ETag和If-None-Match
+
 Etag是服务器响应请求时，返回当前资源文件的一个唯一标识(由服务器生成)，只要资源有变化，Etag就会重新生成。浏览器在下一次加载资源向服务器发送请求时，会将上一次返回的Etag值放到request header里的If-None-Match里，服务器只需要比较客户端传来的If-None-Match跟自己服务器上该资源的ETag是否一致
 
 首先在精确度上，Etag要优于Last-Modified。 第二在性能上，Etag要逊于Last-Modified，毕竟Last-Modified只需要记录时间，而Etag需要服务器通过算法来计算出一个hash值。 第三在优先级上，服务器校验优先考虑Etag
@@ -697,7 +701,180 @@ Etag是服务器响应请求时，返回当前资源文件的一个唯一标识(
 10. GET产生一个TCP数据包；POST产生两个TCP数据包。
 11. GET在请求的时候会一次性将header和data发出去，然后服务器响应200（返回数据）；而POST会先发header，等到服务器响应100（continue）的时候再发送data，然后服务器返回200（返回数据）。
 
+# POST和PUT请求的区别
 
+让我们从解释 PUT 请求的关键特征开始：幂等性。
+
+如果您多次调用 PUT 请求，则结果不变。 因此，假设你创建了一个资源：一本书。如果你调用该方法两次，结果仍是相同的。更准确地说，在数据库中一本书只存在一次。每本书都是唯一的。
+一个 POST 请求有些不同。如果你创建了一本书，然后再创建同一本书，你将拥有两本书。换句话说，第二次请求时你将会得到不同的结果。
+
+两种方法各有千秋，但 PUT 方法在防止副作用方面非常好用。
+
+为了给让你有个更清晰的概念，让我描述一个场景：Juliette 想购买三明治，她点击一个按钮。因为网店的响应有点慢，她再次按下了同一个按钮。同一个请求两次到达服务器。因为你已经使用 PUT 请求实现了该方法，所以它在第二次访问服务器时没有造成任何的影响。Juliette 不必吃两顿饭，她也省下了一笔钱。很棒，对吧？
+
+在许多情况下，PUT 请求非常适合用于防止不必要的更新。
+
+备注：注意，即使你使用 PUT 方法，你仍有可能违反幂等性。如果你用和 POST 方法一样的方式来实现 PUT 方法，两者之间将没有任何区别。这违反了 PUT 的原则。作为一个 API 开发人员，你有责任创建好一个有效的 PUT 请求。
+
+举一个简单的例子，假如有一个博客系统提供一个Web API，模式是这样http://superblogging/blogs/post/{blog-name}，很简单，将{blog-name}替换为我们的blog名字，往这个URI发送一个HTTP PUT或者POST请求，HTTP的body部分就是博文，这是一个很简单的REST API例子。我们应该用PUT方法还是POST方法？取决于这个REST服务的行为是否是idempotent的，假如我们发送两个http://superblogging/blogs/post/Sample请求，服务器端是什么样的行为？如果产生了两个博客帖子，那就说明这个服务不是idempotent的，因为多次使用产生了副作用了嘛；如果后一个请求把第一个请求覆盖掉了，那这个服务就是idempotent的。前一种情况，应该使用POST方法，后一种情况，应该使用PUT方法。
+# 关于post请求产生的preflight request小记
+[原文链接](https://juejin.cn/post/6844904164124786701)
+## 问题背景
+
+本地启动的前端vue项目使用axios发送post请求去获取一个展示列表，对于可能会产生的跨域请求后端项目中已经配置了如下
+```
+response.setHeader("Access-Control-Allow-Origin",request.getHeader("Origin"));
+response.setHeader("Access-Control-Allow-Methods", "*");
+response.setHeader("Access-Control-Allow-Credentials", "true");
+response.setHeader("Access-Control-Allow-Headers", "Authorization,Origin, X-Requested-With, Content-Type, Accept,Access-Token");
+```
+前端请求为
+```
+axios.post(myUrl, {
+    token: myToken,
+}).then( res => {
+    // do sth success
+}).catch( err => {
+    // do sth error
+})
+```
+然后浏览器控制台显示为
+origin xxxx has been blocked by CORS policy Response to preflight request doesnt pass access control check Redirect is not allowed for a preflight request
+
+接着看报错的文字Redirect is not allowed for a preflight request.，其中有个关键字应该是preflight request
+
+axios使用post请求时，会默认先发送一个option请求
+axios使用post请求时，默认的Content-Type是application/json
+使用FormData格式的参数作为post请求的参数时，不会出现跨域问题和preflight request报错
+
+preflight request是为确保服务器是否允许发起对服务器数据产生副作用的HTTP请求方法，而预先由浏览器发起OPTIONS方法的一个预检请求，如果允许就发送真实的请求，如果不允许则直接拒绝发起真实请求。
+
+## 尝试解决
+
+### 方法一
+在发送axios发送post请求时，配置header属性 + axios的data字段
+
+注意：这个配置application/x-www-form-urlencoded后，浏览器不会报错preflight request，但后端可能会获取不到数据，因为虽然格式是application/x-www-form-urlencoded，但发送的参数还是JSON字符串
+
+[如何解决原文链接](https://juejin.cn/post/6844903633151229959)
+
+近期在利用axios向后台传数据时，axios默认传的是用application/json格式，若后台需要的数据格式为key/value格式，可以在axios的config中进行配置，也可以用qs.stringify()方法进行转换。
+
+注：若用原生的<form>标签对后台进行post传输数据，默认即为key/value格式
+
+方法一：在vue中axios的配置
+```
+this.$axios({
+  method: 'post',
+  url: 'https://jsonplaceholder.typicode.com/posts',
+  // 利用 transformRequest 进行转换配置
+  transformRequest: [
+    function(oldData){
+      // console.log(oldData)
+      let newStr = ''
+      for (let item in oldData){
+        newStr += encodeURIComponent(item) + '=' + encodeURIComponent(oldData[item]) + '&'
+      }
+      newStr = newStr.slice(0, -1)
+      return newStr
+    }
+  ],
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
+  data: dataObj,
+})
+```
+方法二：利用qs.stringify()进行转换
+```
+import qs from 'qs' // qs在安装axios后会自动安装，只需要组件里import一下即可
+
+// 代码省略...
+
+dataObj = qs.stringify(dataObj) // 得到转换后的数据为 string 类型
+
+this.$axios({
+  method: 'post',
+  url: 'https://jsonplaceholder.typicode.com/posts',
+  headers: {
+    'Content-Type': 'application/x-www-form-urlencoded'
+  },
+  data: dataObj,  // 直接提交转换后的数据即可
+})
+```
+
+方法三：利用URLSearchParams()进行转换
+
+```
+let param = {
+    aa: 'aaaa',
+    bb: 'bbbb'
+}
+// 组件内直接使用URLSearchParams()
+
+let params = new URLSearchParams()
+params.append('aa', 'aaaa')
+params.append('bb', 'bbbb')
+
+this.$axios.post('https://jsonplaceholder.typicode.com/posts', params: params).then(()=>{})
+
+```
+
+### 方法二
+使用FormData参数格式 + axios的data字段
+```
+let formData = new FormData();
+formData.append('token', myToken);
+axios({
+    method: 'post',
+    url: myUrl,
+    data: formData,
+})
+```
+使用formData发送请求时，axios不会预先发送option请求，直接只有一个post请求
+
+### 方法三
+直接使用axios的params字段
+axios({
+    method: 'post',
+    url: myUrl,
+    params: {
+        token: myToken,
+    },
+})
+复制代码使用params字段发送请求时，axios不会预先发送option请求，直接只有一个post请求
+
+补充：如果axios用post请求且直接使用data字段，浏览器会报preflight request错误，而且浏览器会先发送一个option请求
+
+# url编码的三种方式和区别
+[原文链接](https://www.ruanyifeng.com/blog/2010/02/url_encoding.html)
+
+为什么要编码 --- 网络标准RFC 1738做了硬性规定：
+
+"只有字母和数字[0-9a-zA-Z]、一些特殊符号"$-_.+!*'(),"[不包括双引号]、以及某些保留字，才可以不经过编码直接用于URL。"
+
+不同的操作系统、不同的浏览器、不同的网页字符集，将导致完全不同的编码结果。如果程序员要把每一种结果都考虑进去，是不是太恐怖了？有没有办法，能够保证客户端只用一种编码方法向服务器发出请求。回答是有的，就是使用Javascript先对URL编码，然后再向服务器提交，不要给浏览器插手的机会。因为Javascript的输出总是一致的，所以就保证了服务器得到的数据是格式统一的。
+
+一旦被Javascript编码（以下三种编码方式），就都变为unicode字符。也就是说，Javascipt函数的输入和输出，默认都是Unicode字符
+## escape()
+实际上，escape()不能直接用于URL编码，它的真正作用是返回一个字符的Unicode编码值。比如"春节"的返回结果是%u6625%u8282，也就是说在Unicode字符集中，"春"是第6625个（十六进制）字符，"节"是第8282个（十六进制）字符。
+
+它的具体规则是，除了ASCII字母、数字、标点符号"@ * _ + - . /"以外，对其他所有字符进行编码。在\u0000到\u00ff之间的符号被转成%xx的形式，其余符号被转成%uxxxx的形式。对应的解码函数是unescape()。
+
+所以，"Hello World"的escape()编码就是"Hello%20World"。因为空格的Unicode值是20（十六进制）。
+
+
+## encodeURI()
+encodeURI()是Javascript中真正用来对URL编码的函数。
+
+它着眼于对整个URL进行编码，因此除了常见的符号以外，对其他一些在网址中有特殊含义的符号"; / ? : @ & = + $ , #"，也不进行编码。编码后，它输出符号的utf-8形式，并且在每个字节前加上%。
+
+需要注意的是，它不对单引号'编码。
+
+## encodeURIComponent()
+最后一个Javascript编码函数是encodeURIComponent()。与encodeURI()的区别是，它用于对URL的组成部分进行个别编码，而不用于对整个URL进行编码。
+
+因此，"; / ? : @ & = + $ , #"，这些在encodeURI()中不被编码的符号，在encodeURIComponent()中统统会被编码。至于具体的编码方法，两者是一样。
 
 # TCP和UDP的区别
 
