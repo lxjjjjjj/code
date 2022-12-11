@@ -12,6 +12,8 @@
 // 3.当我们在另外一个effect中读取计算属性值的时候，
 //   它里面访问的响应式数据只会把computed内部的effect收集为依赖，
 //   外层effect不会被内层effect中的响应式数据收集
+//   getter的内引用的值发生变化会触发computed内引用getter的effect执行，
+//   此时将dirty变成true，触发computed值的trigger 在引用computed值的地方就会重新计算值
 
 
 // watch注意的点
@@ -286,6 +288,8 @@ function computed(getter) {
     let value
     // dirty 标志
     let dirty = true
+    // 普通的值将getter作为effect收入到自己的effect数组中，然后普通的值set触发tigger，
+    // 那么getter的trigger触发computed的value的trigger方法 通知 引用到computed值的effect变化
     const effectFn = effect(getter, {
         lazy: true,
         // 当trigger函数触发，effect函数重新执行，表示数据有变化 将dirty变成true 可以重新获取新值
@@ -325,6 +329,7 @@ function watch(source, cb){
         oldValue = newValue
     }
     const effectFn = effect(
+        // 有用到source任何值的地方就会触发effectFn的执行
         ()=> getter(source),
         {
             lazy: true,
