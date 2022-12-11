@@ -3,6 +3,8 @@
 # Koa中间件的作用
 中间件主要用于请求拦截和修改请求或响应结果。一次Http请求通常包含很多工作，如请求体解析、Cookie处理、权限验证、参数验证、记录日志、ip过滤、异常处理。中间件功能是可以访问请求对象（request），响应对象（response）和应用程序的请求-响应周期中通过 next 对下一个中间件函数的调用。通俗来讲，利用这个特性在 next 之前对 request 进行处理，在 next 函数之后对 response 处理。Koa 的中间件模型可以非常方便的实现后置处理逻辑。
 
+## 总结
+在使用use函数创建中间件的时候，会将每个callback函数都添加到middleware数组中，createServer函数创建一个server实例之后，koa将req和res整合成ctx对象传给通过compose函数构建的middleware函数，在每个middleware函数中，都有ctx参数和next函数，如何做到让开发者自动调用每个中间件next函数实现中间件调用，在每个fn调用的时候都通过闭包变量i的值取到第i个middleware。
 ## 中间件例子
 
 ```
@@ -104,6 +106,7 @@ return function fn (ctx, next) {
   function dispatch (i) {
     let middlewareFn = middleware[i]
     try {
+      // dispatch.bind(null, i + 1) 就是 middleware的next函数
       return Promise.resolve(middlewareFn(ctx, dispatch.bind(null, i + 1)));
     } catch (err) {
       return Promise.reject(err)
