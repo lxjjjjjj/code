@@ -1,4 +1,4 @@
-# 严格限制使用new 调用 Vue
+# 严格限制使用 new 调用 Vue
 看 vue.runtime.esm.js比较好理解代码
 ```
 function Vue (options) {
