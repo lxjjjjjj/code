@@ -8,7 +8,7 @@
 
 总结一下：
 
-webpack中通过compilation对象进行模块编译时，会首先进行匹配loader处理文件得到结果(string/buffer),之后才会输出给webpack进行编译，loader runner 会调用这个函数，然后把上一个 loader 产生的结果或者资源文件(resource file)传入进去。loader 用于对模块的源代码进行转换。oader 让 webpack 能够去处理其他类型的文件，并将它们转换为有效模块。以供应用程序使用，以及被添加到依赖图中。loader的本质就是一个函数，接受我们的源代码作为入参同时返回新的内容。
+webpack中通过compilation对象进行模块编译时，会首先进行匹配loader处理文件得到结果(string/buffer),之后才会输出给webpack进行编译，loader runner 会调用这个函数，然后把上一个 loader 产生的结果或者资源文件(resource file)传入进去。loader 用于对模块的源代码进行转换。loader 让 webpack 能够去处理其他类型的文件，并将它们转换为有效模块。以供应用程序使用，以及被添加到依赖图中。loader的本质就是一个函数，接受我们的源代码作为入参同时返回新的内容。
 ```
 webpack中loader的本质就是一个函数，接受我们的源代码作为入参同时返回新的内容。loader runner 会调用这个函数，然后把上一个 loader 产生的结果或者资源文件(resource file)传入进去。loader 用于对模块的源代码进行转换。loader 可以使你在 import 或 "load(加载)" 模块时预处理文件。因此，loader 类似于其他构建工具中“任务(task)”，并提供了处理前端构建步骤的得力方式。loader 可以将文件从不同的语言（如 TypeScript）转换为 JavaScript 或将内联图像转换为 data URL。loader 甚至允许你直接在 JavaScript 模块中 import CSS 文件！webpack中通过compilation对象进行模块编译时，会首先进行匹配loader处理文件得到结果(string/buffer),之后才会输出给webpack进行编译。简单来说，loader就是一个函数，通过它我们可以在webpack处理我们的特定资源(文件)之前进行提前处理。
 比方说，webpack仅仅只能识别javascript模块，而我们在使用TypeScript编写代码时可以提前通过babel-loader将.ts后缀文件提前编译称为JavaScript代码，之后再交给Webapack处理。loader 让 webpack 能够去处理其他类型的文件，并将它们转换为有效模块。以供应用程序使用，以及被添加到依赖图中。
@@ -32,11 +32,11 @@ webpack中loader的本质就是一个函数，接受我们的源代码作为入�
 
 ## inline
 
-行内 loader 比较特殊，是在import / require的时候，将 loader 写入代码中。而对于inline而言，有三种前缀语法：
+行内 loader 比较特殊，是在 import / require 的时候，将 loader 写入代码中。而对于inline而言，有三种前缀语法：
 
-!：忽略normal loader
--!：忽略pre loader 和normal loader
-!!：忽略所有 loader（pre / noraml / post ）
+!：忽略 normal loader
+-!：忽略 pre loader 和 normal loader
+!!：忽略所有 loader（ pre / noraml / post ）
 
 行内 loader 通过!将资源中的 loader 进行分割，同时支持在 loader 后面，通过?传递参数，参数信息参考 loader.options 内容。
 
@@ -58,6 +58,7 @@ normal loader默认接受一个参数，这个参数是需要处理的文件内�
 
 ### normal loader 的 this 对象
 关于normal loader中其实有非常多的属性会挂载在函数中的this上，比如通常我们在使用某个loader时会在外部传递一些参数，此时就可以在函数内部通过this.getOptions()方法获取。关于loader中的this被称作上下文对象。
+
 [webpack原文链接](https://webpack.docschina.org/api/loaders/#the-loader-context)
 
 #### this.addDependency
