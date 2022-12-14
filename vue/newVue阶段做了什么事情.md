@@ -1,3 +1,50 @@
+# 总结
+引入vuejs文件，会依次调用如下方法：
+initMixin(Vue);
+stateMixin(Vue); 初始化Vue.prototype.set/get/$watch方法
+eventsMixin(Vue); 初始化父子组件通信的消息订阅中心
+lifecycleMixin(Vue);初始化$destory、$forceUpdate、等方法
+renderMixin(Vue);初始化Vue.prototype.$nextTick 和 Vue.prototype._render (里面有slots方法)
+* initMixin方法会初始化Vue.prototype._init方法，这个方法是每个组件new Vue调用的方法 在这方法中会调用
+  initLifecycle(vm); initLifecycle会初始化vm实例上的$parent,$root,_watcher,children以及生命周期的标志
+  initEvents(vm); initEvents会拿到父组件绑定的自定义事件进行更新事件，因为子组件里emit事件需要有个on监听传给父组件，父组件触发事件，完成组件间通信
+  initRender(vm); 会处理父组件的slots拿到作用域slots，放到子组件的vm.$slots上方便渲染，并且会内置createElement方法和创建模版属性的数据响应式拦截。
+  callHook(vm, 'beforeCreate');此时触发beforeCreate的hook，注意任何hook都要停止收藏依赖，因为会导致不必要的多次触发更新
+  initInjections(vm); // resolve injections before data/props
+  initState(vm); 建立数据响应
+  initProvide(vm); // resolve provide after data/props
+  callHook(vm, 'created'); 数据已经完成
+  if (vm.$options.el) {
+    vm.$mount(vm.$options.el);
+  }
+* 
+# callHook
+为什么在各种生命钩子中禁止收集依赖，因为如果收集依赖会造成多次渲染
+```
+function callHook (vm, hook) {
+    // #7573 disable dep collection when invoking lifecycle hooks
+    // 在生命周期暂停数据的收集，防止
+    pushTarget();
+    var handlers = vm.$options[hook];
+    var info = hook + " hook";
+    if (handlers) {
+      for (var i = 0, j = handlers.length; i < j; i++) {
+        invokeWithErrorHandling(handlers[i], vm, null, vm, info);
+      }
+    }
+    if (vm._hasHookEvent) {
+      vm.$emit('hook:' + hook);
+    }
+    popTarget();
+  }
+```
+# pushTarget
+```
+function pushTarget (target) {
+    targetStack.push(target);
+    Dep.target = target;
+  }
+```
 # 严格限制使用 new 调用 Vue
 看 vue.runtime.esm.js比较好理解代码
 ```
@@ -8,7 +55,7 @@ function Vue (options) {
     warn('Vue is a constructor and should be called with the `new` keyword');
   }
   // 因为严格限制new 调用 所以 this一定是vue实例本身
-  this._init(options);
+  this._init(options); // 这个方法是Vue.prototype._init方法
 }
 
 initMixin(Vue);
@@ -16,6 +63,55 @@ stateMixin(Vue);
 eventsMixin(Vue);
 lifecycleMixin(Vue);
 renderMixin(Vue);
+```
+Vue.prototype._init 
+```
+function initMixin (Vue) {
+    Vue.prototype._init = function (options) {
+      var vm = this;
+      // a uid
+      vm._uid = uid$3++;
+
+      // a flag to avoid this being observed
+      vm._isVue = true;
+      // merge options
+      if (options && options._isComponent) {
+        // 优化内部组件实例化，因为动态选项合并非常慢，并且没有内部组件选项需要特殊处理。
+        initInternalComponent(vm, options);
+      } else {
+        vm.$options = mergeOptions(
+          resolveConstructorOptions(vm.constructor),
+          options || {},
+          vm
+        );
+      }
+      /* istanbul ignore else */
+      {
+        initProxy(vm);
+      }
+      // expose real self
+      vm._self = vm;
+      initLifecycle(vm);
+      initEvents(vm);
+      initRender(vm);
+      callHook(vm, 'beforeCreate');
+      initInjections(vm); // resolve injections before data/props
+      initState(vm);
+      initProvide(vm); // resolve provide after data/props
+      callHook(vm, 'created');
+
+      /* istanbul ignore if */
+      if (config.performance && mark) {
+        vm._name = formatComponentName(vm, false);
+        mark(endTag);
+        measure(("vue " + (vm._name) + " init"), startTag, endTag);
+      }
+
+      if (vm.$options.el) {
+        vm.$mount(vm.$options.el);
+      }
+    };
+  }
 ```
 # 总结做了什么
 1. 调用initMixin实现合并options并且
