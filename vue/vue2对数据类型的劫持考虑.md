@@ -27,6 +27,7 @@ let vm = new Vue({
 
 
 数组的劫持思路
+
 核心目标是要实现数组的响应式：
 
 Vue 认为这 7 个方法能够改变原数组：push、pop、splice、shift、unshift、reverse、sort

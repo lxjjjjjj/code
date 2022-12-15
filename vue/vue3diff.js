@@ -6,8 +6,9 @@
 
 // 先剔除掉理想情况下的开头连续几个节点都相同 以及结尾连续几个节点都相同的情况
 // 处理边界情况就是 
-// 如果index大于prevEnd 并且index 小于 nextEnd  只需要把新列表中index到nextEnd之间剩下的节点插入进去就可以了
-// 如果index > nextEnd时，我们把旧列表中index到prevEnd之间的节点删除
+// 如果 index 大于 prevEnd 并且 index 小于 nextEnd  只需要把新列表中 index 到 nextEnd 之间剩下的节点插入进去就可以了
+// 如果 index > nextEnd 时，我们把旧列表中 index 到 prevEnd 之间的节点删除
+
 // 当前/后置的预处理结束后，我们进入真正的diff环节。首先，我们先根据新列表剩余的节点数量，创建一个source数组，并将数组填满-1。
 // source数组是来做新旧节点的对应关系的，我们将新节点在旧列表的位置存储在该数组中，
 // 我们在根据source计算出它的最长递增子序列用于移动DOM节点。

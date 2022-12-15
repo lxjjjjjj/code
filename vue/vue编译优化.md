@@ -1,3 +1,9 @@
+[如何将template编译成AST](https://juejin.cn/post/7116296421816418311)
+[模型树的优化](https://juejin.cn/post/7117085295798911012)
+[render code的生成](https://juejin.cn/post/7121504219588198413)
+[vue3 编译之美](https://juejin.cn/post/7124890499478978597)
+[vue3 空白字符的处理](https://juejin.cn/post/7127074001897127943)
+[web components](https://juejin.cn/post/7153521106916212744)
 # Vue编译器做的事情
 DSL(一种特定领域语言的描述) Vue的模版语法就是一个DSL，因为模版语法和HTML语法很相似，所以所以可以按照HTML的规范来实现。（HTML使用有限自动机来完成模版语法的解析和词法分析）
 * 分析模版，将其解析为模版AST

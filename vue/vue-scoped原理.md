@@ -74,7 +74,7 @@ module: {
   |- b-loader normal execution
 |- a-loader normal execution
 ```
-那在pitching 阶段能做些什么？首先，传递给 pitch 方法的 data，在执行阶段也会暴露在 this.data 之下，并且可以用于在循环时，捕获并共享前面的信息。
+那在 pitching 阶段能做些什么？首先，传递给 pitch 方法的 data，在执行阶段也会暴露在 this.data 之下，并且可以用于在循环时，捕获并共享前面的信息。
 ```
 module.exports = function (content) {
   // this.data.value = 42
