@@ -4,7 +4,7 @@
 // 代码实现有两种，一种是时间戳，另一种是定时器 1）时间戳实现
 // 在一段时间之后多次执行，只要函数执行时间满足大于规定时间就执行 即使连续触发多次 也按照相同的时间间隔执行操作
 function throttle (func, wait = 50) {
-    let last = 0
+    let last = new Date()
     return function (...args) {
         let now = +new Date()
         if(now - last > wait) {
@@ -23,25 +23,24 @@ function throttle (func, wait = 50) {
 
 // 综合使用时间戳与定时器，完成一个事件触发时立即执行，触发完毕还能执行一次的节流函数
 // 实现一个节流函数? 如果想要最后一次必须执行的话怎么实现?
-function throttle(func, delay){
-    let timer = null;
-    let startTime = Date.now();
-  
-    return function(){
-      let curTime = Date.now();
-      let remaining = delay - (curTime - startTime);
-      const context = this;
-      const args = arguments;
-  
-      timer && clearTimeout(timer);
-      if(remaining <= 0){
-        func.apply(context,args);
-        startTime = Date.now();
-      }else{
-        timer = setTimeout(func, remaining);
+function throttle(func, wait) {
+  let timer = null
+  let last = new Date()
+  return function() {
+      timer && clearTimeout(timer)
+      let now = new Date()
+      const remaining = wait - now - last
+      if(remaining <= 0) {
+          func.call(this, arguments)
+          startTime = Date.now();
+      }else {
+          timer = setTimeout(() => {
+              func.call(this, arguments)
+              timer && clearTimeout(timer)
+          }, remaining)
       }
-    }
   }
+}
 
 
 // 需要在每个delay时间中一定会执行一次函数，

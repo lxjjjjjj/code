@@ -3,6 +3,7 @@ const REJECTED = 'rejected'
 const PENDING = 'pending'
 
 
+
 const promise = new MyPromise((resolve) => {
   setTimeout(() => {
     resolve(1)
