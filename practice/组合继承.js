@@ -9,3 +9,4 @@ Parent.prototype.parentFn = function() {
 }
 
 // 提示 继承props 和 fn
+
