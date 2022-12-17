@@ -1,4 +1,6 @@
-
+// request发出一个请求 根据请求的优先级将这个请求添加到不同请求队列中，
+// 并且判断如果请求数量没有超过limit限制就不停的flushQueue不停的发送请求
+// 请求成功之后会将重新构建的请求promise.resolve以便于在请求队列中将这个任务删除可以继续执行flushQueue
 export default class RequestQueue {
   constructor (config) {
     if (!config.adapter) {
