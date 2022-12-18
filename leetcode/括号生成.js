@@ -14,6 +14,7 @@ function match(num) {
             return
         }
         while(str.length <= num * 2){
+            // 当strnum有值可以是() 但是当strnum没有值 只能是）
             ['(', ')'].forEach(item => {
                 if(strnum){
                     if(item === '(') --strnum

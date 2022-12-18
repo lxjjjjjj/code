@@ -43,3 +43,36 @@ console.log(subarraySum([1,2,3],3))
 // console.log(subarraySum([1,2,1,2,1], 3))
 // console.log(subarraySum([-1,-1,1],0)) // 1
 // console.log(subarraySum([1,-1,0],0))  // 3 这个case太恶心了
+
+// 关键点：当前缀和数组减去目标和等于前缀和数组中的某一项，则说明存在连续子数组的和等于目标和
+// 举个例子，愿数组[1,1,1],前缀和[0，1，2，3].目标和2
+// 当发现前缀和数组中2-2等于0（前缀中第一项），说明存在连续子数组即[1,1]和等于2
+
+// 一、首先要构造一个前缀和数组
+// 第一项为0，之后的项是前缀和元素加上愿数组元素
+
+// 二、创建一个map，存储前缀和数组中元素出现的次数。
+// 三、遍历前缀和数组，当前缀和数组减去目标和等于map中的某一项，则说明存在连续子数组的和等于目标和，count即map中这一项对应的值。接着map设置前缀和数组元素出现的次数
+// （注意，由于前缀和第一项是0，从1开始）
+
+var subarraySum = function(nums, k) {
+    //法二：前缀和+哈希表
+    let count = 0;
+    let map = new Map();
+    map.set(0, 1);
+    let pre = 0;
+    for(let num of nums) {
+        pre += num;//前n项和
+        // 重点 如果含有acc-k，说明从数组 j ~ i 之间的数字之和为 k
+        if(map.has(pre - k)) {//存在数组和等于pre - k
+            count += map.get(pre - k);//计数
+        }
+        if(map.has(pre)) {//等于pre的数组出现过
+            map.set(pre, map.get(pre) + 1);//和为pre的情况增加
+        } else {//等于pre的数组没出现过
+            map.set(pre, 1);//新增进哈希表
+        }
+    }
+    return count;
+};
+

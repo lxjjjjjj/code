@@ -39,3 +39,32 @@ var job = (start, end, profit) => {
 
 // [1,2,3,3] [3,4,5,6] [50,10,40,70] => 120
 console.log(job([1,2,3,3], [3,4,5,6], [50,10,40,70]))
+
+
+/**
+ * @param {number[]} startTime
+ * @param {number[]} endTime
+ * @param {number[]} profit
+ * @return {number}
+ */
+ var jobScheduling = function(startTime, endTime, profit) {
+    let works = []
+    for(let i = 0; i < startTime.length; ++i) {
+        works[i] = { startTime: startTime[i], endTime: endTime[i], profit: profit[i] }
+    }
+    works.sort((a, b) => a.endTime - b.endTime)
+    const dp = [0] // 初始第一个虚拟的dp，报酬为0
+    for(let i = 1; i < (works.length + 1); ++i) {
+        let pre = 0
+        for (let j = i - 1; j >= 0; --j){
+            // 向前寻找“最近的”“已完成的"兼职工作
+            if (works[j].endTime <= works[i - 1].startTime) {
+                pre = j + 1;
+                break; 
+            }
+        }
+        dp[i] = Math.max(dp[i - 1], dp[pre] + works[i - 1].profit)
+    }
+    return dp.pop()
+};
+
