@@ -30,18 +30,18 @@
 var combinationSum = function(candidates, target) {
     let res = []
     
-    const dfs = (target, c, idx) => {
+    const dfs = (target, curArr, idx) => {
         if (idx === candidates.length) return
         if (target === 0) {
-            res.push(c)
+            res.push(curArr)
             return
         }
         // 不用自己
-        dfs(target, c, idx + 1)
+        dfs(target, curArr, idx + 1)
         
         // 用自己 每次都是重复去看
         if (target - candidates[idx] >= 0) {
-            dfs(target - candidates[idx], [candidates[idx], ...c], idx)
+            dfs(target - candidates[idx], [candidates[idx], ...curArr], idx)
         }
     }
     

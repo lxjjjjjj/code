@@ -50,6 +50,7 @@ var lengthOfLongestSubstring = function(s) {
     let res = []
     let max = 0
     for (let str of s) {
+      //只要有相同的字符串就一直将最前面的字符删掉
       while (res.includes(str)) {
         res.shift()
       }
