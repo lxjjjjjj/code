@@ -45,7 +45,7 @@ const obj = new Proxy(data, {
         //         return this.foo
         //     }
         // }
-        const res = Reflect.get(target, key, recevier)
+        const res = Reflect.get(target, key, receiver)
         if(typeof res === 'object' && res !== null){
             return reactive(res)
         }
