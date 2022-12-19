@@ -69,7 +69,7 @@ function lengthOfLIS(nums) {
       findArrNode(dp, i, result, nums);
     }
     return result;
-  }
+}
   function findArrNode(dp, value, result, arr) {
     // 找到符合条件最后一项的下标，这样才能保证数组的顺序是正确的
     let index = dp.lastIndexOf(value);
