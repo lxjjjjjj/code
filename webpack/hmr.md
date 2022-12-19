@@ -79,5 +79,13 @@ HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，
 
 # 总结
 
-引入HotModuleReplacementPlugin生成manifest.json和js文件，其中manifest.json文件存放的是更改的文件的hash值，以便于客户端拉取新的文件。js文件就是更改的新文件。同时HotModuleReplacementPlugin也会生成在客户端运行可以接收服务端socket消息通信的代码。webpack-dev-server负责将通信代码在webpack编译流程中通过更改entry达到将文件打包到客户端文件中让客户端执行。同时它也会创建本地server服务用来给客户端发送消息，webpack-dev-middleware负责监听webpack编译获取文件系统的变化并且将文件发送给客户端。HotModuleReplacementPlugin在webpack编译的每个module中都加入hot属性，hot对象包含accept函数和check函数，check函数负责拉取manifest文件。accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。
+环境准备做的事情
+
+引入 HotModuleReplacementPlugin 生成 manifest.json 和 js 文件，其中 manifest.json 文件存放的是更改的文件的 hash 值，以便于客户端拉取新的文件。js 文件就是更改的新文件。同时 HotModuleReplacementPlugin 也会生成在客户端运行可以接收服务端socket消息通信的代码。webpack-dev-server负责将通信代码在webpack编译流程中通过更改entry达到将文件打包到客户端文件中让客户端执行。同时它也会创建本地server服务用来给客户端发送消息，webpack-dev-middleware负责监听webpack编译获取文件系统的变化并且将文件发送给客户端。HotModuleReplacementPlugin在webpack编译的 mainTemplate 的 module 中加入hot属性，hot对象包含accept函数和check函数，check函数负责拉取manifest文件。accept函数内添加的依赖文件更新，触发引入该module的父module的render函数更新。
+
+为什么使用JSONP获取最新代码？主要是因为JSONP获取的代码可以直接执行
+
+webpack 只会在 mainTemplate 也就是主入口文件中加入hot属性，所以加入到client的dev-server代码中也直接判断module.hot是否有这个属性进行热更新代码拉取mainfest.json 以及更改的 js 文件。
+
+webpack编译完生成新的hash -> 服务端socket发送编译hash -> 客户端socket 收到hash 保存hash -> 服务端发送ok -> 客户端收到ok -> 通过hotEventemitter发送给client更新事件监听 -> 执行reloadApp的操作 -> 执行hot的check函数 拉取mainfest.json 和 js 文件 -> 执行hot的accept函数处理引用了变化的文件的父module执行render函数重新引入依赖文件
 
