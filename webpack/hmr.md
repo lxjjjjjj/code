@@ -40,18 +40,23 @@ if (module.hot) {
 ## 2、生成两个补丁文件
 HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，包含本次编译和上次编译更改的chunk名和更改的chunk文件的hash值的内容。还有updated chunk (JavaScript)命名为chunk名字.本次编译生成的hash.hot-update.js。
 
-
+# webpack-hot-middleware
+将热更新的代码插入hot相关逻辑可以热更新
 
 # webpack-dev-server
+
 1、创建webpack实例，更改entry、向客户端打包的代码中添加HotModuleReplacementPlugin生成的监听webpack done事件发送hash和ok事件的代码
 
 2、创建webserver服务器和websocket服务器让浏览器和服务端建立通信（对应服务端的1.3.4和客户端的1）
+
+【node-express[启动服务] + webpack-dev-middleware + webpack-hot-middleware】的集成封装
 
 # webpack-dev-middleware
 1、负责本地文件的监听、启动webpack编译
 2、设置文件系统为内存文件系统
 3、实现了一个express中间件，将编译的文件返回（对应服务端的2）
 
+将webpack编译产物提交给服务器，并且他将产物放置在内存中【这也是为啥我们在开发过程中在文件夹中找不到我们的打包代码】
 
 整个流程分为服务端和客户端两部分
 
@@ -70,7 +75,7 @@ HotModuleReplacement 生成 manifest(JSON)命名为hash.hot-update.json文件，
 
 1.创建一个 websocket客户端 连接 websocket服务端，websocket客户端监听 hash 和 ok 事件。
 
-2.主要的热更新客户端实现逻辑，浏览器会接收服务器端推送的消息，如果需要热更新，浏览器发起http请求去服务器端获取新的模块资源解析并局部刷新页面，这本是HotModuleReplacementPlugin帮我们做了，他将HMR 运行时代码注入到chunk中
+2.主要的热更新客户端实现逻辑，浏览器会接收服务器端推送的消息，如果需要热更新，浏览器发起http请求去服务器端获取新的模块资源解析并局部刷新页面，这本是HotModuleReplacementPlugin帮我们做了，他将 HMR 运行时代码注入到chunk中
 
 # 总结
 
