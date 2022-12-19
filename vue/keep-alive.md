@@ -1,3 +1,6 @@
+[keep-alive 使用切记 和 keep-alive v3版本的更新](https://juejin.cn/post/7170878262061563941)
+
+v3 版本不是单纯的用组件的tag去区分是否要缓存组件，而是利用了创建组件时创建的对组件描述的对象type地址来判断。所以对于相同组件名但是不同组件数据的组件可以起到分别缓存的效果。
 # 总结
 keep-alive属于vue的内置组件，会有单独的abstract标识，这个标识不会让内置组件真实的出现在组件链中，在keep-alive组件内部执行render方法，如果不会缓存，则取slot的第一个组件，如果命中缓存，那么返回缓存中的vnode，每一次渲染都会更新组件在缓存的位置，在设置了缓存组件长度的情况下，如果缓存个数超过限制就会删除缓存数组中靠后的一个key值。对于使用了keep-alive包裹的组件首次渲染时并不会与其他组件有任何区别，因为会标识渲染的子组件的keepAlive为true，但是此时vnode.componentInstance时undefined所以不满足，所以会挂载组件，如果是第二次挂载，在 patch 的过程中会执行 patchVnode 的逻辑，它会对比新旧 vnode 节点，甚至对比它们的子节点去做更新逻辑，但是对于keep-alive组件 vnode 而言，是没有 children 的，那么对于 <keep-alive> 组件而言，如何更新它包裹的内容呢？原来 patchVnode 在做各种 diff 之前，有keepAlive=true的组件会先执行 prepatch 的钩子函数，对于keep-alive组件来说，检测到有slots组件会执行forthUpdate也就是重新执行render，取缓存中的vnode渲染。并且更新vnode的keepAlive属性为true，在组件的update的时候命中prepatch然后更新子组件。并且有keepAlive是true的组件不会在destory生命周期被销毁。
 
