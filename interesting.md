@@ -6,3 +6,4 @@
 [从vue源代码中了解Symbol.isPrimitive](https://juejin.cn/post/6994298142631919629)
 [Web 现代应用程序架构下的性能优化，渐进式的极致艺术。](https://juejin.cn/post/6898224585993519111)
 [webpack的asyncQueue深入理解webpack编译](https://juejin.cn/post/7052609791641780260)
+[call的性能比apply高](https://juejin.cn/post/7137959904135872549)

@@ -1,7 +1,30 @@
 [原文链接](https://juejin.cn/post/7138070814791827469)
 
 # 总结
-通过Proxy代理对象，如果直接访问代理对象上的属性可以通过Reflect.get(target, property, target)。访问一个函数属性调用需要将代理对象的this绑定为代理前的目标对象target，receiver：如果target对象中指定了getter，receiver则为getter调用时的this值。
+使用Proxy代理Set、Map、URL这样的对象访问对象内部提供的访问器属性，会和直接访问普通对象的属性不同。
+比如访问set.size属性因为在set的内部是这样定义访问size属性的步骤的，Set.prototype.size是一个访问器属性，它的set访问器函数是undefined，它的get访问器函数会执行以下步骤，首先让this指向调用者，在Proxy内部调用者是proxy对象，因为proxy对象上没有size属性，所以报出错误。需要Reflect.get(target, property, target);这样访问对象链上的数据。
+
+对于对象上的方法的访问需要手动改变this的指向，达到可以访问内部方法的目的。
+
+const data = { a: 1, b: 2 };const obj = new Proxy(data, {
+    get(target, key, receiver){
+        return Reflect.get(target, key, receiver)
+    }
+}); console.log(data,obj.a); // 正常工作
+
+function Data() {return { a: 1, b: 2 }}; const sub = new Data();const obj = new Proxy(sub, {
+    get(target, key, receiver){
+        return Reflect.get(target, key, receiver)
+    }
+}); console.log(sub, obj.a); // 正常工作
+
+const url = new URL(location.href); 
+proxy = new Proxy(url, { 
+    get(target, property, receiver) { 
+        return Reflect.get(target, property, receiver); 
+    } 
+}); console.log(typeof url) // object
+proxy.pathname; // 报错Illegal invocation
 # 示例
 创建一个URL对象的代理。除去添加的行为外，代理的意义在于它们跟代理的对象相同，但是从attempt看，并非如此。
 ```

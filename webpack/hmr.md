@@ -1,5 +1,5 @@
 [原文链接](https://juejin.im/post/5df36ffd518825124d6c1765#heading-58)
-
+[第二个webpack热更新原理文章](https://juejin.cn/post/7148075486403362846)
 [流程图更清晰](https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/12/13/16eff1c393a42bd0~tplv-t2oaga2asx-image.image)
 # HotModuleReplacementPlugin
 

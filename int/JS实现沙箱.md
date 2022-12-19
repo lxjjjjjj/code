@@ -1,3 +1,4 @@
+[qiankun的JS沙箱隔离](https://juejin.cn/post/7148075486403362846)
 [原文链接](https://mp.weixin.qq.com/s/XcPBjxxkbhz_0tzMfjVuzw)
 # 最终实现
 1）利用 iframe 创建沙箱，取出其中的原生浏览器全局对象作为沙箱的全局对象
