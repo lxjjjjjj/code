@@ -75,7 +75,7 @@ useEffect(() => {
 
 # useMemo & useCallback 配合 React.memo
 
-常见用来缓存useEffect的依赖和缓存子组件props的值
+**常见用来缓存useEffect的依赖和缓存子组件props的值**
 
 非常常见的就是，父组件的更新引起子组件不必要的更新，因为父组件接收了一个参数，那个参数都是每次父组件渲染都会重新生成的参数，可以使用useMemo和useCallback和React.memo来避免不必要的渲染.[对应例子的three]
 
@@ -255,8 +255,59 @@ deps 依赖数组，依赖发生变化会重新执行 createHandle 函数。
 ```
 useImperativeHandle  可以让你在使用 ref 时自定义暴露给父组件的实例值。在大多数情况下，应当避免使用 ref 这样的命令式代码。useImperativeHandle 应当与 forwardRef 一起使用。
 
-这个api可以让父组件调用子组件暴露出来的方法
+相当于子组件向父组件输出本身实例或者DOM元素。而利用useImperativeHandle子组件可以向父组件输出任意数据。
 
+这个api可以让父组件调用子组件暴露出来的方法
+```
+// FancyInput组件作为子组件
+const FancyInput = React.forwardRef(function FancyInput(props, ref) {
+  const inputRef = useRef();
+
+  // 命令式的给`ref.current`赋值个对象
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      inputRef.current.focus()
+    }
+  }));
+  
+  return <input ref={inputRef} ... />
+})
+
+// Example组件作为父组件
+function Example() {
+  const fancyInputRef = useRef()
+
+  const focus = () => {
+    fancyInputRef.current.focus()
+  }
+
+  return (
+    <>
+      <FancyInput ref={fancyInputRef} />
+    </>
+  )
+}
+```
+**先学习一下React.forwardRef**
+React forwardRef是一种允许父组件向下（即“转发”）引用传递给它们的子组件的方法。在 React 中使用 forwardRef 可以让父组件外的组件获取对父组件内部子组件的dom引用
+
+* 转发 refs 到 DOM 组件
+* 在高阶组件中转发引用
+```
+React.forwardRef接受渲染函数作为参数。React 将使用props和ref作为两个参数调用此函数。这个函数应该返回一个 React 节点。
+const FancyButton = React.forwardRef((props, ref) => (
+  <button ref={ref} className="FancyButton">
+    {props.children}
+  </button>
+));
+
+// You can now get a ref directly to the DOM button:
+const ref = React.createRef();
+<FancyButton ref={ref}>Click me!</FancyButton>;
+在上面的示例中，Reactref将给定的<FancyButton ref={ref}>元素作为第二个参数传递给调用中的渲染函数React.forwardRef。此渲染函数将 传递ref给<button ref={ref}>元素。
+
+因此，React 附加 ref 后，ref.current将直接指向<button>DOM 元素实例。
+```
 # useLayoutEffect
 useLayoutEffect 的区别在于它会在所有的 DOM 变更之后同步调用 effect。
 

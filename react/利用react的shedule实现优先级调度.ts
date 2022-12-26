@@ -1,5 +1,4 @@
 
-```
 import {
   unstable_IdlePriority as IdlePriority,
   unstable_ImmediatePriority as ImmediatePriority,
@@ -146,4 +145,3 @@ const doSomeBuzyWork = (len: number) => {
   }
 };
 
-```
