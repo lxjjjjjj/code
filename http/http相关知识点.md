@@ -318,13 +318,15 @@ http 状态码 404 （未找到） 服务器找不到请求的网页。
 
 # 跨域CORS
 [跨域解决方案](https://juejin.cn/post/7017614708832206878#heading-5)
-cors是解决跨域问题的常见解决方法，关键是服务器要设置Access-Control-Allow-Origin，控制哪些域名可以共享资源。origin是cors的重要标识，只要是非同源或者POST请求都会带上Origin字段，接口返回后服务器也可以将Access-Control-Allow-Origin设置为请求的Origin，解决cors如何指定多个域名的问题。
+cors是解决跨域问题的常见解决方法，关键是服务器要设置Access-Control-Allow-Origin，控制哪些域名可以共享资源。origin是cors的重要标识，只要是非同源或者POST请求都会带上Origin字段】
+
+接口返回后服务器也可以将Access-Control-Allow-Origin设置为请求的Origin，解决cors如何指定多个域名的问题。
 
 CORS将请求分为**简单请求**和**非简单请求**
 
 * 简单请求
-）只支持HEAD，get、post请求方式；
-2）没有自定义的请求头；Accept  Accept-Language Content-Language Last-Event-ID Content-Type
+1）只支持HEAD，GET、POST请求方式
+2）没有自定义的请求头；对CORS安全的首部集合 Accept Accept-Language Content-Language Range Content-Type
 3）Content-Type：只限于三个值application/x-www-form-urlencoded、multipart/form-data、text/plain
 对于简单请求，浏览器直接发出CORS请求。具体来说，就是在头信息之中，增加一个Origin字段。如果浏览器发现这个接口回应的头信息没有包含Access-Control-Allow-Origin字段的话就会报跨域错误。
 
