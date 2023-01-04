@@ -63,4 +63,4 @@ var longestValidParentheses = function(s) {
 
     return max
 };
-console.log(longestValidParentheses('()(()'))
+console.log(longestValidParentheses('()()'))
