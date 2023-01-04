@@ -17,7 +17,17 @@ renderMixin(Vue);初始化Vue.prototype.$nextTick 和 Vue.prototype._render (里
   if (vm.$options.el) {
     vm.$mount(vm.$options.el);
   }
-* 
+1. 调用initMixin实现合并options并且
+  * initLifecycle初始化watcher、生命周期标识、refs、parents等对象。
+  * initEvents注册监听事件，通过消息订阅实现on事件的监听
+  * initRender 创建$createElement可以确定此时render的vm上下文。可以根据vm创建render function 创建属于这个vm的render watcher，绑定组件attrs和listeners的监听，如果变化可以引起组件的渲染更新。
+  * initState 数据绑定data，创建computed watcher 和 watch watcher
+  * 调用$mount创建render watcher 调用mountComponent创建vnode
+2. stateMixin创建全局的$set、$props、$watch 方法
+3. eventsMixin 通过注册一个发布订阅模式实现事件的注册、执行、解绑。并且在emit事件的时候，会触发invokeWithErrorHandling，进行全局的错误收集。
+4. lifecycleMixin 在vue.prototype创建全局update destory 和 forthUpdate方法
+5. renderMixin 在vue.prototype挂载$nextTick和_render方法(创建vnode)
+
 # callHook
 为什么在各种生命钩子中禁止收集依赖，因为如果收集依赖会造成多次渲染
 ```
@@ -113,17 +123,7 @@ function initMixin (Vue) {
     };
   }
 ```
-# 总结做了什么
-1. 调用initMixin实现合并options并且
-  * initLifecycle初始化watcher、生命周期标识、refs、parents等对象。
-  * initEvents注册监听事件，通过消息订阅实现on事件的监听
-  * initRender 创建$createElement可以确定此时render的vm上下文。可以根据vm创建render function 创建属于这个vm的render watcher，绑定组件attrs和listeners的监听，如果变化可以引起组件的渲染更新。
-  * initState 数据绑定data，创建computed watcher 和 watch watcher
-  * 调用$mount创建render watcher 调用mountComponent创建vnode
-2. stateMixin创建全局的$set、$props、$watch 方法
-3. eventsMixin 通过注册一个发布订阅模式实现事件的注册、执行、解绑。并且在emit事件的时候，会触发invokeWithErrorHandling，进行全局的错误收集。
-4. lifecycleMixin 在vue.prototype创建全局update destory 和 forthUpdate方法
-5. renderMixin 在vue.prototype挂载$nextTick和_render方法(创建vnode)
+
 
 # initMixin做的事情
 1. Vue.prototype上维护创建的Vue的个数
