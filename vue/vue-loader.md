@@ -13,7 +13,7 @@ lib/plugin.js 定义的插件
 
 # 总结
 
-预处理阶段：
+预处理阶段：在vue-loader-plugin中处理
 1.在插件中生成匹配xxx.vue?vue 的 pitcher loader放到rule数组的最前面确保比别的rules更前置处理内容。
 2.插件重新给用户rules规定resourceQuery，clone rules 内 不是 resourceQuery 设定匹配的rules(不是用户自定义的rules)，用以lang参数结尾的虚拟路径使用户匹配的rules让rules生效。
 
