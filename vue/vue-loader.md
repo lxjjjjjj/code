@@ -10,7 +10,6 @@ vue-loader 主要包含三部分：
 lib/index.js 定义的 normal loader
 lib/loaders/pitcher.js 定义的 pitcher loader
 lib/plugin.js 定义的插件
-
 # 总结
 
 预处理阶段：在vue-loader-plugin中处理
@@ -65,3 +64,16 @@ vue-loader第二次执行因为路径query中有了type参数，所以可以做�
 * 灵活使用 resourceQuery ，能够在loader中更精准地命中特定路径格式
 
 
+Vue SFC 文件包含多种格式的内容：style、script、template以及自定义block，vue-loader 如何分别处理这些内容？
+
+在vue-loader中，给原始文件路径增加不同的参数，后续配合 resourceQuery 函数就可以分开处理这些内容，这样的实现相比于一次性处理，逻辑更清晰简洁，更容易理解
+
+针对不同内容块，vue-loader 如何复用其他loader？比如针对 less 定义的style块，vue-loader 是怎么调用 less-loader 加载内容的？
+
+经过 normal loader、pitcher loader 两个阶段后，SFC 内容会被转化为 import xxx from '!-babel-loader!vue-loader?xxx' 格式的引用路径，以此复用用户配置。
+
+此外，从 vue-loader 可以学到一些webpack 插件、loader的套路：
+
+可以在插件中动态修改webpack的配置信息
+Loader 并不一定都要实实在在的处理文件的内容，也可以是返回一些更具体，更有指向性的新路径，以复用webpack的其他模块
+灵活使用 resourceQuery ，能够在loader中更精准地命中特定路径格式
