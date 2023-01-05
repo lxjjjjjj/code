@@ -10,11 +10,11 @@ function exchangeOddEven(arr) {
     let end = arr.length - 1;
     // 当start > end时，完成交换
     while (start < end) {
-      // 找到第一个偶数
+      // 找到第一个偶数 判断条件表示这个尾端的数不是奇数
       while (arr[start] % 2 === 1) {
         start++;
       }
-      // 找到第一个奇数
+      // 找到第一个奇数 判断条件表示这个尾端的数不是偶数
       while (arr[end] % 2 === 0) {
         end--;
       }
