@@ -128,7 +128,7 @@ if(process.env.NODE_ENV === 'development'){
 
 4.模块导出列表中未被使用的值都不会定义在 __webpack_exports__ 对象中，形成一段不可能被执行的 Dead Code 效果，利用插件Terser、UglifyJS完成删除代码。
 
-
+[标记图片示例](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/64044294f29e449e9c6016e724a93fdd~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.image)
 # 实现原理
 Webpack 中，Tree-shaking 的实现一是先标记出模块导出值中哪些没有被用过，二是使用 Terser 删掉这些没被用到的导出语句。标记过程大致可划分为三个步骤：
 
