@@ -61,3 +61,7 @@ function initialize() {
   x = 10;
 }
 ```
+# 双重类型断言
+如果某个类型直接断言成number或者别的类型不可以的话 可以间接绕过ts的检查
+
+xxx as unknown as number
