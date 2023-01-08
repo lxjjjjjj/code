@@ -4,14 +4,12 @@ function swap(v1, v2) {
   }
   
   function test1() {
-    console.log(chalk.yellow("test1:"))
     const [secondUser, firstAdmin] = swap(admins[0], users[1])
     logUser(secondUser)
     logAdmin(firstAdmin)
   }
   
   function test2() {
-    console.log(chalk.yellow("test2:"))
     const [secondAdmin, firstUser] = swap(users[0], admins[1])
     logAdmin(secondAdmin)
     logUser(firstUser)
