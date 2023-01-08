@@ -3,6 +3,14 @@
 
 双向数据绑定： 双向绑定除了数据驱动 DOM 之外， DOM 的变化反过来影响数据，是一个双向的关系。
 
+# 总结如何实现双向绑定功能的
+子组件$emit触发事件，在父组件中，v-model="message" 被改成 @input="message = $event.target.value"
+<input
+  v-bind:value="message"
+  v-on:input="message=$event.target.value">
+对于表单元素，统一绑定的好处是可以磨平原生select/input等原生dom元素在不同浏览器的事件触发名称，通过简单的v-model实现双向数据绑定。v-model 不仅仅是语法糖，它还有副作用。副作用如下：如果 v-model 绑定的是响应式对象上某个不存在的属性，那么 vue 会悄悄地增加这个属性，并让它响应式。
+
+其他元素使用 v-model 双向数据绑定实际上就是，通过默认监听 input 事件。以及$emit 方法派发，再通过 prop 的形式传递。
 # 在 Vue 中体现出双向数据绑定作用的方式有两种
 
 ## v-model 属性
@@ -162,3 +170,12 @@ this.$emit('update:title', newTitle)
 这样会把 doc 对象中的每一个 property (如 title) 都作为一个独立的 prop 传进去，然后各自添加用于更新的 v-on 监听器。
 
 将 v-bind.sync 用在一个字面量的对象上，例如 v-bind.sync=”{ title: doc.title }”，是无法正常工作的，因为在解析一个像这样的复杂表达式的时候，有很多边缘情况需要考虑。
+
+在父组件上告诉子组件传递过去的msg跟父组件上的n保持同步，相当于允许它修改
+<child :msg.sync='n'></child>
+
+在子组件上的代码写为：
+<button @click="$emit('update:msg',msg-1)">子组件点击{{msg}}</button>
+
+使用.sync后写法需要注意的是：eventName只能采用update:传递过来的prop属性的方式才行。
+

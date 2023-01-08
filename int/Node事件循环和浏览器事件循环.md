@@ -733,8 +733,17 @@ sto
 rAF
 rAF
 ```
+## requestAnimationFrame 和 微任务 的执行顺序
 
+requestAnimationFrame(() => console.log("rAF"));
+queueMicrotask(() => console.log("mic"));
 
+或者
+
+queueMicrotask(() => console.log("mic"));
+requestAnimationFrame(() => console.log("rAF"));
+
+都是先执行微任务 再执行 requestAnimationFrame
 ## requestIdleCallback
 意图是让我们把一些计算量较大但是又没那么紧急的任务放到空闲时间去执行。不要去影响浏览器中优先级较高的任务，比如动画绘制、用户输入等等。
 

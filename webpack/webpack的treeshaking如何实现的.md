@@ -1,13 +1,66 @@
-# 在 Webpack 中，启动 Tree Shaking 功能必须同时满足三个条件
-```
+# 在 Webpack4 中，启动 Tree Shaking 功能必须同时满足三个条件
+
 使用 ESM 规范编写模块代码
 配置 optimization.usedExports 为 true，启动标记功能
 启动代码优化功能，可以通过如下方式实现：
 
+webpack4需要配置 
 配置 mode = production
 配置 optimization.minimize = true
 提供 optimization.minimizer 数组
 
+// Base Webpack Config for Tree Shaking
+const config = {
+ mode: 'production',
+ optimization: {
+  usedExports: true,
+  minimizer: [
+   new TerserPlugin({...})
+  ]
+ }
+};
+
+# webpack5 的配置
+webpack5自带tree-shaking功能 无需下面的配置 但是 optimization.usedExports 还是要改成 true
+
+1. 开发环境下的配置
+// webpack.config.js
+module.exports = {
+  // ...
+  mode: 'development',
+  optimization: {
+    usedExports: true,
+  }
+};
+
+2. 生产环境下的配置
+// webpack.config.js
+module.exports = {
+  // ...
+  mode: 'production',
+};
+
+## 如何避免css样式的tree-shaking
+```
+// main.js
+import "./styles/reset.css"
+```
+这样的代码，在打包后，打开页面，你就会发现样式并没有应用上，原因在于：上面我们将 sideEffects 设置为 false 后，所有的文件都会被 Tree Shaking，通过 import 这样的形式引入的 CSS 就会被当作无用代码处理掉。
+为了解决这个问题，可以在 loader 的规则配置中，添加 sideEffects: true ，告诉 Webpack 这些文件不要 Tree Shaking。
+```
+// webpack.config.js
+module.exports = {
+  // ...
+    module: {
+    rules: [
+      {
+        test: /\.css$/i,
+        use: ["style-loader", "css-loader"],
+        sideEffects: true
+      }
+    ]
+  },
+};
 ```
 ## sideEffects
 告知 webpack 要不要去识别该项目代码中是否有副作用，从而为Tree-shaking提供更大的压缩空间。
@@ -75,7 +128,7 @@ if(process.env.NODE_ENV === 'development'){
 
 4.模块导出列表中未被使用的值都不会定义在 __webpack_exports__ 对象中，形成一段不可能被执行的 Dead Code 效果，利用插件Terser、UglifyJS完成删除代码。
 
-
+[标记图片示例](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/64044294f29e449e9c6016e724a93fdd~tplv-k3u1fbpfcp-zoom-in-crop-mark:4536:0:0:0.image)
 # 实现原理
 Webpack 中，Tree-shaking 的实现一是先标记出模块导出值中哪些没有被用过，二是使用 Terser 删掉这些没被用到的导出语句。标记过程大致可划分为三个步骤：
 

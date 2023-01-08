@@ -25,7 +25,8 @@ const users = [
       name: "Kate Müller",
       age: 23,
       occupation: "Astronaut",
-      aaaa: "aaaaa"
+      aaaa: "aaaaa",
+      bbbb: "aaaaa"
     },
   ]
   type User2 = typeof users2[number]

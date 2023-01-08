@@ -738,7 +738,7 @@ const router = new VueRouter({
 第二种方法:
 const router = new VueRouter({
     routes: [
-        { path: '/a', redirect: { name: 'foo' }}
+        { path: '/a', redirect: { name: 'foo' } }
     ]
 })
 第三种方法：

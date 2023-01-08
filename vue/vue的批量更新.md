@@ -18,8 +18,8 @@ function queueWatcher (watcher) {
       queue.splice(i + 1, 0, watcher);
     }
     // queue the flush
-    if (!waiting) {
-      waiting = true;
+    if (!flushing) {
+      flushing = true;
       nextTick(flushSchedulerQueue);
     }
   }
@@ -60,6 +60,4 @@ created() {
 大致说的是为了保证父子组件按照顺序执行update、用户创建的watcher（像这个例子中在watch这个option中监听msg就会创建一个user wathcer）在render watcher之前执行、在父组件的watcher run的时候销毁了子组件，那么子组件的watcher就不会被执行了。
 这里我觉得知道queue中所有watcher是按照id升序排列的，而id是创建watcher时自增的就够了，具体为什么这么干以后遇到具体场景就理解了。
 
-## waiting
-
-waiting这个变量，这个变量很简单，就是保证完成一次对queue的遍历之前不会开启新的遍历。
+flushing这个变量，这个变量很简单，就是保证完成一次对queue的遍历之前不会开启新的遍历。

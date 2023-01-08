@@ -5,6 +5,8 @@ v3 版本不是单纯的用组件的tag去区分是否要缓存组件，而是�
 keep-alive属于vue的内置组件，会有单独的abstract标识，这个标识不会让内置组件真实的出现在组件链中，在keep-alive组件内部执行render方法，如果不会缓存，则取slot的第一个组件，如果命中缓存，那么返回缓存中的vnode，每一次渲染都会更新组件在缓存的位置，在设置了缓存组件长度的情况下，如果缓存个数超过限制就会删除缓存数组中靠后的一个key值。对于使用了keep-alive包裹的组件首次渲染时并不会与其他组件有任何区别，因为会标识渲染的子组件的keepAlive为true，但是此时vnode.componentInstance时undefined所以不满足，所以会挂载组件，如果是第二次挂载，在 patch 的过程中会执行 patchVnode 的逻辑，它会对比新旧 vnode 节点，甚至对比它们的子节点去做更新逻辑，但是对于keep-alive组件 vnode 而言，是没有 children 的，那么对于 <keep-alive> 组件而言，如何更新它包裹的内容呢？原来 patchVnode 在做各种 diff 之前，有keepAlive=true的组件会先执行 prepatch 的钩子函数，对于keep-alive组件来说，检测到有slots组件会执行forthUpdate也就是重新执行render，取缓存中的vnode渲染。并且更新vnode的keepAlive属性为true，在组件的update的时候命中prepatch然后更新子组件。并且有keepAlive是true的组件不会在destory生命周期被销毁。
 
 如果是缓存过的组件就不会再执行create和mounted生命周期，只会执行attached生命周期。
+
+keep-alive通过自定义 render 函数并且利用了插槽(slot)，组件包裹的子元素——也就是插槽(slot)是是通过<keep-alive>的prepatch方法中调用$forthUpdate执行render函数，slot组件执行createComponent做更新的，如果是缓存过的组件就不会再执行create和mounted生命周期，只会执行attached生命周期
 # 是什么
 <keep-alive> 是 Vue 源码中实现的一个组件，它能够把不活动的组件的实例保存在内存中，而不是直接的销毁，它是一个抽象组件，不会被渲染到真实DOM中，也不会出现在父组件链中
 

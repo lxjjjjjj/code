@@ -28,13 +28,20 @@ npm 跟 git 一样都有完善的钩子机制散布在 npm 运行的各个阶段
     "install": "echo \"install hook\"",
     "postinstall": "echo \"postinstall hook\""
     // ...
-  }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "",
+      "pre-push": "sh ./pre-push.sh"
+    }
+  },
 	// ...
 }
 ```
 
 ## 获取 package.json 中依赖数据构建依赖树
-首先需要做的是确定工程中的首层依赖，也就是 dependencies 和 devDependencies、peerDependences 属性中直接指定的模块（假设此时没有添加 npm install的其他参数）。
+首先需要做的是确定工程中的首层依赖，也就是 dependencies 和 devDependencies、peerDependences（当一个依赖项 c 被列在某个包 b 的 peerDependency 中时，它就不会被自动安装。取而代之的是，包含了 b 包的代码库 a 则必须将对应的依赖项 c 包含为其依赖。） 属性中直接指定的模块（假设此时没有添加 npm install的其他参数）。
+
 工程本身是整棵依赖树的根节点，每个首层依赖模块都是根节点下面的一棵子树，npm 会开启多进程从每个首层依赖模块开始逐步寻找更深层级的节点。确定完首层依赖后，就开始获取各个依赖的模块信息，获取模块信息是一个递归的过程，分为以下几步：
 
 * 获取模块信息。在下载一个模块之前，首先要确定其版本，这是因为 package.json 中往往是语义化版本。此时如果版本描述文件（npm-shrinkwrap.json 或 package-lock.json）中有该模块信息直接拿即可，如果没有则从仓库获取。如 packaeg.json 中某个包的版本是 ^1.1.0，npm 就会去仓库中获取符合 1.x.x 形式的最新版本。
