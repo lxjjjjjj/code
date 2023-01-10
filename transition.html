@@ -1,0 +1,53 @@
+<html>
+    <head>
+        <style>
+            .wrapper{
+                height: 300px;
+                width: 600px;
+                border: 1px solid red;
+                overflow: hidden;
+            }
+            .container{
+                height: 300px;
+                width: 1400px;
+                left: 200px;
+                position: relative;
+                transition: left 0.2s ease-in-out;
+            }
+            .screen {
+                width: 200px;
+                height: 200px;
+                margin-right: 20px;
+                background-color: green;
+                display: inline-block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrapper" id="screen">
+            <div class="container" id="container">
+                <div class="screen"></div>
+                <div class="screen"></div>
+                <div class="screen"></div>
+                <div class="screen"></div>
+                <div class="screen"></div>
+                <div class="screen"></div>
+            </div>
+        </div>
+        
+        <script>
+            const containerEL = document.getElementById('container')
+            let index = 0
+            setInterval(() => {
+                if(index === 6) {
+                    index = 0
+                } else {
+                    index++
+                }
+                containerEL.style.left = -index * 100 + 'px'
+            },2000)
+        </script>
+        
+    </body>
+
+</html>
