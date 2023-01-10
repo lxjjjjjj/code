@@ -3,48 +3,64 @@
         <style>
             .wrapper{
                 height: 300px;
-                width: 600px;
+                width: 375px;
                 border: 1px solid red;
-                overflow: hidden;
+                overflow: scroll;
             }
             .container{
                 height: 300px;
-                width: 1400px;
-                left: 200px;
+                width: 1602px;
+                left: 54px;
                 position: relative;
+                display: flex;
+            }
+            .move {
                 transition: left 0.2s ease-in-out;
             }
             .screen {
-                width: 200px;
+                width: 267px;
                 height: 200px;
-                margin-right: 20px;
                 background-color: green;
-                display: inline-block;
+                margin-right: 10px;
+                font-size: 24px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            .active {
+                opacity: 1;
             }
         </style>
     </head>
     <body>
         <div class="wrapper" id="screen">
             <div class="container" id="container">
-                <div class="screen"></div>
-                <div class="screen"></div>
-                <div class="screen"></div>
-                <div class="screen"></div>
-                <div class="screen"></div>
-                <div class="screen"></div>
+                <div class="screen">1</div>
+                <div class="screen">2</div>
+                <div class="screen">3</div>
             </div>
         </div>
         
         <script>
             const containerEL = document.getElementById('container')
+            containerEL.innerHTML += containerEL.innerHTML
+            let len = 3
             let index = 0
             setInterval(() => {
-                if(index === 6) {
-                    index = 0
+                console.log('index', index)
+                if(index === 0) {
+                    index = len
+                    containerEL.className = 'container'
+                    containerEL.style.left = -(index) * 277 + 'px'
+                } else if(index === len * 2 - 1) {
+                    index = len - 2
+                    containerEL.className = 'container'
+                    containerEL.style.left = -(index) * 277 + 'px'
                 } else {
                     index++
+                    containerEL.className = 'container move'
+                    containerEL.style.left = -(index) * 277 + 'px'
                 }
-                containerEL.style.left = -index * 100 + 'px'
             },2000)
         </script>
         
