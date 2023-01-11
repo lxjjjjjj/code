@@ -15,7 +15,8 @@
                 display: flex;
             }
             .move {
-                transition: left 0.2s ease-in-out;
+                transition: -webkit-transform 500ms ease 0s;
+                /* transition: left 0.2s ease-in-out; */
             }
             .screen {
                 width: 267px;
@@ -46,21 +47,22 @@
             containerEL.innerHTML += containerEL.innerHTML
             let len = 3
             let index = 0
+            if(index === 0) {
+                index = len
+                // containerEL.className = 'container'
+                // containerEL.style.left = -(index) * 277 + 'px'
+                containerEL.style.transform = `translate3d(${-(index) * 277}px, 0px, 0px)`
+            } else if(index === len * 2 - 1) {
+                index = len - 1
+                // containerEL.className = 'container'
+                // containerEL.style.left = -(index) * 277 + 'px'
+                containerEL.style.transform = `translate3d(${-(index) * 277}px, 0px, 0px)`
+            } 
             setInterval(() => {
-                console.log('index', index)
-                if(index === 0) {
-                    index = len
-                    containerEL.className = 'container'
-                    containerEL.style.left = -(index) * 277 + 'px'
-                } else if(index === len * 2 - 1) {
-                    index = len - 2
-                    containerEL.className = 'container'
-                    containerEL.style.left = -(index) * 277 + 'px'
-                } else {
-                    index++
-                    containerEL.className = 'container move'
-                    containerEL.style.left = -(index) * 277 + 'px'
-                }
+                index++
+                containerEL.className = 'container move'
+                // containerEL.style.left = -(index) * 277 + 'px'
+                containerEL.style.transform = `translate3d(${-(index) * 277}px, 0px, 0px)`
             },2000)
         </script>
         
