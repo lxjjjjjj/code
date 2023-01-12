@@ -1,0 +1,34 @@
+<html>
+    <head>
+        <style>
+            
+        </style>
+    </head>
+    <body>
+        <input type="text"></div>
+        
+        <script>
+            // function job() {
+            //     new Promise((resolve, reject) => {
+            //         resolve()
+            //     }).then(() => {
+            //         job()
+            //     })
+            // }
+            // job() // 页面无响应但是不会报错
+            function job() {
+                job()
+            }
+            job() // 页面仍有响应
+            // function job() {
+            //     console.log('job')
+            //     setTimeout(() => {
+            //         job()
+            //     },0)
+            // }
+            // job() // 页面有响应 且不会报错
+        </script>
+        
+    </body>
+
+</html>

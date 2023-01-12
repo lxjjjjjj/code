@@ -24,22 +24,21 @@ function throttle (func, wait = 50) {
 // 综合使用时间戳与定时器，完成一个事件触发时立即执行，触发完毕还能执行一次的节流函数
 // 实现一个节流函数? 如果想要最后一次必须执行的话怎么实现?
 function throttle(func, wait) {
-  let timer = null
-  let last = new Date()
-  return function() {
-      timer && clearTimeout(timer)
-      let now = new Date()
-      const remaining = wait - now - last
-      if(remaining <= 0) {
-          func.call(this, arguments)
-          startTime = Date.now();
-      }else {
-          timer = setTimeout(() => {
-              func.call(this, arguments)
-              timer && clearTimeout(timer)
-          }, remaining)
-      }
-  }
+    let last =  new Date()
+    let timer = null
+    return function () {
+        let now = new Date()
+        let remaining = now - last - wait
+        if(remaining <= 0) {
+            func.apply(this, ...arguments)
+            last = now
+        } else {
+            timer && clearTimeout(timer)
+            timer = setTimeout(() => {
+                func.apply(this, ...arguments)
+            }, remaining)
+        }
+    }
 }
 
 

@@ -10,3 +10,13 @@ Parent.prototype.parentFn = function() {
 
 // 提示 继承props 和 fn
 
+function Child(age, ...args) {
+    Parent.call(this, args)
+    this.age = age
+}
+Child.prototype = new Parent()
+Child.prototype.constructor = Child
+Child.prototype.setAge = function (age)  {
+    this.age =  age
+}
+
