@@ -747,6 +747,13 @@ requestAnimationFrame(() => console.log("rAF"));
 ## requestIdleCallback
 意图是让我们把一些计算量较大但是又没那么紧急的任务放到空闲时间去执行。不要去影响浏览器中优先级较高的任务，比如动画绘制、用户输入等等。
 
+requestIdleCallback 是一个兼容性不那么好的功能，所以我们使用前得判断它是否支持
+我们可以使用 window.requestIdleCallback() 方法来插入一个函数，这个函数将在浏览器空闲时被调用；requestIdleCallback
+ 它的参数为 callback 和 可选的 timeout；如果指定了 timeout 且为正值；则回调在 timeout 毫秒后还没调用时，回调任务就会被放入事件循环里排队，这样做可能会影响性能；
+
+
+注意点：因为它发生在一帧的最后，此时页面布局已经完成，所以不建议在 requestIdleCallback 里再操作 DOM，这样会导致页面再次重绘。
+
 ### 渲染有序进行
 Run Task -> Update Rendering -> idle callback | Run Task -> Update Rendering -> idle callback
 
