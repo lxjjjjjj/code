@@ -1,6 +1,21 @@
 Set 和 Map 主要的应用场景在于 数据重组 和 数据储存
 
 **Set 是一种叫做集合的数据结构，Map 是一种叫做字典的数据结构**
+# 总结
+**set 和 weakSet 区别**
+Set 允许存储任何类型的唯一值（不能重复），无论是原始值或者是对象引用；
+WeakSet 成员都是弱引用的对象，会被垃圾回收机制回收，可以用来保存DOM节点，不容易造成内存泄漏；
+WeakSet 不可迭代，不能用在 for-of 循环中
+WeakSet 没有 size 属性
+
+**map 和 weakMap 的区别**
+Map的key可以是任意的数据类型（基础类型、对象、函数等）；weakmap的键只能是非null的对象引用；
+Map的key是强引用（只要键不释放就会一直占着内存，不会被GC），weakmap的key是弱引用的对象，所以不会计入垃圾回收引用次数（在没有其他引用存在时垃圾回收能正确进行）；
+Map 能轻易转化为数组（扩展运算符）；weakmap 做不到
+由于 key 随时会被回收，所以 weakmap 的key 不可枚举，相应地也就不能获取 size 等，它能做的事情也就只有 has/get/set/delete 四种操作；map 相对比较丰富，has/get/set/delete 之外，支持 entries/size/foreach/keys/values 等
+
+**Map 和 普通Obejct的区别**
+过去通常用object实现，但是obj只能用字符串作为key，有很大限制，所以出现map，支持任意类型作为key。
 
 # 集合（Set）
 ES6 新增的一种新的数据结构，类似于数组，但成员是唯一且无序的，没有重复的值。
@@ -342,24 +357,25 @@ myElement.addEventListener('click', function() {
   let logoData = myWeakmap.get(myElement);
   logoData.timesClicked++;
 }, false);
-5. 总结
-Set
+
+# 总结
+**Set**
 成员唯一、无序且不重复
 [value, value]，键值与键名是一致的（或者说只有键值，没有键名）
 可以遍历，方法有：add、delete、has
-WeakSet
+**WeakSet**
 成员都是对象
 成员都是弱引用，可以被垃圾回收机制回收，可以用来保存DOM节点，不容易造成内存泄漏
 不能遍历，方法有add、delete、has
-Map
+**Map**
 本质上是键值对的集合，类似集合
 可以遍历，方法很多可以跟各种数据格式转换
-WeakMap
+**WeakMap**
 只接受对象作为键名（null除外），不接受其他类型的值作为键名
 键名是弱引用，键值可以是任意的，键名所指向的对象可以被垃圾回收，此时键名是无效的
 不能遍历，方法有get、set、has、delete
-6. 扩展：Object与Set、Map
-Object 与 Set
+# 扩展：Object与Set、Map
+**Object 与 Set**
 
 // Object
 const properties1 = {
@@ -373,7 +389,7 @@ const properties2 = new Set()
 properties2.add('width')
 properties2.add('height')
 console.log(properties2.has('width')) // true
-Object 与 Map
+**Object 与 Map**
 
 JS 中的对象（Object），本质上是键值对的集合（hash 结构）
 
@@ -382,161 +398,7 @@ const element = document.getElementsByClassName('App');
 
 data[element] = 'metadata';
 console.log(data['[object HTMLCollection]']) // "metadata"
-但当以一个DOM节点作为对象 data 的键，对象会被自动转化为字符串[Object HTMLCollection]，所以说，Object 结构提供了 字符串-值 对应，Map则提供了 值-值 的对应
-
-本文始发于我的博客：Set、WeakSet、Map及WeakMap
-
- 283  1
-1138663994 commented
-Set 1.成员不能重复 2.只有健值，没有健名，有点类似数组。 3. 可以遍历，方法有add, delete,has weakSet
-
-成员都是对象
-成员都是弱引用，随时可以消失。 可以用来保存DOM节点，不容易造成内存泄漏
-不能遍历，方法有add, delete,has Map
-本质上是健值对的集合，类似集合
-可以遍历，方法很多，可以干跟各种数据格式转换 weakMap 1.直接受对象作为健名（null除外），不接受其他类型的值作为健名
-健名所指向的对象，不计入垃圾回收机制
-不能遍历，方法同get,set,has,delete
- 100  2
-noctiomg commented
-为了学习 ES6 里面 Set、Map、WeakSet 和 WeakMap 的知识，懒癌晚期的我第一选择立刻翻阅阮一峰老师的 ES6入门 ，挑选里面的局部内容进行摘抄和理解。
-
-Set
-基本用法
-ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。 Set本身是一个构造函数，用来生成 Set 数据结构。
-
-看到这句我们可以基本明白，Set 是 “无重复的值的数组 (Array) ”。
-
-Set 实例的属性和方法
-Set 结构的实例有以下属性。
-
-Set.prototype.constructor：构造函数，默认就是Set函数。
-Set.prototype.size：返回Set实例的成员总数。 Set 实例的方法分为两大类：操作方法（用于操作数据）和遍历方法（用于遍历成员）。下面先介绍四个操作方法。
-add(value)：添加某个值，返回 Set 结构本身。
-delete(value)：删除某个值，返回一个布尔值，表示删除是否成功。
-has(value)：返回一个布尔值，表示该值是否为Set的成员。
-clear()：清除所有成员，没有返回值。
-然后我们会发现，Set 居然没有 push 、shift 这类的方法吗？不是说是无重复值的数组吗？<br />原来，Set 的本质还是一个对象，它并不是数组。我们看一下 Set 的构造函数：
-
-语法
-new Set([iterable]);
-
-参数
-iterable如果传递一个可迭代对象，它的所有元素将不重复地被添加到新的 SetSet**为空。
-
-返回值
-一个新的Set对象。
-
-*可迭代对象
-
-这里提到了可迭代对象，很多时候我们只记得可迭代对象一般是能够被 for( ... in ... ){} 进行遍历的对象/值。比较常见的可迭代对象：字符串、数组、对象。按照这种说法，那 Object 岂不是也可以被 Set 作为参数……
-
-image.png<br />
-
-个屁！并不能。凭啥？我们来看看在 MDN 中的真正的定义：
-
-The for...of statement creates a loop iterating over iterable objects, including: built-in String, Array, Array-like objects (e.g., arguments or NodeList), TypedArray, Map, Set, and user-defined iterables.
-
-内置字符串对象，数组，类数组……这些才是在 JS 语言中真正的可迭代对象（说起来字符串本身也是一种类数组哦）。所以刚刚的测试报错，我们就用 DevTools 所理解的伪数组（有 length 属性、且有 splice 方法的对象）来骚操作一下 ：
-
-image.png
-
-为啥有问题？好好看报错！cannot read property Symbol(Symbol.iterator)<br />也就是说，如果你想创建一个可迭代对象，你需要让这个对象(类)拥有一个私有标识：Symbol.iterator 。确切地来说，Set 的构造器要求对象具有的这一私有的标识，本质上要求应该是一个“具有 next 方法、且每次 next 方法会返回一个具有 done 和 value 两个属性的对象”的方法，done 的值为布尔值、为 false 则可以继续执行 next 取下一个值。多说无益，show u my code ：
-
-var foo = {
-	0 : 'zero',
-	1 : 'one',
-	2 : 'two',
-	3 : 'three',
-	length : 4
-};
-foo[Symbol.iterator] = function(){
-	let i = 0;
-    let l = this.length;
-	let that = this;
-	console.log('someone is using the iterator')
-    return {
-      next() {
-        if (i < l) {
-          console.log('now:'+that[i]+',progress:'+i+'/'+l)
-          return { done: false, value: that[i++] };
-        }
-        return { done: true };
-      }
-    };
-}
-new Set(foo);
-输出结果如图：<br /> image.png
-
-关于迭代器的一些知识搜索来源于 David Tang 博客中的 《Iterables and Iterators in JavaScript》 ，原文干货很多，建议 Mark 。<br />按照这种思路，我们甚至可以写一些坑爹东西忽悠 Set 构造器：<br />image.png
-
-就此打住，我们把重心转移回 Set 上。<br />刚刚我们看到 Set 可以理解为无序的、无重复子元素的数组，所以 Set 理所应当也具有一些和数组相似的方法：
-
-Set 结构的实例有四个遍历方法，可以用于遍历成员。
-
-keys()：返回键名的遍历器
-values()：返回键值的遍历器
-entries()：返回键值对的遍历器
-forEach()：使用回调函数遍历每个成员
-理解到这里，用 Set 给一些存了基本类型数据的数组去重，就很好理解了。
-
-Map
-阮一峰老师在文中有一个特别好的总结，我们摘录下：
-
-JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。
-
-const data = {};
-const element = document.getElementById('myDiv');
-data[element] = 'metadata';
-data['[object HTMLDivElement]'] // "metadata"
-上面代码原意是将一个 DOM 节点作为对象data的键，但是由于对象只接受字符串作为键名，所以element被自动转为字符串[object HTMLDivElement]。 为了解决这个问题，ES6 提供了 Map 数据结构。它类似于对象，也是键值对的集合，但是“键”的范围不限于字符串，各种类型的值（包括对象）都可以当作键。也就是说，Object 结构提供了“字符串—值”的对应，Map 结构提供了“值 - 值”的对应，是一种更完善的 Hash 结构实现。如果你需要“键值对”的数据结构，Map 比 Object 更合适。
-
-粗暴理解下，Map 是一个可以用 “任何值” 作为 **键名 **的 对象 。更严谨地说，不是“任何值”，而是“任何指针”。可以用阮一峰老师的例子说明：
-
-同理，同样的值的两个实例，在 Map 结构中被视为两个键。
-
-const map = new Map();
-const k1 = ['a'];
-const k2 = ['a'];
-map
-.set(k1, 111)
-.set(k2, 222);
-map.get(k1) // 111
-map.get(k2) // 222
-上面代码中，变量k1和k2的值是一样的，但是它们在 Map 结构中被视为两个键。 由上可知，Map 的键实际上是跟内存地址绑定的，只要内存地址不一样，就视为两个键。这就解决了同名属性碰撞（clash）的问题，我们扩展别人的库的时候，如果使用对象作为键名，就不用担心自己的属性与原作者的属性同名。
-
-最好玩的是，Map 和 Set 的构造器所传参数是一样的——无参数、或者可迭代对象。<br />只要基于数组理解 Set ， 基于对象理解 Map ，其实他俩在意义和特性上是很好理解的，具体的一些方法和属性可以参考阮一峰老师 ES6入门 上的 这一章节 来具体学习。
-
-WeakSet
-顾名思义，WeakSet 是“弱 Set”——弱引用版本的 Set。光是知道这句话是不行的，很多同学在刚接触这个定义的时候会有这种猜想：
-
-// 以下代码的输出结果为猜想值
-var ws = new WeakSet();
-var a = {foo:'bar'};
-ws.add(a);
-console.log(ws); 
-/* 应输出：
-WeakSet {{…}}
-	__proto__: WeakSet
-  [[Entries]]: Array(1)
-  	0: value: {foo: "bar"}
-    length: 1
-*/ 
-delete a;
-console.log(ws); 
-/* 应输出：
-WeakSet {}
-	__proto__: WeakSet
-	[[Entries]]: Array(0)
-		length: 0
-*/
-然后果不其然，我们会被 pia pia 打脸：<br /> image.png<br /> <br />“说好的弱引用呢？”<br />甚至我们掏出 MDN 会发现一个特别神奇的事情：WeakSet 几乎不兼容各种主流浏览器，只有 Chrome 被标注支持了，甚至 Chrome 也要强调：只有开启实验性 JavaScript 才支持。所以 WeakSet 到底是何许码也？既然明码标价是弱引用，那怎么样才能触发它的这个特性，回收后让 WeakSet 中的相关内容消失？
-
-既然已经走到了这里，我们就一口气把 JavaScript 浏览器端和 WeakSet 相关的内存管理、弱引用等知识都搞清楚。首先我们了解下 JavaScript 里有关变量回收的一些规则（参考文章）：
-
-在Javascript是可以使用delete来手动删除变量，通过这样的方法让GC来回收内存，但在JS中并不是所有的对象都可以被删除的， kangex在他的博文中对此作了详细说明：Understanding delete 在JS中通过 var\function 声明因含有DontDelete，而不可被删除； 但是对象的属性、数组成员却是可以删除的； 因此如果我们要回收某个对象可以使用Object来封装一下。
-
-所以我们再修改一下上方的代码。
+但当以一个DOM节点作为对象 data 的键，对象会被自动转化为字符串[Object HTMLCollection]，所以说，**Object 结构提供了 字符串-值 对应，Map则提供了 值-值 的对应**
 
 var test = {
 	name : 'test',
@@ -550,11 +412,8 @@ ws.add(test.content);
 console.log('清理前',ws);
 delete test.content;
 console.log('清理后',ws)
-但是结果却依然不行，如图：<br /> image.png
 
-原来，JavaScript 语言中，内存的回收并不是在执行 delete 操作符断开引用后即时触发的，而是根据运行环境的不同、在不同的运行环境下根据不同浏览器的回收机制而异的。比如在 Chrome 中，我们可以在控制台里点击 CollectGarbage 按钮来进行内存回收：
-
-image.png<br /><br />在点击此按钮后，我们再打印上方的 ws 变量：<br /> image.png
+但是结果却依然不行。原来，JavaScript 语言中，内存的回收并不是在执行 delete 操作符断开引用后即时触发的，而是根据运行环境的不同、在不同的运行环境下根据不同浏览器的回收机制而异的。比如在 Chrome 中，我们可以在控制台里点击 CollectGarbage 按钮来进行内存回收：
 
 关于在不同浏览器环境下手动进行内存回收的具体异同，可参考：如何手动触发 JavaScript 垃圾回收行为？<br />每次都必须使用 delete 一个一个删除属性吗？并不，delete 的意义是“断开引用”，同样的，我们也可以用这种方式来进行清理：
 
@@ -571,12 +430,10 @@ console.log('清理前',ws); // 清理前 WeakSet {{…}}
 test.content = null;
 console.log('清理后',ws); // 清理后 WeakSet {{…}}
 
-// -- 进行手动回收 --
 
-console.log(ws); // WeakSet {}
 这样我们就彻底搞清楚了：JavaScript 会在执行内存回收时，清除掉 被引用次数为0 的那部分内存；而 WeakSet 是只能储存对象的（或者说只能储存内存指针而非静态值）、并且它对对象的引用将不计入对象的引用次数，当清除对象属性、对应的内存被清理之后，WeakSet 中记录的内存地址上不再有内容，它将自动断开与这条引用的关联 —— 也正因如此，它所储存的内容会受到开发者对其他对象操作的被动影响，所以 WeakSet 在设计上就设计成了没有“长度”、“遍历”概念的特殊弱引用 Set 型。
 
-这样的弱引用，用途上可以开一些脑洞，比如阮一峰老师的例子：
+这样的弱引用，用途上可以开一些脑洞，比如：
 
 const foos = new WeakSet()
 class Foo {
@@ -589,13 +446,9 @@ class Foo {
     }
   }
 }
-上面代码保证了Foo的实例方法，只能在Foo的实例上调用。这里使用 WeakSet 的好处是，foos对实例的引用，不会被计入内存回收机制，所以删除实例的时候，不用考虑foos，也不会出现内存泄漏。——阮一峰
-
-相比 WeakMap，它的应用能力不是特别强，或许这也是它目前没有被广泛支持的原因吧。
+上面代码保证了Foo的实例方法，只能在Foo的实例上调用。这里使用 WeakSet 的好处是，foos对实例的引用，不会被计入内存回收机制，所以删除实例的时候，不用考虑foos，也不会出现内存泄漏。
 
 WeakMap
-理解了迭代器、弱引用、内存回收，对 WeakMap 我们就可以很简单地去理解了：<br />WeakMap 是一个只能以 对象 作为键名的 Map，同时 WeakMap 上 每个键名对应的引用也是弱引用的。<br />也就是我们刚刚 WeakSet 的值的那种实验，在 WeakMap 的键名上是依然存在的。比如：
-
 var a = {b:{c:'42'}};
 var wm = new WeakMap();
 wm.set(a.b,'love & peace');
@@ -604,7 +457,7 @@ delete a.b;
 // 手动执行 CollectGarbage
 console.log(wm);
 // WeakMap {}
-懂得很多道理，却依然过不好这一……呸！既然知道定义了就应该知道怎么用！我们先以阮一峰老师的例子 A 来看：
+
 
 let myElement = document.getElementById('logo');
 let myWeakmap = new WeakMap();
@@ -615,7 +468,7 @@ myElement.addEventListener('click', function() {
 }, false);
 上面代码中，myElement是一个 DOM 节点，每当发生click事件，就更新一下状态。我们将这个状态作为键值放在 WeakMap 里，对应的键名就是myElement。一旦这个 DOM 节点删除，该状态就会自动消失，不存在内存泄漏风险。
 
-把 DOM 节点用作它的键名是一个常见场景，对应的可以做各种各样的骚操作。再看阮一峰老师的例子 B ：
+把 DOM 节点用作它的键名是一个常见场景，对应的可以做各种各样的骚操作。例子 B ：
 
 const _counter = new WeakMap();
 const _action = new WeakMap();

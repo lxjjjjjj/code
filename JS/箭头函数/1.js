@@ -7,6 +7,7 @@ let x={
 let y={
     num:1,
     sum:data=>{
+        // this 是 window
         return this.num+data
     }
 }

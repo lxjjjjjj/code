@@ -1,0 +1,168 @@
+<html>
+    <head>
+        <style>
+            /* :root {
+                --whiteColor: #f00;
+            }
+
+            p {
+                background-color: var(--whiteColor);
+                width: 500px;
+                height: 400px;
+            } */
+
+            :root {
+                --colorA: #fff;
+                --colorB: #000;
+            }
+            div {
+                background: linear-gradient(45deg, var(--colorA), var(--colorB));
+                transition: 1s --colorA, 1s --colorB; 
+                /* 不能让颜色渐变 */
+                width: 500px;
+                height: 400px;
+            }
+            div:hover {
+                --colorA: yellowgreen;
+                --colorB: deeppink;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- <p>这是一个红色</p> -->
+        <div>
+            这是一个渐变
+        </div>
+        <script>
+            // 注意，规则集所指定的选择器定义了自定义属性的可见作用域。
+            // 通常的最佳实践是定义在根伪类 :root 下，这样就可以在 HTML 文档的任何地方访问到它了
+
+            // 这样就是只能在element元素下使用这个属性，别的元素访问不到这个属性
+            // element {
+            //     --main-bg-color: brown;
+            // }
+            // 自定义属性名是大小写敏感的，--my-color 和 --My-color 会被认为是两个不同的自定义属性。
+
+            // 自定义属性的继承性
+            // 自定义属性会继承。这意味着如果在一个给定的元素上，没有为这个自定义属性设置值，在其父元素上的值会被使用。
+            // <div class="one">
+            //     <div class="two">
+            //         <div class="three"></div>
+            //         <div class="four"></div>
+            //     </div>
+            // </div>
+            // 配套的 CSS：
+
+            // .two {
+            //     --test: 10px;
+            // }
+
+            // .three {
+            //     --test: 2em;
+            // }
+            // 在这个情况下， var(--test) 的结果分别是：
+
+            // 对于元素 class="two" ：10px
+            // 对于元素 class="three" ：2em
+            // 对于元素 class="four" ：10px （继承自父属性）
+            // 对于元素 class="one" ：非法值，会变成自定义属性的默认值
+
+            // 自定义属性备用值
+            // 用 var() 函数可以定义多个备用值(fallback value)，当给定值未定义时将会用备用值替换。这对于 Custom Elements 和 Shadow DOM 都很有用。
+
+            // 备注： 备用值并不是用于实现浏览器兼容性的。如果浏览器不支持 CSS 自定义属性，备用值也没什么用。
+            // 它仅对支持 CSS 自定义属性的浏览器提供了一个备份机制，该机制仅当给定值未定义或是无效值的时候生效。
+
+            // 函数的第一个参数是自定义属性的名称。如果提供了第二个参数，则表示备用值，当自定义属性值无效时生效。第二个参数可以嵌套，但是不能继续平铺展开下去了，例如：
+
+            // .two {
+            // color: var(--my-var, red); /* Red if --my-var is not defined */
+            // }
+
+            // .three {
+            // background-color: var(--my-var, var(--my-background, pink)); /* pink if --my-var and --my-background are not defined */
+            // }
+
+            // .three {
+            // background-color: var(--my-var, --my-background, pink); /* Invalid: "--my-background, pink" */
+            // }
+
+            // 第二个例子展示了如何处理一个以上的 fallback。该技术可能会导致性能问题，因为它花了更多的时间在处理这些变量上。
+
+            // 备注： 像自定义属性这些 fallback 语法允许使用逗号。比如 var(--foo, red, blue) 
+            // 定义了一个 red, blue 的备用值——从第一个逗号到最后的全部内容，都会被作为备用值的一部分。
+
+            // 无效变量会导致什么？
+            // 当浏览器遇到无效的 var() 时，会使用继承值或初始值代替。
+
+            // 考虑如下代码：
+
+            // HTML
+            // <p>This paragraph is initial black.</p>
+            // Copy to Clipboard
+            // CSS
+            // :root { --text-color: 16px; }
+            // p { color: blue; }
+            // p { color: var(--text-color); }
+            // Copy to Clipboard
+            // 毫不意外，浏览器将 --text-color 的值替换给了 var(--text-color)，但是 16px 并不是 color 的合法属性值。代换之后，该属性不会产生任何作用。浏览器会执行如下两个步骤：
+
+            // 检查属性 color 是否为继承属性。是，但是 <p> 没有任何父元素定义了 color 属性。转到下一步。
+            // 将该值设置为它的默认初始值，比如 black。
+
+            // 我们利用了 CSS Houdini 自定义变量，将原本定义在 background 的过渡效果嫁接到了 color 之上，
+            // 而 CSS 是支持一个颜色变换到另外一个颜色的，这样，我们巧妙的实现了渐变背景色的过渡动画。
+
+            // 渐变背景动画
+
+
+        // @property --colorA {
+        //     syntax: '<color>';
+        //     inherits: false;
+        //     initial-value: fuchsia;
+        // }
+        // @property --colorC {
+        //     syntax: '<color>';
+        //     inherits: false;
+        //     initial-value: #f79188;
+        // }
+        // @property --colorF {
+        //     syntax: '<color>';
+        //     inherits: false;
+        //     initial-value: red;
+        // }
+        // div {
+        //     background: linear-gradient(45deg,
+        //         var(--colorA),
+        //         var(--colorC),
+        //         var(--colorF));
+        //     animation: change 10s infinite linear;
+        // }
+
+        // @keyframes change {
+        //     20% {
+        //         --colorA: red;
+        //         --colorC: #a93ee0;
+        //         --colorF: fuchsia;
+        //     }
+        //     40% {
+        //         --colorA: #ff3c41;
+        //         --colorC: #e228a0;
+        //         --colorF: #2e4c96;
+        //     }
+        //     60% {
+        //         --colorA: orange;
+        //         --colorC: green;
+        //         --colorF: teal;
+        //     }
+        //     80% {
+        //         --colorA: #ae63e4;
+        //         --colorC: #0ebeff;
+        //         --colorF: #efc371;
+        //     }
+        // }
+        </script>
+        
+    </body>
+
+</html>
