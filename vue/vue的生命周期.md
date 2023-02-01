@@ -43,3 +43,9 @@ updated 不会保证所有的子组件也都一起被重绘。如果你希望等
 # destoryed
 发生在实例销毁之后，这个时候只剩下了dom空壳。组件已被拆解，数据绑定被卸除，事件监听器被移除，所有子实例也统统被销毁。在大多数场景中你不应该调用这个方法。最好使用 v-if 和 v-for 指令以数据驱动的方式控制子组件的生命周期。
 
+# 为什么setup没有beforeCreate和created
+因为 setup 是围绕 beforeCreate 和 created 生命周期钩子运行的，所以不需要显式地定义它们。换句话说，在这些钩子中编写的任何代码都应该直接在 setup 函数中编写。
+
+
+前文 Vue3.0源码学习——Composition API 学习了，在 setup 定义的时候组件的实例 instance 已经创建，因此在 setup 中使用 beforeCreate 和 created 钩子没有意义，也印证了官方文档
+
