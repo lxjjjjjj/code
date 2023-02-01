@@ -8,9 +8,23 @@
 <input
   v-bind:value="message"
   v-on:input="message=$event.target.value">
+
 对于表单元素，统一绑定的好处是可以磨平原生select/input等原生dom元素在不同浏览器的事件触发名称，通过简单的v-model实现双向数据绑定。v-model 不仅仅是语法糖，它还有副作用。副作用如下：如果 v-model 绑定的是响应式对象上某个不存在的属性，那么 vue 会悄悄地增加这个属性，并让它响应式。
 
 其他元素使用 v-model 双向数据绑定实际上就是，通过默认监听 input 事件。以及$emit 方法派发，再通过 prop 的形式传递。
+
+针对于 input 的 v-model 双向数据绑定实际上就是通过子组件中的 $emit 方法派发 input 事件，父组件监听 input 事件中传递的 value 值，并存储在父组件 data 中；然后父组件再通过 prop 的形式传递给子组件 value 值，再子组件中绑定 input 的 value 属性即可。
+
+对于一般的父组件元素，编译之后是这样的
+
+<child :value="message" @input="message=arguments[0]"></child>
+
+1.vue中双向绑定是一个指令v-model，可以绑定一个响应式数据到视图，同时视图中变化能改变该值。
+2.v-model是语法糖，默认情况下相当于:value和@input。使用v-model可以减少大量繁琐的事件处理代码，提高开发效率。
+3.通常在表单项上使用v-model，还可以在自定义组件上使用，表示某个值的输入和输出控制。
+4.通过<input v-model="xxx">的方式将xxx的值绑定到表单元素value上；对于checkbox，可以使用true-value和false-value指定特殊的值，对于radio可以使用value指定特殊的值；对于select可以通过options元素的value设置特殊的值；还可以结合.lazy,.number,.trim对v-mode的行为做进一步限定；v-model用在自定义组件上时又会有很大不同，4.vue3中它类似于sync修饰符，最终展开的结果是modelValue属性和update:modelValue事件；vue3中我们甚至可以用参数形式指定多个不同的绑定，例如v-model:foo和v-model:bar，非常强大！
+5.v-model是一个指令，它的神奇魔法实际上是vue的编译器完成的。我做过测试，包含v-model的模板，转换为渲染函数之后，实际上还是是value属性的绑定以及input事件监听，事件回调函数中会做相应变量更新操作。编译器根据表单元素的不同会展开不同的DOM属性和事件对，比如text类型的input和textarea会展开为value和input事件；checkbox和radio类型的input会展开为checked和change事件；select用value作为属性，用change作为事件。
+
 # 在 Vue 中体现出双向数据绑定作用的方式有两种
 
 ## v-model 属性
@@ -159,7 +173,7 @@ this.$emit('update:title', newTitle)
 ></text-document>
 为了方便起见，我们为这种模式提供一个缩写，即 .sync 修饰符：
 
-<text-document v-bind:title.sync="doc.title"></text-document>
+<text-document :title.sync="doc.title"></text-document>
 ```
 注意带有 .sync 修饰符的 v-bind 不能和表达式一起使用 (例如 v-bind:title.sync=”doc.title + ‘!’” 是无效的)。取而代之的是，你只能提供你想要绑定的 property 名，类似 v-model。
 
@@ -178,4 +192,49 @@ this.$emit('update:title', newTitle)
 <button @click="$emit('update:msg',msg-1)">子组件点击{{msg}}</button>
 
 使用.sync后写法需要注意的是：eventName只能采用update:传递过来的prop属性的方式才行。
+
+
+## v-model和.sync的区别
+v-model的本质
+```
+    <!--v-model写法-->
+    <my-component type="text" v-model="value">
+    <!--展开语法糖后的写法-->
+    <my-component type="text"
+      :value="value"
+      @input="value = $event.target.value"
+    >
+    <!--
+    默认针对原生组件input事件，但是如果子组件定义了针对事件
+    model: {
+            prop: "value",
+            event: "update"
+    },
+    则编译为
+    -->
+    <my-component type="text"
+      :value="value"
+      @update="(val) => value = val"
+    >
+```
+.sync本质
+```
+    <!--语法糖.sync-->
+    <my-component :value.sync="value" />
+    <!--编译后的写法-->
+    <my-component 
+      :value="msg" 
+      @update:value="(val) => value = val"
+    >
+```
+两者本质都是一样，并没有任何区别： “监听一个触发事件”="(val) => value = val"。
+
+1.只不过v-model默认对应的是input或者textarea等组件的input事件，如果在子组件替换这个input事件，其本质和.sync修饰符一模一样。比较单一，不能有多个。
+// 子组件可以用自定义事件，来替换v-model默认对应的原生input事件，只不过我们需要在子组件手动 $emit
+model: {
+        prop: "value",
+        event: "update"
+},
+
+**一个组件可以多个属性用.sync修饰符，可以同时"双向绑定多个“prop”，而并不像v-model那样，一个组件只能有一个。**
 
