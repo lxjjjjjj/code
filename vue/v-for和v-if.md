@@ -1,23 +1,15 @@
 # v-if 和 v-for 哪个优先级更高 如果同时出现，应该怎么优化得到更好的性能
 
-```
-(function anonymous(){
-    with(this){return _c('div',{
-    attrs:{
-        "id":"demo"}
-    },
-    [_c('h1',[_v("一段注释")]),
-    (isFolder)?_l((children),function(child){
-        return _c('p',[....])
-    })
-    ]
-    )}
-})
+实践中不应该把v-for和v-if放一起
 
-在vue源码的src/compiler/codegen getElement方法中看到for优先于if被解析
-v-for优先于v-if被解析
-如果v-for和v-if同时存在 vue编译解析后的函数
-会在for循环的每个循环中加入if判断,每次循环都会判断条件再进行渲染， 那么这样就非常不合理。要避免出现这种情况，需要在v-for外面嵌套含有v-if的template渲染。
+在vue2中，v-for的优先级是高于v-if，把它们放在一起，输出的渲染函数中可以看出会先执行循环再判断条件，哪怕我们只渲染列表中一小部分元素，也得在每次重渲染的时候遍历整个列表，这会比较浪费；另外需要注意的是在vue3中则完全相反，v-if的优先级高于v-for，所以v-if执行时，它调用的变量还不存在，就会导致异常
 
-如果每个列表数据都有不能避免的循环，那么建议在compute属性中做完判断再渲染避免重复的计算。
-```
+通常有两种情况下导致我们这样做：
+
+为了过滤列表中的项目 (比如 v-for="user in users" v-if="user.isActive")。此时定义一个计算属性 (比如 activeUsers)，让其返回过滤后的列表即可（比如users.filter(u=>u.isActive)）。
+
+为了避免渲染本应该被隐藏的列表 (比如 v-for="user in users" v-if="shouldShowUsers")。此时把 v-if 移动至容器元素上 (比如 ul、ol)或者外面包一层template即可。
+
+文档中明确指出永远不要把 v-if 和 v-for 同时用在同一个元素上，显然这是一个重要的注意事项。
+
+源码里面关于代码生成的部分，能够清晰的看到是先处理v-if还是v-for，顺序上vue2和vue3正好相反，因此产生了一些症状的不同，但是不管怎样都是不能把它们写在一起的。
