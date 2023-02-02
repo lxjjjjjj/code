@@ -1,3 +1,4 @@
+[vue打包文件](https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js)
 # 总结
 引入vuejs文件，会依次调用如下方法：
 initMixin(Vue);

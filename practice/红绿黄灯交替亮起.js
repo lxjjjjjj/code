@@ -8,4 +8,3 @@ function yellow() {
     console.log('yellow')
 }
 
-
