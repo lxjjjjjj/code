@@ -15,3 +15,26 @@ testGAsync().then(result => {
   console.log(result)
 })
 
+function asyncToGenerator(func) {
+  return function() {
+    const genFunc = func.apply(this, arguments)
+    return new Promise((resolve, reject) => {
+      function step(type, ...args) {
+        let genRes
+        try {
+          genRes = genFunc[type](args)
+        } catch(err) {
+          return reject(err)
+        }
+        const { value, done } = genRes
+        if(done) {
+          return resolve(value)
+        } else {
+          return Promise.resolve(value).then((val) => step('next', val), (err) => step('throw', err))
+        }
+      }
+      step('next')
+    })
+  }
+}
+
