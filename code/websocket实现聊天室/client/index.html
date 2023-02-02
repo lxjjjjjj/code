@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <ul id="list">
+        <input type="text" id="message" placeholder="请输入消息" />
+        <button id="send">发送</button>
+    </ul>
+    <script>
+        const oList = document.querySelector('#list');
+        const oMessage = document.querySelector('#message');
+        const oSendBtn = document.querySelector('#send');
+        let username = '';
+
+        const ws = new WebSocket('ws:localhost:8000');
+        oSendBtn.addEventListener('click',handleSendBtnClick,false);
+        ws.addEventListener('open',handleOpen,false);
+        ws.addEventListener('close',handleClose,false);
+        ws.addEventListener('error',handleError,false);
+        ws.addEventListener('message',handleMessage,false);
+        function handleSendBtnClick(){
+            console.log('send message');
+            const msg = oMessage.value;
+            if(!msg.trim().length){
+                return;
+            }
+            ws.send(JSON.stringify({
+                user:username,
+                dateTime:new Date().getTime(),
+                message:msg
+            }))
+
+            oMessage.value = '';
+        }
+        function handleOpen(){
+            console.log('WebSocket open');
+            username = localStorage.getItem('username');
+
+            if(!username){
+                location.href = 'entry.html';
+                return;
+            }
+        }
+        function handleClose(){
+            console.log('WebSocket close');
+        }
+        function handleError(){
+            console.log('WebSocket error');
+        }
+        function handleMessage(e){
+            console.log('WebSocket message');
+            console.log(e);
+            const msgData = JSON.parse(e.data);
+            oList.appendChild(createMsg(msgData));
+        }
+        function createMsg(data){
+            const {user,dateTime,message} = data;
+            const oItem = document.createElement('li');
+            oItem.innerHTML = `
+                <p>
+                    <span>${user}</span>
+                    <i>${new Date(dateTime)}</i>    
+                </p>
+                <p>消息:${message}</p>
+            `
+            return oItem;
+        }
+    </script>
+</body>
+</html>
