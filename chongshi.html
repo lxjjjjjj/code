@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <style>
+            .width{
+                height: 300px;
+                width: 300px;
+            }
+            img {
+                height:100%;
+                width:100%;
+            }
+            .screen {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: 0;
+                right: 0;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <script>
+            // request方法 fn count 失败重试的count
+        function retry(fn, count){
+            const wrapperFn = () => {
+                return new Promise((resolve, reject) => {
+                    const wrapperReject = () => {
+                        reject()
+                        if(count > 1) {
+                            --count
+                            wrapperFn()
+                        }
+                    }
+                    fn(resolve, wrapperReject)
+                })
+            } 
+            wrapperFn()
+        }
+        const sample = function(resolve, reject) {
+            fetch({
+                url: 'http://www.xxxxx.com/aa',
+                method: 'GET'
+            }).then(() => {
+                resolve()
+            }).catch(err => {
+                console.log('err', err)
+                reject()
+            })
+        }
+        // retry(sample, 3)
+        const sum = (a, b, c) => a + b + c;
+        // curry(sum)(1)(2)(3); // 6
+        // curry(sum)(1, 2, 3); // 6
+        // curry(sum, 1)(2, 3); // 6
+        // curry(sum, 1)(2)(3); // 6
+        // curry(sum, 1, 2)(3); // 6
+        // curry(sum, 1, 2, 3); // 6
+        function curry(...args) {
+            const fn = args.splice(0,1)[0]
+            let outerArgs = [...args]
+            if(outerArgs.length === fn.length) return fn(...outerArgs)
+            return function F(...innerArgs) {
+                outerArgs = outerArgs.concat(...innerArgs)
+                if(outerArgs.length === fn.length) {
+                    console.log('outerArgs', outerArgs)
+                    return fn(...outerArgs)
+                } else {
+                    return F
+                }  
+            }
+        }
+        console.log(curry(sum, 1, 2, 3))
+        </script>
+        
+    </body>
+
+</html>
