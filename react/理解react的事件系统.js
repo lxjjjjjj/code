@@ -56,7 +56,9 @@ console.log("document:after react mount");
 
 
 // [原文链接](https://www.cnblogs.com/Wayou/p/react_event_issue.html)
+
 // 因为react事件绑定是在reactDOM包实现的所以需要将这个包和react都改成16.18.0版本
+
 // 以上输出结果为
 // body
 // document:bedore react mount
@@ -145,6 +147,7 @@ console.log("document:after react mount");
 // 如何解决 因为 button 事件处理器的执行前提是事件达到 document 被 React 接收到，
 // 然后 React 将事件派发到 button 组件。既然在按钮的事件处理器执行之前，事件已经达到 document 了，
 // 那当然就无法在按钮的事件处理器进行阻止了。
+
 // 用 window 替换 document
 // 来自 React issue 回答中提供的这个方法是最快速有效的。使用 window 替换掉 document 后，前面的代码可按期望的方式执行。
 
