@@ -213,6 +213,8 @@ console.log(this.props.value) // 0
 this.props.onIncrement();
 console.log(this.props.value) // 0
 ```
+假设 如果props和state的更新是同步的 
+如果 子组件1 调用 this.props.onIncrement 方法更新了 this.props.value 子组件二在调用 this.props.onIncrement 更改 this.props.value 之前 输出看一下 this.props.value 的值 发现值改变了，但是在子组件二内部并没有更改值，会造成props的内部不一致， 所以要统一集中处理更新。
 ## 启用并发更新(react18的模式)
 React一直在探究一种“异步渲染”的一种方式是，React 可以根据调用的来源为调用分配不同的优先级setState()：事件处理程序、网络响应、动画等。
 
@@ -238,7 +240,7 @@ React16.3
 触发 setState
 shouldComponentUpdate
 render
-getSnpshotBeforeUpdate
+getSnapshotBeforeUpdate
 componentDidUpdate
 
 React16.4
