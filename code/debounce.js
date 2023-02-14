@@ -45,6 +45,7 @@ const func = debounce(biu,500)
 
 // 防抖函数 可以支持配置 第一次执行 或者 最后一次执行
 
+// 原文链接 https://juejin.cn/post/6844904041189752845
 function laterDebounce(func, wait = 50) {
     let timer = 0
     return function (...params) {
