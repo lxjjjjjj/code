@@ -24,7 +24,8 @@ var longestWPI = function (hours) {
                 map.set(count, i); // 记录第一次count<=0的下标
                 console.log('count', count, map.get(count))
             }
-            // 如果count一直是负数 那减一只会是往后挪动一步 如果count是0 并且前一位是比八小的数 那就是此时最大的值
+            // 如果count一直是负数 那减一只会是往后挪动一步 也就是 map.has(count - 1) 一直不会有值
+            // 如果count是0 并且前一位是比八小的数 那就是此时最大的值
             if (map.has(count - 1)) { // 如果有count的前一次记录，此时count-1到count符合要求
                 result = Math.max(result, i - map.get(count - 1));
             }
