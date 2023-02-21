@@ -58,6 +58,7 @@ console.log(job([1,2,3,3], [3,4,5,6], [50,10,40,70]))
         let pre = 0
         for (let j = i - 1; j >= 0; --j){
             // 向前寻找“最近的”“已完成的"兼职工作
+            // j === i - 1是不可能走到if循环的 所以一定是i-1前面完成的工作
             if (works[j].endTime <= works[i - 1].startTime) {
                 pre = j + 1;
                 break; 

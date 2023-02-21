@@ -1,0 +1,55 @@
+<html>
+    <script>
+        // 写具名函数可以直接在performance中直接看到函数名称
+        // 写calc耗时函数是因为可以扩大执行时间，可以明显看出函数调用
+        function calc() {
+            let a = 0
+            for(let i = 0; i < 1000000;i++) {
+                a += i
+            }
+        }
+        function printMutation() {
+            console.log('mutation')
+            calc()
+        }
+        new MutationObserver(function(){
+            printMutation()
+        }).observe(document.body,{
+            type: 'attribute',
+            attributeFilter: ['aaa']
+        })
+        document.body.setAttribute('aaa', 'guang')
+        function printStart(){
+            console.log('start')
+            calc()
+        }
+        function printtimer1() {
+            console.log('timer1')
+            calc()
+        }
+        function printtimer2() {
+            console.log('timer2')
+            calc()
+        }
+        function printpromise2() {
+            console.log('promise2')
+            calc()
+        }
+        function printpromise() {
+            console.log('promise')
+            calc()
+        }
+        const timer1 = setTimeout(() => {
+            printtimer1()
+            Promise.resolve().then(() => {
+                printpromise2()
+            })
+        }, 0)
+        Promise.resolve().then(() => {
+            printpromise()
+            const timer2 = setTimeout(() => {
+                printtimer2()
+            }, 0)
+        })
+    </script>
+</html>
