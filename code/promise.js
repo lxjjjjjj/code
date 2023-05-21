@@ -93,11 +93,11 @@ class MyPromise {
             resolvePromise(promise2, x, resolve, reject);
           } catch (error) {
             reject(error)
-          } 
-        })  
+          }
+        })
       }
 
-      const rejectedMicrotask = () => { 
+      const rejectedMicrotask = () => {
         // 创建一个微任务等待 promise2 完成初始化
         queueMicrotask(() => {
           try {
@@ -107,13 +107,13 @@ class MyPromise {
             resolvePromise(promise2, x, resolve, reject);
           } catch (error) {
             reject(error)
-          } 
-        }) 
+          }
+        })
       }
       // 判断状态
       if (this.status === FULFILLED) {
-        fulfilledMicrotask() 
-      } else if (this.status === REJECTED) { 
+        fulfilledMicrotask
+      } else if (this.status === REJECTED) {
         rejectedMicrotask()
       } else if (this.status === PENDING) {
         // 等待
@@ -122,8 +122,8 @@ class MyPromise {
         this.onFulfilledCallbacks.push(fulfilledMicrotask);
         this.onRejectedCallbacks.push(rejectedMicrotask);
       }
-    }) 
-    
+    })
+
     return promise2;
   }
 

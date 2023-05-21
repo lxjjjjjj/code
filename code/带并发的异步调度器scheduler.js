@@ -51,3 +51,27 @@ class Scheduler {
       });
     }
   }
+
+  class Scheduler {
+    constructor() {
+      this.waitTasks = [];
+      this.excutingTasks = []
+      this.maxExcutingNum = 2
+    }
+
+    add(promiseMaker) {
+      if (this.excutingTasks.length >= this.maxExcutingNum) {
+        this.waitTasks.push(promiseMaker)
+      } else {
+        this.run(promiseMaker)
+      }
+    }
+
+    run(promiseMaker) {
+      const index = this.excutingTasks.push(promiseMaker) - 1
+      promiseMaker().then(() => {
+        this.excutingTasks.splice(index, 1)
+        this.waitTasks.length && this.run(this.waitTasks.shift())
+      })
+    }
+  }

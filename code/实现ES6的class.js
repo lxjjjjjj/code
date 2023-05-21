@@ -24,3 +24,23 @@ function Parent(name) {
   child.sayName()
   child.sayAge()
    
+
+  function MyParent(name) {
+    this.name = name
+  }
+
+  MyParent.prototype.sayName = function () {
+    console.log(this.name)
+  }
+
+  function MyChild(name, age) {
+    MyParent.call(this, name)
+    this.age = age
+  }
+
+  MyChild.prototype = Object.create(MyParent.prototype)
+  MyChild.prototype.constructor = MyChild
+
+  MyChild.prototype.sayAge = function () {
+    console.log(this.age)
+  }

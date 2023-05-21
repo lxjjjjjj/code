@@ -135,18 +135,18 @@
 
 class Query {
     constructor(data) {
-      data = data
+      this.data = data
     }
     cbs = []
     _where = (fn) => {
-        return data.filter(fn)
+        return this.data.filter(fn)
     }
     _orderBy = (str) => {
-      return data.sort((a, b) => a[str] - b[str])
+      return this.data.sort((a, b) => a[str] - b[str])
     }
     _groupBy = (group) => {
         const res = {}, arr = []
-        data.forEach(cur => {
+        this.data.forEach(cur => {
           if(!res[cur[group]]) {
             res[cur[group]] = [cur]
           } else {

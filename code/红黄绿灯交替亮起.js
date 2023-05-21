@@ -19,17 +19,17 @@ function red() {
       }, timer);
     });
   };
-  
-  
+
+
   let myStep = () => {
     Promise.resolve().then(() => {
       return myLight(3000, red);
     }).then(() => {
       return myLight(2000, green);
     }).then(()=>{
-      return myLight(1000, yellow);
+      myLight(1000, yellow);
     }).then(()=>{
-      myStep();
+      return myStep();
     })
   };
   myStep();

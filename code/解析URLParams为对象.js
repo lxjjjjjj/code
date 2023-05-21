@@ -1,5 +1,5 @@
-let url = 'http://www.domain.com/?user=anonymous&id=123&id=456&city=%E5%8C%97%E4%BA%AC&enabled';
-parseParam(url)
+let url = 'http://www.domain.com/?user=anonymous&id=123.0&id=456.1&city=%E5%8C%97%E4%BA%AC&enabled';
+console.log(parseParam1(url))
 /* 结果
 { user: 'anonymous',
   id: [ 123, 456 ], // 重复出现的 key 要组装成数组，能被转成数字的就转成数字类型
@@ -29,4 +29,26 @@ function parseParam(url) {
   })
 
   return paramsObj;
+}
+
+function parseParam1(url) {
+  // 获取url 参数
+  const urlParamsStr = url.split('?')[1]
+  const urlParamsArr = urlParamsStr.split('&')
+  if (!urlParamsArr.length) return {}
+
+  return urlParamsArr.reduce((prev, next) => {
+    let [key, value] = next.split('=')
+    if (value) {
+      // 进行解码
+      value = decodeURIComponent(value)
+      // 判断是否为数字
+      value = Number(value) ? parseFloat(value) : value
+      if (prev[key]) prev[key] = [].concat(prev[key], value)
+      else prev[key] = value
+    } else {
+      prev[key] = true
+    }
+    return prev
+  }, {})
 }

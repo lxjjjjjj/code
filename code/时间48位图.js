@@ -11,47 +11,47 @@
  * @return {Array<object>} 时间区间数组
  */
 /**
-* 
+*
 */
 function timeBitmapToRanges(bitmap = '') {
-        const obj = {};
-        let count = 0; // 记录1的长度
-        /**
-        * len = bitmap.length + 1，多循环一趟做 else obj赋值操作, 
-        * 相当于 00000110 尾部补0，不影响结果
+        const obj = {};
+        let count = 0;// 记录1的长度
+        /**
+            * len = bitmap.length + 1，多循环一趟做 else obj赋值操作, 
+            * 相当于 00000110 尾部补0，不影响结果
         **/
         const len = bitmap.length + 1;
-        for (let i = 0; i < len; i++) {
-            if (bitmap.charAt(i) === '1') {
-                count += 1;
-            } else {
-                if (count !== 0) {
-                    // 有记录, 找到起始下标 i - count
-                    obj[i-count] = count;
-                    count = 0; // reset
-                }
-            }
-        }
-    
-       /**
+        for (let i = 0; i < len; i++) {
+            if (bitmap.charAt(i)  ===   '1')  {
+                count   +=  1;
+            }   else    {
+                if  (count  !==   0)  {
+                    // 有记录, 找到起始下标 i - count
+                    obj[i-count] = count;
+                    count = 0; // reset
+                }
+            }
+        }
+
+    /**
         * 0 => 00:00
         * 1 => 00:30
         * 2 => 01:00
         * 3 => 01:30
         * 4 => 02:00
         * 找规律，通过数字格式化成字符串
-       */
-        const format = (num) => {
-            const h = Math.floor(num/2);
-            const m = num%2 === 0 ? '00' : '30';
-            return `${h>9? h : `0${h}`}:${m}`
-        };
-    
-        return Object.keys(obj).map(index => `${format(index)}~${format(Number(index) + obj[index])}`);
+    */
+        const  format  =  (num)  =>  {
+            const  h  =  Math.floor(num/2);
+            const  m  =  num%2  ===  0  ?  '00'  :  '30';
+            return  `${h>9?  h  :  `0${h}`}:${m}`
+        };
+
+        return  Object.keys(obj).map(index  =>  `${format(index)}~${format(Number(index)  + obj[index])}`);
     }
-    
-    
-    
+
+
+
     console.log(timeBitmapToRanges('111010000000000000000000000000000000000000000011'));
 
 // console.log(timeBitmapToRanges("110010000000000000000000000000000000000000000000"));

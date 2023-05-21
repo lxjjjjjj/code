@@ -55,6 +55,20 @@ function clone(target, map = new Map()) {
     }
 };
 
+function clone(target, map = new WeakMap()) {
+    if (typeof target === 'object') {
+        const cloneTarget = Array.isArray(target) ? [] : {}
+        if (map.get(target)) return map.get(target)
+        map.set(target, cloneTarget)
+        for (const key in target) {
+            cloneTarget[key] = clone(target[key], map)
+        }
+        return cloneTarget;
+    } else {
+        return target
+    }
+}
+
 // ## 性能优化
 
 // ### 使用weakMap替代Map
@@ -80,7 +94,7 @@ function clone(target, map = new Map()) {
 // 如果是WeakMap的话，target和obj存在的就是弱引用关系，当下一次垃圾回收机制执行时，这块内存就会被释放掉。
 
 
-// for in 和 while 和 for 
+// for in 和 while 和 for
 // while循环最快，因此我们使用while写循环
 
 // 当遍历数组时，直接使用forEach进行遍历，当遍历对象时，使用Object.keys取出所有的key进行遍历，然后在遍历时把forEach会调函数的value当作key使用
