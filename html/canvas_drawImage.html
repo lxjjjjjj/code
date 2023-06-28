@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<style>
+  .content{
+    display: flex;
+  }
+  .poster_img {
+    width: 900px;
+  }
+</style>
+
+<body>
+  <div class="content">
+    <div>
+      <p>要绘制的图像：</p>
+      <img id="tulip" class="poster_img" src="http://img-ap-hongkong.mykeeta.net/sailorbanmore/6450be488eac52e0bc74c1b45f8c8c415322104.jpg" alt="The Tulip" />
+    </div>
+    <div>
+      <p>画布：</p>
+      <canvas id="myCanvas" width="900" style="border:1px solid #d3d3d3;background:#ffffff;">
+        Your browser does not support the HTML5 canvas tag.
+      </canvas>
+    </div>
+    <div>
+      <p>DataURL后的图片样式：</p>
+      <img class="poster_img" id="canvas_img" src="" alt="" srcset="">
+    </div>
+  </div>
+</body>
+<script>
+  var c = document.getElementById("myCanvas");
+  var ctx = c.getContext("2d");
+  var ratio = window.devicePixelRatio || 1;
+  var canvasImg = document.getElementById("canvas_img")
+  const img = new Image()
+  img.src = document.getElementById("tulip").src;
+  // ctx.scale(ratio, ratio)
+  // 解决 canvas2d toDataURL 跨域问题
+  img.setAttribute('crossOrigin', 'anonymous')
+  img.onload = function () {
+    const imgScale = img.width / img.height;
+    c.style.width = c.width + 'px'
+    c.style.height = c.width / imgScale + 'px'
+    c.width = c.width * ratio;
+    c.height = c.width / imgScale;
+    ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, c.width, c.height);
+    canvasImg.src = c.toDataURL('image/jpeg')
+  }
+</script>
+
+</html>

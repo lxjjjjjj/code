@@ -193,5 +193,3 @@ class Query {
     .orderBy('age')
     .groupBy('city')
     .execute())
-
-    

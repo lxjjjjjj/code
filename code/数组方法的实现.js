@@ -1,6 +1,5 @@
 // # push
 // push接收参数个数无限制，可以是字符串、数值或引用类型
-
 Array.prototype_push = function(){
     let arr = this
     if(!Array.isArray(arr)) throw new Error('not array')
@@ -15,8 +14,6 @@ Array.prototype_push = function(){
 }
 
 // # pop
-
-
 Array.prototype._pop = function(){
     let arr = this
     if(!Array.isArray(arr)) throw new Error('not array')
@@ -27,9 +24,6 @@ Array.prototype._pop = function(){
     arr.length--
     return lastItem
 }
-
-// # unshift
-
 
 /** unshift
  * 1.接收不限个数的参数
@@ -56,15 +50,11 @@ Array.prototype._pop = function(){
     return arrL
  }
 
-// # shift
-
-
 /** shift
  * 1.不接受参数
  * 2.把原数组中所有的项向前移一位
  * 3.原数组长度减一
- */ 
- 
+ */
 Array.prototype._shift = function (){
     const arr = this
     if(!Array.isArray(arr)){
@@ -80,8 +70,6 @@ Array.prototype._shift = function (){
 }
 
 // # concat
-
-
 /** concat
  * 1. 接收不限个数参数，类型可以是数组或其他类型
  * 2. 获取原数组长度，遍历concat的参数，如果参数是数组则拆开，如果数组中的元素还包括数组，不用一一拆分
@@ -114,8 +102,6 @@ Array.prototype._shift = function (){
  }
 
 // # isArray
-
-
 Array.prototype._isArray = function (arr) {
     if(Object.prototype.toString.call(arr) !== '[object Array]'){
         return false
@@ -124,8 +110,6 @@ Array.prototype._isArray = function (arr) {
 }
 
 // # indexOf
-
-
 Array.prototype._indexOf = function(ele, start){
     let arr = this
     if(!Array.isArray(arr)) return new Error('not array')
@@ -143,8 +127,6 @@ Array.prototype._indexOf = function(ele, start){
 }
 
 // # join
-
-
 Array.prototype._join = function(point){
     let arr = this
     let p = point || ','
@@ -165,7 +147,6 @@ Array.prototype._join = function(point){
 // 1.接收一个函数参数和一个函数执行作用域的参数（可选），参数函数也接受3个参数，
 // 分别是当前项值，当前项索引（可选），当前数组（可选）
 // 2.执行参数函数，默认执行环境为window，不返回任何值
-
 Array.prototype._forEach = function (fn, scope) {
   let arr = this
   if (!Array.isArray(arr)) {
@@ -180,9 +161,6 @@ Array.prototype._forEach = function (fn, scope) {
     fn.call(sp, arr[i], i, arr)
   }
 }
-
-// # map
-
 
 /** map
  * 1.接收一个函数参数和一个函数执行作用域的参数（可选），参数函数也接受3个参数，分别是当前项值，当前项索引（可选），当前数组（可选）
@@ -201,10 +179,6 @@ Array.prototype._map = function (fn, scope){
     }
     return result
 }
-
-// # filter
-
-
 
 /** filter
  * 1.接收一个函数参数和一个函数执行作用域的参数（可选），参数函数也接受3个参数，分别是当前项值，当前项索引（可选），当前数组（可选）
@@ -227,8 +201,6 @@ Array.prototype._filter(fn, scope){
 }
 
 // # every
-
-
 /**
  * 1. 接收一个函数参数和一个函数执行作用域的参数（可选），参数函数也接受3个参数，分别是当前项值，当前项索引（可选），当前数组（可选）
  * 2. 执行参数函数，默认执行环境为window，如果返回值全为true，最终的every返回true，当有一个返回false时，退出循环，立即返回false 
@@ -252,8 +224,6 @@ Array.prototype._every(fn, scope){
 }
 
 // # some
-
-
 /**
  * 1. 接收一个函数参数和一个函数执行作用域的参数（可选），参数函数也接受3个参数，分别是当前项值，当前项索引（可选），当前数组（可选）
  * 2. 执行参数函数，默认执行环境为window，如果返回值有一个为true，退出循环，最终的every返回true，当全部返回false时，最终返回false
@@ -277,8 +247,6 @@ Array.prototype._every(fn, scope){
 }
 
 // # reduce
-
-
 Array.prototype.reduce = function(fn, init){
     if (!Array.isArray(this)) {
         throw new Error('not Array')
@@ -295,9 +263,6 @@ Array.prototype.reduce = function(fn, init){
 }
 
 // # slice
-
-
-
 /** slice
  * 1.接收两个参数，第二个参数可选，如果不传第二个参数，默认原数组长度，即一直截取到末尾
  * 2.从第一个参数开始遍历原数组，直到结束位置时结束遍历，把遍历的每一项push到一个新的数组中，返回这个新数组
@@ -332,8 +297,6 @@ Array.prototype._slice = function(start, end){
 }
 
 // # splice
-
-
 /** splice
  * 1.有三个功能，删除、替换、插入，根据参数不同来进行操作
  * 2.如果是插入或替换，只需用替换元素长度减去删除的个数即可得出向后移动的位置数，把插入替换的元素在移动出空缺的位置上对号入座；

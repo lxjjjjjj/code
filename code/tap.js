@@ -58,7 +58,6 @@ accelerate.tap("LoggerPlugin", (newSpeed) =>
 // 再注册一个回调，用来检测是否超速
 accelerate.tap("OverspeedPlugin", (newSpeed) => {
   if (newSpeed > 120) {
-    
     console.log("OverspeedPlugin", "您已超速！！");
   }
 });
